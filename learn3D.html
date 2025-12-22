@@ -40,8 +40,8 @@
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
         }
 
-        /* 背景图 */
-        #bg-image {
+        /* 背景视频 */
+        #bg-video {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -354,16 +354,22 @@
 <body>
 
 <div id="app-container">
-    <!-- 背景图 -->
-    <img id="bg-image" src="https://s1.imagehub.cc/images/2025/12/03/78c683e1c62e4fad2fd8594d1dc8c07c.jpg" onerror="alert('图片加载失败，请检查网络或链接')">
+    <!-- 背景视频（替代原背景图） -->
+    <video id="bg-video" autoplay loop muted playsinline>
+        <source src="Avatar IV Video.mp4" type="video/mp4">
+        您的浏览器不支持视频播放
+    </video>
 
-    <!-- === 左上：AI老师视频 === -->
+    <!-- === 左上：AI老师视频（如需要可保留） === -->
+    <!-- 如果不需要单独的老师视频窗口，可以删除此部分 -->
+    <!--
     <div id="teacher-section">
         <video id="teacher-video" autoplay loop muted playsinline>
             <source src="Avatar IV Video.mp4" type="video/mp4">
             您的浏览器不支持视频播放
         </video>
     </div>
+    -->
 
     <!-- === 右侧：多媒体黑板 (扩展版) === -->
     <div id="display-section">

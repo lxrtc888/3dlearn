@@ -27,8 +27,8 @@ body {
     box-shadow: 0 0 50px rgba(0,0,0,0.8);
 }
 
-/* 背景图 */
-#bg-image {
+/* 背景视频 */
+#bg-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
