@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 协作教学系统 V7.0 - 神经元课堂 (模块化版)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="app-container">
+    <!-- 背景图 -->
+    <img id="bg-image" src="https://s1.imagehub.cc/images/2025/12/03/78c683e1c62e4fad2fd8594d1dc8c07c.jpg" 
+         onerror="alert('图片加载失败，请检查网络或链接')">
+
+    <!-- === 右侧：多媒体黑板 === -->
+    <div id="display-section">
+        <!-- Tab 栏 -->
+        <div class="tab-bar">
+            <div class="tab-btn active" id="tab-scene">
+                <i class="fas fa-cube mr-2"></i>全息演示
+            </div>
+            <div class="tab-btn" id="tab-ppt">
+                <i class="fas fa-chalkboard-teacher mr-2"></i>智能课件
+            </div>
+            <div class="tab-btn" id="tab-code">
+                <i class="fas fa-code mr-2"></i>后台代码
+            </div>
+        </div>
+
+        <!-- 内容区域容器 -->
+        <div class="content-container">
+            <!-- 1. 场景视图 -->
+            <div id="view-scene" class="content-view active">
+                <!-- Canvas 容器 -->
+                <div id="scene-canvas-container" class="w-full h-full absolute inset-0"></div>
+                
+                <!-- 占位符 -->
+                <div id="placeholder-text">
+                    <div class="text-center p-10 border-2 border-dashed border-gray-600/50 rounded-3xl bg-black/40 backdrop-blur-md">
+                        <div class="relative inline-block mb-6">
+                            <i class="fas fa-atom text-7xl text-blue-500 opacity-80 animate-spin-slow"></i>
+                            <div class="absolute inset-0 bg-blue-500 blur-2xl opacity-30"></div>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-gray-100 tracking-wide">AI 教学实验室</h3>
+                        <p class="text-base opacity-70 mb-4">请输入指令探索物理与AI世界</p>
+                        <div class="flex gap-2 justify-center text-sm">
+                            <span class="px-3 py-1.5 bg-blue-500/20 text-blue-300 rounded-full border border-blue-500/30">
+                                <i class="fas fa-brain mr-1"></i> LLM原理
+                            </span>
+                            <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
+                                <i class="fas fa-wave-square mr-1"></i> 双缝干涉
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 动态控制栏 -->
+                <div id="scene-controls" style="display:none;"></div>
+            </div>
+
+            <!-- 2. PPT 视图 -->
+            <div id="view-ppt" class="content-view">
+                <div class="slide-frame">
+                    <div class="slide-bg-deco"></div>
+                    <div id="slide-container" class="w-full h-full">
+                        <!-- JS 动态注入 -->
+                    </div>
+                    <div class="ppt-controls">
+                        <button class="ppt-btn" id="btn-prev" title="上一页">
+                            <i class="fas fa-chevron-left text-lg"></i>
+                        </button>
+                        <div id="slide-num" class="px-4 text-lg">1 / 8</div>
+                        <button class="ppt-btn" id="btn-next" title="下一页">
+                            <i class="fas fa-chevron-right text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 代码视图 -->
+            <div id="view-code" class="content-view">
+                <div id="code-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === 左侧：聊天交互 === -->
+    <div id="chat-section">
+        <div id="chat-history" class="chat-scroll-area flex flex-col"></div>
+
+        <div class="relative w-full mt-auto">
+            <input type="text" id="user-input" 
+                class="glass-input w-full rounded-full px-6 py-4 text-base pr-14" 
+                placeholder="输入指令，例如：大模型原理..." 
+                autocomplete="off">
+            <button onclick="window.app.handleSend()" 
+                class="absolute right-3 top-3 w-10 h-10 flex items-center justify-center rounded-full text-blue-400 hover:text-white hover:bg-blue-600 transition-all">
+                <i class="fas fa-paper-plane text-lg"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 主应用脚本 (ES Module) -->
+<script type="module">
+    import { App } from './js/core/App.js';
+    
+    // 创建并初始化应用
+    const app = new App();
+    window.app = app;  // 暴露到全局供按钮调用
+    
+    // DOM加载完成后初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        app.init();
+    });
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 协作教学系统 V7.0 - 神经元课堂</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* === 基础设置 === */
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #000; 
+            font-family: 'Noto Sans SC', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        /* 16:9 核心容器 */
+        #app-container {
+            position: relative;
+            width: 100vw;
+            height: 56.25vw; /* 16:9 */
+            max-height: 100vh;
+            max-width: 177.78vh; /* 16:9 */
+            background-color: #1a1a1a;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        /* 背景图 */
+        #bg-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            z-index: 1;
+        }
+
+        /* === 布局区域调整 (V7 扩展版) === */
+        
+        /* 左侧：聊天区 */
+        #chat-section {
+            position: absolute;
+            z-index: 20;
+            bottom: 3.5%; 
+            left: 2.5%;
+            width: 24%; 
+            height: 38%;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        /* 右侧：显示大屏 (黑板 - 扩展到整个绿色框选区域) */
+        #display-section {
+            position: absolute;
+            z-index: 20;
+            top: 8%; 
+            bottom: 4%;
+            right: 2.5%;
+            left: 29%;
+            
+            border-radius: 6px;
+            overflow: hidden;
+            /* 稍微调亮背景，使其在明亮PPT下更自然，同时保持黑板感 */
+            background: rgba(20, 20, 24, 0.95); 
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === Tab 导航栏 === */
+        .tab-bar {
+            height: 48px;
+            background: linear-gradient(to bottom, rgba(40,50,70,0.9), rgba(20,30,50,0.8));
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+            z-index: 30;
+        }
+        .tab-btn {
+            color: #a0aec0;
+            padding: 0 18px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+            letter-spacing: 0.5px;
+        }
+        .tab-btn:hover { color: #fff; }
+        .tab-btn.active { color: #60a5fa; }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; 
+            background: #60a5fa; 
+            box-shadow: 0 -2px 12px rgba(96, 165, 250, 0.7);
+        }
+
+        /* 内容容器 */
+        .content-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content-view {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: none; 
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .content-view.active { display: block; opacity: 1; }
+
+        /* === 代码视图 === */
+        #view-code {
+            background: #0d1117;
+            color: #a5d6ff;
+            padding: 30px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        #view-code::-webkit-scrollbar { width: 6px; }
+        #view-code::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+        .cursor::after { content: '▋'; animation: blink 1s infinite; color: #58a6ff; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* === 场景视图 (3D) === */
+        #view-scene { width: 100%; height: 100%; position: relative; }
+        
+        /* 3D 交互控制面板 */
+        #scene-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+            pointer-events: none; /* 默认不阻挡鼠标，按钮单独开启 */
+        }
+        .control-btn {
+            pointer-events: auto; /* 按钮可以点击 */
+            background: rgba(255, 255, 255, 0.9);
+            color: #1e293b;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid transparent;
+        }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        .control-btn.active { background: #3b82f6; color: white; border-color: #2563eb; }
+
+        /* 3D 标签 */
+        .scene-label {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            color: #1e293b;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+        }
+        .scene-label i { color: #3b82f6; }
+        .label-line {
+            position: absolute;
+            width: 2px;
+            background: linear-gradient(to bottom, #3b82f6, transparent);
+            transform-origin: top center;
+            z-index: 0;
+        }
+        .scene-label-container {
+            position: absolute;
+            top: 0; left: 0;
+            transform: translate(-50%, -100%);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* === PPT 视图 (V7 明亮风格) === */
+        #view-ppt {
+            background: #f0f2f5; /* 明亮背景 */
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+        .slide-frame {
+            width: 90%;
+            height: 85%;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 10px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        /* 幻灯片背景装饰 */
+        .slide-bg-deco {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
+                        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.08) 0%, transparent 60%);
+            z-index: 0;
+        }
+
+        .slide-content {
+            flex: 1;
+            padding: 60px 80px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+            animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        .slide-header { margin-bottom: 40px; }
+        .slide-title { font-size: 42px; font-weight: 800; color: #1e293b; margin-bottom: 10px; }
+        .slide-subtitle { font-size: 18px; color: #64748b; font-weight: 500; }
+        
+        .slide-body { font-size: 22px; line-height: 1.7; color: #334155; flex: 1; }
+        .highlight-box { background: #eff6ff; border-left: 6px solid #3b82f6; padding: 24px; border-radius: 8px; margin: 30px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        
+        /* PPT 控件 (明亮风格) */
+        .ppt-controls {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            display: flex;
+            gap: 15px;
+            z-index: 20;
+            align-items: center;
+        }
+        .ppt-btn {
+            width: 48px; height: 48px;
+            background: #ffffff;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; items-center; justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .ppt-btn:hover { border-color: #3b82f6; color: #3b82f6; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .ppt-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; background: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; }
+        #slide-num { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #64748b; }
+
+        /* === 聊天组件 === */
+        .chat-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+            margin-bottom: 12px;
+        }
+        .chat-scroll-area::-webkit-scrollbar { width: 0; }
+
+        .chat-bubble {
+            padding: 14px 18px;
+            border-radius: 16px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 92%;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(10px);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        .bubble-ai { 
+            background: rgba(255, 255, 255, 0.95); 
+            color: #0f172a; 
+            align-self: flex-start; 
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .bubble-user { 
+            background: linear-gradient(135deg, #3b82f6, #2563eb); 
+            color: white; 
+            align-self: flex-end; 
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        .glass-input {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        .glass-input:focus { outline: none; border-color: #60a5fa; background: rgba(0, 0, 0, 0.8); box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3); }
+
+        .confirm-card {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            padding: 18px;
+            border-radius: 12px;
+            margin-top: 5px;
+            width: 100%;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <!-- 背景图 -->
+    <img id="bg-image" src="https://s1.imagehub.cc/images/2025/12/03/78c683e1c62e4fad2fd8594d1dc8c07c.jpg" onerror="alert('图片加载失败，请检查网络或链接')">
+
+    <!-- === 左上：AI老师视频 === -->
+    <div id="teacher-section">
+        <video id="teacher-video" autoplay loop muted playsinline>
+            <source src="Avatar IV Video.mp4" type="video/mp4">
+            您的浏览器不支持视频播放
+        </video>
+    </div>
+
+    <!-- === 右侧：多媒体黑板 (扩展版) === -->
+    <div id="display-section">
+        <!-- Tab 栏 -->
+        <div class="tab-bar">
+            <div class="tab-btn active" onclick="switchTab('scene')" id="tab-scene"><i class="fas fa-cube mr-2"></i>全息演示</div>
+            <div class="tab-btn" onclick="switchTab('ppt')" id="tab-ppt"><i class="fas fa-chalkboard-teacher mr-2"></i>智能课件</div>
+            <div class="tab-btn" onclick="switchTab('code')" id="tab-code"><i class="fas fa-code mr-2"></i>后台代码</div>
+        </div>
+
+        <!-- 内容区域容器 -->
+        <div class="content-container">
+            <!-- 1. 场景视图 -->
+            <div id="view-scene" class="content-view active">
+                <div id="scene-canvas-container" class="w-full h-full absolute inset-0"></div> <!-- Canvas 容器 -->
+                
+                <!-- 占位符 -->
+                <div id="placeholder-text" class="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none">
+                    <div class="text-center p-10 border-2 border-dashed border-gray-600/50 rounded-3xl bg-black/40 backdrop-blur-md">
+                        <div class="relative inline-block mb-6">
+                            <i class="fas fa-atom text-7xl text-blue-500 opacity-80 animate-spin-slow"></i>
+                            <div class="absolute inset-0 bg-blue-500 blur-2xl opacity-30"></div>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-gray-100 tracking-wide">AI 教学实验室</h3>
+                        <p class="text-base opacity-70 mb-4">请输入指令探索物理与AI世界</p>
+                        <div class="flex gap-2 justify-center text-sm">
+                            <span class="px-3 py-1.5 bg-blue-500/20 text-blue-300 rounded-full border border-blue-500/30"><i class="fas fa-brain mr-1"></i> LLM原理</span>
+                            <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30"><i class="fas fa-wave-square mr-1"></i> 双缝干涉</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 动态控制栏 -->
+                <div id="scene-controls" style="display:none;"></div>
+            </div>
+
+            <!-- 2. PPT 视图 (V7 明亮版) -->
+            <div id="view-ppt" class="content-view">
+                <div class="slide-frame">
+                    <div class="slide-bg-deco"></div>
+                    <div id="slide-container" class="w-full h-full">
+                        <!-- JS 注入 -->
+                    </div>
+                    <div class="ppt-controls">
+                        <button class="ppt-btn" onclick="prevSlide()" id="btn-prev" title="上一页"><i class="fas fa-chevron-left text-lg"></i></button>
+                        <div id="slide-num" class="px-4 text-lg">1 / 8</div>
+                        <button class="ppt-btn" onclick="nextSlide()" id="btn-next" title="下一页"><i class="fas fa-chevron-right text-lg"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 代码视图 -->
+            <div id="view-code" class="content-view">
+                <div id="code-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === 左侧：聊天交互 === -->
+    <div id="chat-section">
+        <div id="chat-history" class="chat-scroll-area flex flex-col"></div>
+
+        <div class="relative w-full mt-auto">
+            <input type="text" id="user-input" 
+                class="glass-input w-full rounded-full px-6 py-4 text-base pr-14" 
+                placeholder="输入指令，例如：大模型原理..." 
+                autocomplete="off">
+            <button onclick="handleSend()" class="absolute right-3 top-3 w-10 h-10 flex items-center justify-center rounded-full text-blue-400 hover:text-white hover:bg-blue-600 transition-all">
+                <i class="fas fa-paper-plane text-lg"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ================= 全局状态 =================
+    const state = {
+        currentTopic: null,
+        activeTab: 'scene',
+        pptIndex: 0,
+        observerActive: false, // 双缝干涉状态
+        llmInteractiveMode: 'attention', // LLM 交互模式
+    };
+
+    // ================= PPT 数据 (V7 明亮版 - 8页) =================
+    const slides = [
+        {
+            title: "大语言模型 (LLM) 原理",
+            subtitle: "从 Transformer 到智能涌现的奇幻之旅",
+            content: `
+                <div class="flex flex-col h-full justify-center items-center text-center">
+                    <div class="mb-10 relative">
+                        <div class="w-40 h-40 bg-blue-100 rounded-full flex items-center justify-center relative z-10">
+                            <i class="fas fa-brain text-7xl text-blue-600"></i>
+                        </div>
+                        <div class="absolute inset-0 bg-blue-200 blur-3xl opacity-40 z-0"></div>
+                    </div>
+                    <h2 class="text-5xl font-extrabold mb-6 text-gray-900">解构 AI 的“大脑”</h2>
+                    <p class="text-2xl text-gray-600 max-w-3xl leading-relaxed">
+                        探索 GPT、Claude 等顶尖模型背后的核心技术。了解它们如何理解语言、生成内容，以及展现出惊人的推理能力。
+                    </p>
+                </div>
+            `
+        },
+        {
+            title: "第一步：数字化 (Tokenization)",
+            subtitle: "机器如何“阅读”人类语言",
+            content: `
+                <div class="flex flex-col h-full justify-center">
+                    <p class="mb-10 text-2xl text-gray-700">计算机无法直接理解文本，它只能处理数字。**Tokenization** 是将文本切分为计算机可识别的最小单位（Token）的过程。</p>
+                    <div class="bg-white p-10 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center gap-8">
+                        <div class="text-4xl font-serif text-gray-900 bg-gray-50 px-6 py-3 rounded-lg">"我喜欢人工智能"</div>
+                        <i class="fas fa-arrow-down text-4xl text-blue-500 animate-bounce"></i>
+                        <div class="flex gap-6">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="w-20 h-20 bg-blue-100 border-2 border-blue-300 rounded-xl flex items-center justify-center text-blue-700 font-mono text-2xl font-bold shadow-sm">15</div>
+                                <span class="text-lg text-gray-600 font-medium">我</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="w-20 h-20 bg-green-100 border-2 border-green-300 rounded-xl flex items-center justify-center text-green-700 font-mono text-2xl font-bold shadow-sm">209</div>
+                                <span class="text-lg text-gray-600 font-medium">喜欢</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="w-20 h-20 bg-purple-100 border-2 border-purple-300 rounded-xl flex items-center justify-center text-purple-700 font-mono text-2xl font-bold shadow-sm">884</div>
+                                <span class="text-lg text-gray-600 font-medium">人工智能</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        {
+            title: "核心引擎：Transformer",
+            subtitle: "现代 AI 的基石架构 (2017)",
+            content: `
+                <div class="flex items-center gap-12 h-full">
+                    <div class="flex-1">
+                        <p class="text-2xl text-gray-700 mb-8 leading-relaxed">Google 提出的 Transformer 架构彻底改变了自然语言处理。它抛弃了传统的循环结构，实现了高效的并行计算。</p>
+                        <div class="highlight-box bg-blue-50 border-blue-500">
+                            <h4 class="text-2xl font-bold text-blue-800 mb-4 flex items-center"><i class="fas fa-star mr-3"></i>关键突破：并行化</h4>
+                            <p class="text-xl text-blue-900">传统的 RNN/LSTM 需要按顺序一个词一个词地处理。Transformer 可以同时处理整个句子中的所有词，极大地提高了训练速度，使得训练超大规模模型成为可能。</p>
+                        </div>
+                    </div>
+                    <div class="flex-1 flex justify-center relative">
+                        <div class="w-80 h-80 bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col items-center justify-center p-6 relative z-10">
+                            <div class="flex-1 w-full bg-gray-100 rounded-xl mb-2 flex items-center justify-center text-lg font-bold text-gray-500">Output Probabilities</div>
+                            <div class="flex-1 w-full bg-purple-100 rounded-xl mb-2 flex items-center justify-center text-xl font-bold text-purple-700 border border-purple-300">Decoder Block x N</div>
+                            <div class="flex-1 w-full bg-blue-100 rounded-xl mb-2 flex items-center justify-center text-xl font-bold text-blue-700 border border-blue-300">Encoder Block x N</div>
+                            <div class="flex-1 w-full bg-gray-100 rounded-xl flex items-center justify-center text-lg font-bold text-gray-500">Input Embeddings</div>
+                        </div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-tr from-blue-200 to-purple-200 rounded-full blur-3xl opacity-30 z-0"></div>
+                    </div>
+                </div>
+            `
+        },
+        {
+            title: "灵魂所在：注意力机制 (Attention)",
+            subtitle: "让模型学会“划重点”",
+            content: `
+                <div class="h-full flex flex-col justify-center">
+                    <p class="text-2xl text-gray-700 mb-10 text-center max-w-4xl mx-auto">
+                        **自注意力 (Self-Attention)** 是 Transformer 的核心。它允许模型在处理每个词时，计算它与句子中其他所有词的相关性，从而捕捉长距离依赖和上下文信息。
+                    </p>
+                    <div class="bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+                        <div class="text-3xl font-serif text-center mb-8 text-gray-900">"The <span class="text-blue-600 font-bold border-b-4 border-blue-400">animal</span> didn't cross the street because <span class="text-blue-600 font-bold border-b-4 border-blue-400">it</span> was too tired."</div>
+                        <div class="flex justify-center items-center gap-16">
+                            <div class="text-center">
+                                <div class="text-xl font-bold text-gray-500 mb-2">查询 (Query)</div>
+                                <div class="px-6 py-3 bg-blue-100 text-blue-800 rounded-lg font-bold text-2xl shadow-sm">it</div>
+                            </div>
+                            <i class="fas fa-arrows-alt-h text-4xl text-gray-300"></i>
+                             <div class="text-center relative">
+                                <div class="text-xl font-bold text-gray-500 mb-2">键 (Key) & 值 (Value)</div>
+                                <div class="flex gap-2">
+                                    <div class="px-4 py-3 bg-gray-100 text-gray-400 rounded-lg text-xl">The</div>
+                                    <div class="px-4 py-3 bg-blue-600 text-white rounded-lg font-bold text-xl shadow-md transform scale-110 z-10">animal</div>
+                                    <div class="px-4 py-3 bg-gray-100 text-gray-400 rounded-lg text-xl">...</div>
+                                    <div class="px-4 py-3 bg-blue-200 text-blue-800 rounded-lg font-bold text-xl">street</div>
+                                </div>
+                                <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-blue-600 font-bold">高相关性!</div>
+                            </div>
+                        </div>
+                        <p class="text-center text-lg text-gray-500 mt-8">模型计算出 "it" 与 "animal" 的相关性最高，从而理解了代词的指代。</p>
+                    </div>
+                </div>
+            `
+        },
+        {
+            title: "预训练 (Pre-training)",
+            subtitle: "海量阅读，构建世界知识",
+            content: `
+                 <div class="flex items-center gap-12 h-full">
+                    <div class="flex-1 flex justify-center">
+                        <i class="fas fa-book-reader text-[12rem] text-blue-200"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-2xl text-gray-700 mb-8 leading-relaxed">在这一阶段，模型阅读了互联网上数以万亿计的文本数据（书籍、网页、代码）。</p>
+                        <div class="highlight-box bg-green-50 border-green-500">
+                            <h4 class="text-2xl font-bold text-green-800 mb-4"><i class="fas fa-tasks mr-3"></i>自监督学习任务：预测下一个词</h4>
+                            <p class="text-xl text-green-900">模型不断尝试根据前面的文本预测下一个 Token。通过无数次的试错和修正，它学会了语法、事实知识、逻辑推理甚至一定的常识。</p>
+                            <div class="mt-6 bg-white p-4 rounded-lg font-mono text-lg text-center shadow-sm">
+                                今天天气真 <span class="text-green-600 font-bold">[?]</span> -> 预测为：<span class="text-green-600 font-bold">好</span> (概率 85%)
+                            </div>
+                        </div>
+                         <p class="text-xl text-gray-600">预训练后的模型是一个“博学者”，但它还不知道如何恰当地与人对话。</p>
+                    </div>
+                </div>
+            `
+        },
+        {
+            title: "微调 (Fine-tuning) & 指令跟随",
+            subtitle: "从“续写机器”到“得力助手”",
+            content: `
+                <div class="h-full flex flex-col justify-center">
+                    <p class="text-2xl text-gray-700 mb-10 text-center max-w-4xl mx-auto">
+                        为了让模型能够理解和执行人类的指令（如“翻译这段话”、“写一个摘要”），我们需要对其进行微调。
+                    </p>
+                    <div class="flex justify-center gap-16">
+                        <div class="w-1/3 bg-white p-8 rounded-2xl shadow-xl border border-gray-100 opacity-60">
+                            <h4 class="text-2xl font-bold text-gray-500 mb-4 text-center">预训练模型 (Base Model)</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg text-gray-600 mb-4">
+                                <span class="font-bold">输入：</span>把这句话翻译成英文：你好。<br>
+                                <span class="font-bold">输出：</span>今天天气不错。你吃饭了吗？... (续写模式)
+                            </div>
+                            <div class="text-center text-red-500 font-bold"><i class="fas fa-times-circle mr-2"></i>不听指令</div>
+                        </div>
+                        <div class="flex items-center text-blue-500 text-4xl"><i class="fas fa-arrow-right"></i></div>
+                         <div class="w-1/3 bg-white p-8 rounded-2xl shadow-xl border border-blue-200 transform scale-105 z-10">
+                            <h4 class="text-2xl font-bold text-blue-800 mb-4 text-center">指令微调模型 (Instruct Model)</h4>
+                             <div class="bg-blue-50 p-4 rounded-lg text-blue-900 mb-4">
+                                <span class="font-bold">输入：</span>把这句话翻译成英文：你好。<br>
+                                <span class="font-bold">输出：</span>Hello. (对话模式)
+                            </div>
+                            <div class="text-center text-green-600 font-bold"><i class="fas fa-check-circle mr-2"></i>完美执行</div>
+                        </div>
+                    </div>
+                    <p class="text-center text-xl text-gray-500 mt-10">使用高质量的“指令-回答”数据对进行有监督学习。</p>
+                </div>
+            `
+        },
+        {
+            title: "人类反馈强化学习 (RLHF)",
+            subtitle: "对齐人类价值观：更有用、更安全",
+            content: `
+                <div class="h-full flex flex-col justify-center">
+                    <p class="text-2xl text-gray-700 mb-10 text-center max-w-4xl mx-auto">
+                        这是 ChatGPT 成功的关键一步。通过引入人类的反馈，让模型的回答不仅正确，而且符合人类的偏好和伦理准则。
+                    </p>
+                    <div class="grid grid-cols-3 gap-8 text-center">
+                         <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                            <div class="text-4xl text-blue-500 mb-4"><i class="fas fa-comments"></i></div>
+                            <h4 class="text-xl font-bold mb-2">1. 收集人类偏好数据</h4>
+                            <p class="text-gray-600">让人类对模型的多个回答进行排名，告诉模型哪个更好。</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                            <div class="text-4xl text-purple-500 mb-4"><i class="fas fa-trophy"></i></div>
+                            <h4 class="text-xl font-bold mb-2">2. 训练奖励模型 (RM)</h4>
+                            <p class="text-gray-600">训练一个小的 AI 模型来模拟人类的评分标准。</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                            <div class="text-4xl text-green-500 mb-4"><i class="fas fa-robot"></i></div>
+                            <h4 class="text-xl font-bold mb-2">3. 强化学习优化 (PPO)</h4>
+                            <p class="text-gray-600">利用奖励模型的反馈，通过强化学习算法不断调整 LLM 的参数。</p>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        {
+            title: "总结与展望：通往 AGI 之路",
+            subtitle: "大模型作为未来的基础设施",
+            content: `
+                 <div class="flex items-center gap-12 h-full">
+                    <div class="flex-1">
+                        <h3 class="text-3xl font-bold text-gray-800 mb-6">核心要素回顾</h3>
+                        <ul class="space-y-4 text-2xl text-gray-700">
+                            <li class="flex items-center"><i class="fas fa-database text-blue-500 w-10"></i> <span>**海量数据**：知识的来源</span></li>
+                            <li class="flex items-center"><i class="fas fa-microchip text-purple-500 w-10"></i> <span>**强大算力**：训练的基础</span></li>
+                            <li class="flex items-center"><i class="fas fa-code-branch text-green-500 w-10"></i> <span>**Transformer**：高效的架构</span></li>
+                            <li class="flex items-center"><i class="fas fa-hand-holding-heart text-red-500 w-10"></i> <span>**RLHF**：人类的对齐</span></li>
+                        </ul>
+                        <h3 class="text-3xl font-bold text-gray-800 mt-10 mb-6">未来趋势：AI Agent</h3>
+                        <p class="text-xl text-gray-600 leading-relaxed">
+                            未来的 LLM 将不仅仅是聊天机器人，它们将进化为能够使用工具、自主规划、解决复杂任务的**智能体 (Agents)**，成为我们生活和工作中的得力助手。
+                        </p>
+                    </div>
+                    <div class="flex-1 flex justify-center relative">
+                         <div class="relative z-10 animate-float">
+                            <i class="fas fa-rocket text-[10rem] text-transparent bg-clip-text bg-gradient-to-tr from-blue-600 to-purple-600"></i>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-tr from-blue-100 to-purple-100 rounded-full blur-3xl opacity-50 z-0"></div>
+                    </div>
+                </div>
+            `
+        }
+    ];
+
+    // ================= 代码模拟数据 =================
+    const codeSnippets = {
+        engine: `class CyberEngine extends HolographicScene {
+    init() {
+        // 1. 初始化 V6 气缸矩阵
+        const block = new THREE.Mesh(
+            new THREE.BoxGeometry(6, 4, 3), 
+            Materials.CyberMetal
+        );
+        
+        // 2. 注入等离子燃烧模拟
+        this.pistons.forEach(p => {
+            p.add(new PlasmaGlow({ color: 0xff3366 }));
+        });
+
+        // 3. 启动曲轴物理约束
+        this.physics.addConstraint(crankshaft, connectingRod);
+        
+        console.log("Engine Started. RPM: 8000");
+    }
+}`,
+        quantum: `function simulateDoubleSlit() {
+    // 双缝干涉 - 观察者效应模拟
+    
+    // 1. 粒子源
+    const emitter = new ElectronGun({ rate: 100 });
+    
+    // 2. 坍缩逻辑 (The Aha Moment)
+    if (observer.isActive) {
+        // 观察者存在 -> 波函数坍缩 -> 粒子性
+        particles.trajectory = Trajectory.LINEAR;
+        screen.pattern = Patterns.TWO_BANDS;
+    } else {
+        // 无观察者 -> 波动性 -> 干涉条纹
+        particles.trajectory = Trajectory.WAVE;
+        screen.pattern = Patterns.INTERFERENCE;
+    }
+    
+    renderer.render(scene, camera);
+}`,
+        hydraulic: `function initHydraulicScene() {
+    // 帕斯卡定律可视化
+    
+    // F1/A1 = F2/A2
+    const forceInput = new Vector3(0, -10, 0);
+    const pressure = forceInput.length() / areaSmall;
+    
+    // 实时流体动力学
+    fluid.updateMesh(pressure);
+    
+    // 机械传动反馈
+    largePiston.position.y += (smallPiston.deltaY / ratio);
+}`,
+        llm: `class TransformerNetwork extends InteractiveScene {
+    init() {
+        // 1. 创建 Token 嵌入层可视化
+        this.tokens = this.createTokenNodes(inputText);
+        
+        // 2. 构建多头注意力机制连接
+        this.attentionHeads.forEach(head => {
+            head.calculateWeights(this.tokens);
+            this.drawConnections(head.weights);
+        });
+
+        // 3. 启用光线投射交互
+        this.raycaster.on('click', (intersectedToken) => {
+            // 高亮相关的注意力连接
+            this.highlightAttention(intersectedToken);
+            // 显示 Token 信息面板
+            this.ui.showTooltip(intersectedToken.data);
+        });
+    }
+}`
+    };
+
+    // ================= 聊天逻辑 =================
+    const chatHistory = document.getElementById('chat-history');
+    const userInput = document.getElementById('user-input');
+
+    setTimeout(() => {
+        addMessage('ai', '👋 欢迎回到神经元课堂。');
+        addMessage('ai', '我是您的 AI 助教。今天准备了一些非常酷的演示：<br>1. <b>[大模型原理]</b> - 交互式 3D 网络 (New!)<br>2. <b>[V6发动机]</b> - 赛博机械美学<br>3. <b>[双缝干涉]</b> - 量子力学“观察者效应”<br>4. <b>[液压系统]</b> - 流体力学<br>5. <b>[原理课件]</b> - 8页详解 PPT');
+    }, 800);
+    
+    userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleSend(); });
+
+    function handleSend() {
+        const text = userInput.value.trim();
+        if(!text) return;
+        addMessage('user', text);
+        userInput.value = '';
+        analyzeIntent(text);
+    }
+
+    function addMessage(role, text) {
+        const div = document.createElement('div');
+        div.className = `chat-bubble bubble-${role} flex flex-col`;
+        div.innerHTML = text;
+        chatHistory.appendChild(div);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function analyzeIntent(text) {
+        let topic = null;
+        let type = 'scene';
+        let title = '';
+        
+        if(text.includes('发动机') || text.includes('引擎')) { topic = 'engine'; title = 'V6 赛博引擎'; }
+        else if(text.includes('双缝') || text.includes('干涉') || text.includes('量子')) { topic = 'quantum'; title = '双缝干涉 (观察者效应)'; }
+        else if(text.includes('液压') || text.includes('水压')) { topic = 'hydraulic'; title = '液压传动系统'; }
+        else if(text.includes('大模型') && (text.includes('交互') || text.includes('3D'))) { topic = 'llm'; title = 'LLM 注意力网络 (3D交互)'; }
+        else if(text.includes('大模型') || text.includes('PPT') || text.includes('原理') || text.includes('课件')) { topic = 'ppt'; type = 'ppt'; title = 'LLM 原理课件 (8页)'; }
+        else {
+            setTimeout(() => addMessage('ai', '🤔 请尝试输入关键词，例如“大模型3D”、“双缝干涉”或“原理课件”。'), 600);
+            return;
+        }
+
+        setTimeout(() => {
+            const confirmHtml = `
+                <div class="font-bold mb-2 text-blue-300 flex items-center"><i class="fas fa-check-circle mr-2"></i> 资源就绪</div>
+                <div class="text-sm text-gray-300 mb-4 bg-black/20 p-3 rounded-lg border border-white/10">
+                    <div class="mb-1"><span class="text-gray-500">Subject:</span> <span class="font-medium text-white">${title}</span></div>
+                    <div><span class="text-gray-500">Mode:</span> <span class="font-medium text-white">${type === 'ppt' ? 'Interactive Slide' : 'WebGL Simulation'}</span></div>
+                </div>
+                <button onclick="startGeneration('${topic}', '${type}')" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl transition shadow-lg flex items-center justify-center font-bold tracking-wide group text-base">
+                    <i class="fas fa-play mr-2 group-hover:scale-110 transition-transform"></i> 立即加载
+                </button>
+            `;
+            const div = document.createElement('div');
+            div.className = 'confirm-card chat-bubble bubble-ai';
+            div.innerHTML = confirmHtml;
+            chatHistory.appendChild(div);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }, 600);
+    }
+
+    function startGeneration(topic, type) {
+        state.currentTopic = topic;
+        switchTab('code');
+        
+        const codeView = document.getElementById('code-content');
+        codeView.innerHTML = '';
+        codeView.className = 'cursor';
+        
+        const snippet = codeSnippets[topic] || codeSnippets['llm'] || "// Loading advanced modules...";
+        let i = 0;
+        const typingSpeed = 2; 
+
+        function typeWriter() {
+            if (i < snippet.length) {
+                codeView.innerHTML += snippet.charAt(i);
+                i++;
+                document.getElementById('view-code').scrollTop = document.getElementById('view-code').scrollHeight;
+                setTimeout(typeWriter, typingSpeed);
+            } else {
+                codeView.classList.remove('cursor');
+                finishGeneration(type);
+            }
+        }
+        typeWriter();
+    }
+
+    function finishGeneration(type) {
+        setTimeout(() => {
+            if (type === 'ppt') {
+                addMessage('ai', '✅ <b>课件已投屏。</b><br>请使用右下角按钮翻页。');
+                switchTab('ppt');
+                renderSlide(0);
+            } else {
+                addMessage('ai', '✅ <b>全息场景构建完成。</b><br>您可以拖动旋转视角。<br>部分场景支持点击交互。');
+                switchTab('scene');
+                runScene(state.currentTopic);
+            }
+        }, 600);
+    }
+
+    function switchTab(tabName) {
+        state.activeTab = tabName;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        document.querySelectorAll('.content-view').forEach(view => view.classList.remove('active'));
+        document.getElementById(`view-${tabName}`).classList.add('active');
+    }
+
+    // ================= PPT 渲染 (V7) =================
+    function renderSlide(index) {
+        state.pptIndex = index;
+        const container = document.getElementById('slide-container');
+        const slide = slides[index];
+        
+        container.innerHTML = `
+            <div class="slide-content h-full">
+                <div class="slide-header">
+                    <div class="slide-title">${slide.title}</div>
+                    <div class="slide-subtitle">${slide.subtitle}</div>
+                </div>
+                <div class="slide-body">${slide.content}</div>
+            </div>
+        `;
+        
+        // 更新页码和按钮状态
+        document.getElementById('slide-num').innerText = `${index + 1} / ${slides.length}`;
+        document.getElementById('btn-prev').disabled = index === 0;
+        document.getElementById('btn-next').disabled = index === slides.length - 1;
+    }
+
+    function nextSlide() {
+        if (state.pptIndex < slides.length - 1) renderSlide(state.pptIndex + 1);
+    }
+    function prevSlide() {
+        if (state.pptIndex > 0) renderSlide(state.pptIndex - 1);
+    }
+
+    // ================= Three.js 核心逻辑 (V7 专业版 - 含交互) =================
+    let scene, camera, renderer, animationId, controls, raycaster, mouse;
+    let labels = [];
+    let interactableObjects = []; // 用于存储可点击的对象
+
+    function runScene(topic) {
+        const container = document.getElementById('scene-canvas-container');
+        
+        // --- 清理旧场景 (重要修复) ---
+        if (animationId) cancelAnimationFrame(animationId);
+        if (renderer) {
+            renderer.dispose();
+            container.removeChild(renderer.domElement);
+        }
+        // 移除旧的事件监听器
+        if (window.resizeHandler) window.removeEventListener('resize', window.resizeHandler);
+        if (window.clickHandler && container) container.removeEventListener('click', window.clickHandler);
+
+        container.innerHTML = ''; // 清空画布
+        labels = []; 
+        interactableObjects = [];
+        
+        document.getElementById('placeholder-text').style.display = 'none';
+        const controlsDiv = document.getElementById('scene-controls');
+        controlsDiv.style.display = 'none';
+        controlsDiv.innerHTML = '';
+
+        // --- 初始化新场景 ---
+        scene = new THREE.Scene();
+        const aspect = container.clientWidth / container.clientHeight;
+        camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+        
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // 交互初始化
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
+
+        // 通用灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+
+        // 加载场景
+        camera.position.set(0, 5, 20); // 默认相机位置
+        if (topic === 'engine') setupEngineScene(scene);
+        else if (topic === 'quantum') setupQuantumScene(scene);
+        else if (topic === 'hydraulic') setupHydraulicScene(scene);
+        else if (topic === 'llm') setupLLMScene(scene); // 新增
+
+        // 动画循环
+        const clock = new THREE.Clock();
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+            controls.update();
+            
+            if(topic === 'engine') animateEngine(time);
+            if(topic === 'quantum') animateQuantum(time);
+            if(topic === 'hydraulic') animateHydraulic(time);
+            if(topic === 'llm') animateLLM(time);
+            
+            renderer.render(scene, camera);
+            updateLabels();
+        }
+        animate();
+        
+        // Resize 处理
+        window.resizeHandler = () => {
+            if (!container) return;
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            renderer.setSize(w, h);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        };
+        window.addEventListener('resize', window.resizeHandler);
+
+        // 点击事件处理 (用于 LLM 场景)
+        if (topic === 'llm') {
+            window.clickHandler = (event) => {
+                const rect = container.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(interactableObjects);
+
+                if (intersects.length > 0) {
+                    const target = intersects[0].object;
+                    if (target.userData.onClick) {
+                        target.userData.onClick();
+                    }
+                } else {
+                    // 点击空白处，重置状态
+                    resetLLMView();
+                }
+            };
+            container.addEventListener('click', window.clickHandler);
+        }
+    }
+
+    // ================= 新增场景: LLM 原理交互网络 =================
+    let llmGroup, tokenNodes = [], attentionLines = [];
+    let selectedToken = null;
+
+    function setupLLMScene(scene) {
+        camera.position.set(0, 0, 40);
+        llmGroup = new THREE.Group();
+        scene.add(llmGroup);
+
+        // 模拟句子: "The animal didn't cross the street because it was too tired."
+        const sentence = ["The", "animal", "didn't", "cross", "the", "street", "because", "it", "was", "too", "tired."];
+        const colors = [0x3b82f6, 0x10b981, 0x8b5cf6, 0xf59e0b, 0xef4444, 0xec4899, 0x06b6d4, 0x3b82f6, 0x10b981, 0xf59e0b, 0xef4444];
+
+        // 1. 创建 Token 节点 (呈环形排列)
+        const radius = 12;
+        sentence.forEach((word, i) => {
+            const angle = (i / sentence.length) * Math.PI * 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            const z = 0;
+
+            // 节点几何体
+            const geometry = new THREE.SphereGeometry(1, 32, 32);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: colors[i], 
+                emissive: colors[i], 
+                emissiveIntensity: 0.3,
+                roughness: 0.4,
+                metalness: 0.6
+            });
+            const node = new THREE.Mesh(geometry, material);
+            node.position.set(x, y, z);
+            node.userData = { id: i, word: word, baseColor: colors[i] };
+            
+            // 点击事件
+            node.userData.onClick = () => {
+                highlightTokenAndAttention(node);
+            };
+
+            llmGroup.add(node);
+            tokenNodes.push(node);
+            interactableObjects.push(node);
+
+            // 添加文字标签
+            createLabel(word, new THREE.Vector3(x, y + 1.5, z));
+        });
+
+        // 2. 创建 Attention 连接线 (初始隐藏)
+        // 模拟 "it" (index 7) 关注 "animal" (index 1) 和 "street" (index 5)
+        const attentionMap = {
+            7: [ { target: 1, strength: 0.8 }, { target: 5, strength: 0.4 } ], // it -> animal, street
+            1: [ { target: 7, strength: 0.6 } ], // animal -> it (反向关联)
+            10: [ { target: 7, strength: 0.7 }, { target: 1, strength: 0.5 } ] // tired -> it, animal
+        };
+
+        tokenNodes.forEach(sourceNode => {
+            const sourceId = sourceNode.userData.id;
+            const targets = attentionMap[sourceId];
+            if (targets) {
+                targets.forEach(rel => {
+                    const targetNode = tokenNodes[rel.target];
+                    const points = [];
+                    // 使用贝塞尔曲线创建更美观的连接
+                    const midPoint = sourceNode.position.clone().add(targetNode.position).multiplyScalar(0.5);
+                    midPoint.z += 5 * rel.strength; // 强度越高，弧度越大
+                    
+                    const curve = new THREE.QuadraticBezierCurve3(
+                        sourceNode.position,
+                        midPoint,
+                        targetNode.position
+                    );
+                    points.push(...curve.getPoints(20));
+                    
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    // 线条材质：透明度随强度变化
+                    const material = new THREE.LineBasicMaterial({ 
+                        color: 0xffffff, 
+                        transparent: true, 
+                        opacity: rel.strength * 0.8,
+                        linewidth: 2
+                    });
+                    const line = new THREE.Line(geometry, material);
+                    line.visible = false; // 初始不可见
+                    line.userData = { source: sourceId, target: rel.target, strength: rel.strength };
+                    llmGroup.add(line);
+                    attentionLines.push(line);
+                });
+            }
+        });
+
+        // 添加提示信息
+        addMessage('ai', '💡 <b>交互提示：</b><br>试着点击场景中的圆球 (Token)，看看它们在“关注”谁。');
+    }
+
+    function highlightTokenAndAttention(clickedNode) {
+        selectedToken = clickedNode;
+        const selectedId = clickedNode.userData.id;
+
+        // 1. 重置所有节点和线条
+        tokenNodes.forEach(node => {
+            node.material.emissiveIntensity = 0.3;
+            node.scale.set(1, 1, 1);
+        });
+        attentionLines.forEach(line => line.visible = false);
+
+        // 2. 高亮点击的节点
+        clickedNode.material.emissiveIntensity = 1;
+        gsap.to(clickedNode.scale, { x: 1.3, y: 1.3, z: 1.3, duration: 0.3 });
+
+        // 3. 显示相关的 Attention 线条并高亮目标节点
+        attentionLines.forEach(line => {
+            if (line.userData.source === selectedId) {
+                line.visible = true;
+                // 目标节点也稍微高亮
+                const targetNode = tokenNodes[line.userData.target];
+                targetNode.material.emissiveIntensity = 0.7;
+                gsap.to(targetNode.scale, { x: 1.1, y: 1.1, z: 1.1, duration: 0.3 });
+            }
+        });
+    }
+
+    function resetLLMView() {
+        selectedToken = null;
+        tokenNodes.forEach(node => {
+            gsap.to(node.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
+            node.material.emissiveIntensity = 0.3;
+        });
+        attentionLines.forEach(line => line.visible = false);
+    }
+
+    function animateLLM(t) {
+        // 缓慢旋转整个网络
+        llmGroup.rotation.z = Math.sin(t * 0.1) * 0.1;
+        llmGroup.rotation.y = Math.cos(t * 0.15) * 0.1;
+        
+        // 节点轻微浮动
+        tokenNodes.forEach((node, i) => {
+            if (node !== selectedToken) {
+                node.position.z = Math.sin(t * 2 + i) * 0.5;
+            }
+        });
+        
+        // 选中节点时的脉冲效果
+        if (selectedToken) {
+            selectedToken.material.emissiveIntensity = 0.8 + Math.sin(t * 4) * 0.2;
+        }
+    }
+
+    // --- 场景 1: V6 赛博引擎 (保留 V6) ---
+    let engineGroup, pistons = [];
+    function setupEngineScene(scene) {
+        engineGroup = new THREE.Group();
+        scene.add(engineGroup);
+        const spot = new THREE.SpotLight(0x3b82f6, 5); spot.position.set(0, 10, 0); scene.add(spot);
+        const blockGeo = new THREE.BoxGeometry(7, 3.5, 3);
+        const line = new THREE.LineSegments(new THREE.EdgesGeometry(blockGeo), new THREE.LineBasicMaterial({ color: 0x1e293b })); engineGroup.add(line);
+        const glassBlock = new THREE.Mesh(blockGeo, new THREE.MeshPhysicalMaterial({ color: 0x0f172a, transmission: 0.8, opacity: 0.3, transparent: true, roughness: 0.1, metalness: 0.9 })); engineGroup.add(glassBlock);
+        const pistonGeo = new THREE.CylinderGeometry(0.5, 0.5, 1.2, 32);
+        const pistonMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 });
+        for(let i=0; i<6; i++) {
+            const p = new THREE.Mesh(pistonGeo, pistonMat.clone());
+            const side = i%2==0 ? 1 : -1; const z = (Math.floor(i/2) - 1) * 1.8;
+            p.position.set(z, 0, side * 0.8); p.rotation.x = side * 0.2; engineGroup.add(p); pistons.push(p);
+            const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.5), new THREE.MeshStandardMaterial({color: 0x475569})); rod.position.y = -1.5; p.add(rod);
+        }
+        createLabel("V6 气缸矩阵", new THREE.Vector3(0, 2.5, 0)); createLabel("活塞 #1", new THREE.Vector3(-1.8, 1.5, 0.8));
+    }
+    function animateEngine(t) {
+        engineGroup.rotation.y = Math.sin(t*0.2) * 0.2;
+        pistons.forEach((p, i) => {
+            const offset = [0, 4, 2, 5, 1, 3][i] * (Math.PI/3); const y = Math.sin(t*10 + offset) * 0.6; p.position.y = y;
+            const isFire = Math.sin(t*10 + offset) > 0.8;
+            p.material.emissive.setHex(isFire ? 0xff3366 : 0x000000); p.material.emissiveIntensity = isFire ? 2 : 0;
+        });
+    }
+
+    // --- 场景 2: 双缝干涉 (保留 V6) ---
+    let particles, screenMesh, observerMesh, slitMesh;
+    function setupQuantumScene(scene) {
+        camera.position.set(0, 5, 15); state.observerActive = false;
+        const gun = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2, 16), new THREE.MeshStandardMaterial({color: 0x60a5fa, emissive: 0x2563eb, emissiveIntensity: 0.5})); gun.rotation.x = -Math.PI/2; gun.position.z = 8; scene.add(gun); createLabel("电子发射源", new THREE.Vector3(0, 1, 8));
+        const wallMat = new THREE.MeshPhysicalMaterial({color: 0x1e293b, metalness: 0.5, roughness: 0.5});
+        slitMesh = new THREE.Group(); slitMesh.add(new THREE.Mesh(new THREE.BoxGeometry(2.5, 4, 0.2), wallMat).translateX(-2), new THREE.Mesh(new THREE.BoxGeometry(2.5, 4, 0.2), wallMat).translateX(2), new THREE.Mesh(new THREE.BoxGeometry(0.4, 4, 0.2), wallMat)); slitMesh.position.z = 2; scene.add(slitMesh);
+        screenMesh = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.DoubleSide})); screenMesh.position.z = -6; scene.add(screenMesh); createLabel("探测屏", new THREE.Vector3(5, 3, -6));
+        observerMesh = new THREE.Group(); observerMesh.add(new THREE.Mesh(new THREE.SphereGeometry(0.5,32,32), new THREE.MeshStandardMaterial({color:0xffffff})), new THREE.Mesh(new THREE.SphereGeometry(0.25,32,32), new THREE.MeshStandardMaterial({color:0x000000})).translateZ(0.4)); observerMesh.position.set(3, 2, 2); observerMesh.lookAt(0, 0, 2); observerMesh.visible = false; scene.add(observerMesh);
+        const pCount = 800; const pPos = new Float32Array(pCount * 3); for(let i=0; i<pCount*3; i+=3) { pPos[i]=0; pPos[i+1]=0; pPos[i+2]=8; }
+        particles = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(pPos, 3)), new THREE.PointsMaterial({color: 0x00ffff, size: 0.15})); scene.add(particles);
+        const controlsDiv = document.getElementById('scene-controls'); controlsDiv.style.display = 'flex'; controlsDiv.innerHTML = `<button class="control-btn" onclick="toggleObserver()" id="btn-obs"><i class="fas fa-eye-slash"></i> 放置观察者</button>`;
+    }
+    window.toggleObserver = function() {
+        state.observerActive = !state.observerActive; observerMesh.visible = state.observerActive; const btn = document.getElementById('btn-obs');
+        if(state.observerActive) { btn.innerHTML = '<i class="fas fa-eye"></i> 移除观察者'; btn.classList.add('active'); addMessage('ai', '👁️ <b>观察者介入！</b>波函数坍缩，表现为粒子性。'); } else { btn.innerHTML = '<i class="fas fa-eye-slash"></i> 放置观察者'; btn.classList.remove('active'); addMessage('ai', '🙈 <b>观察者移除。</b>恢复波动性，形成干涉条纹。'); }
+    }
+    function animateQuantum(t) {
+        const positions = particles.geometry.attributes.position.array; const speed = 0.15;
+        for(let i=0; i<positions.length; i+=3) {
+            positions[i+2] -= speed;
+            if(positions[i+2] < 2 && positions[i+2] > -6 && !state.observerActive) positions[i] += Math.sin(t * 10 + i) * 0.02;
+            if(positions[i+2] < -6) { positions[i+2] = 8; positions[i] = (Math.random()-0.5)*0.1; positions[i+1] = (Math.random()-0.5)*0.1; }
+        }
+        particles.geometry.attributes.position.needsUpdate = true;
+        const ctx = document.createElement('canvas').getContext('2d'); ctx.canvas.width = 128; ctx.canvas.height = 64; ctx.fillStyle = '#000'; ctx.fillRect(0,0,128,64); ctx.fillStyle = '#00ffff';
+        if(state.observerActive) { ctx.filter = 'blur(4px)'; ctx.fillRect(30, 10, 10, 44); ctx.fillRect(88, 10, 10, 44); } else { ctx.filter = 'blur(6px)'; for(let k=0; k<7; k++) { ctx.globalAlpha = k%2==0 ? 0.8 : 0.2; ctx.fillRect(10 + k*16, 10, 8, 44); } }
+        screenMesh.material.map = new THREE.CanvasTexture(ctx.canvas); screenMesh.material.map.needsUpdate = true;
+    }
+
+    // --- 场景 3: 液压系统 (保留 V6) ---
+    let hydraulicGroup, smallP, largeP, fluidMesh;
+    function setupHydraulicScene(scene) {
+        hydraulicGroup = new THREE.Group(); scene.add(hydraulicGroup);
+        const glassMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.9, opacity: 0.5, transparent: true, roughness: 0.1, metalness: 0 });
+        const fluidMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.8 });
+        hydraulicGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 5, 32), glassMat).translateX(-3), new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 5, 32), glassMat).translateX(3), new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 6, 32), glassMat).rotateZ(Math.PI/2).translateY(-2));
+        const leftFluid = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 32), fluidMat); leftFluid.position.set(-3, -1.5, 0); hydraulicGroup.add(leftFluid);
+        const rightFluid = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 1, 32), fluidMat); rightFluid.position.set(3, -1.5, 0); hydraulicGroup.add(rightFluid);
+        hydraulicGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 6, 32), fluidMat).rotateZ(Math.PI/2).translateY(-2));
+        const pistonMat = new THREE.MeshStandardMaterial({color: 0x64748b});
+        smallP = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.5), pistonMat); smallP.position.set(-3, 0, 0); hydraulicGroup.add(smallP);
+        largeP = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 0.5), pistonMat); largeP.position.set(3, 0, 0); hydraulicGroup.add(largeP);
+        largeP.add(new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial({color: 0xf59e0b})).translateY(1.5));
+        createLabel("输入力 F1", new THREE.Vector3(-3, 2, 0)); createLabel("输出力 F2 = 4*F1", new THREE.Vector3(3, 4, 0));
+        fluidMesh = { left: leftFluid, right: rightFluid };
+    }
+    function animateHydraulic(t) {
+        const inputY = Math.sin(t*2) * 1.5; smallP.position.y = inputY;
+        fluidMesh.left.scale.y = Math.max(0.1, 2 + inputY); fluidMesh.left.position.y = -2 + fluidMesh.left.scale.y/2;
+        const outputY = -inputY * 0.25; largeP.position.y = outputY;
+        fluidMesh.right.scale.y = Math.max(0.1, 2 + outputY); fluidMesh.right.position.y = -2 + fluidMesh.right.scale.y/2;
+    }
+
+    // ================= 标签系统 =================
+    function createLabel(text, position) {
+        const container = document.createElement('div'); container.className = 'scene-label-container';
+        const div = document.createElement('div'); div.className = 'scene-label'; div.innerHTML = `<i class="fas fa-info-circle"></i>${text}`; container.appendChild(div);
+        const line = document.createElement('div'); line.className = 'label-line'; container.appendChild(line);
+        document.getElementById('scene-canvas-container').appendChild(container);
+        labels.push({ container, line, position, element: div });
+    }
+    function updateLabels() {
+        if(!camera) return; const container = document.getElementById('scene-canvas-container');
+        const w = container.clientWidth; const h = container.clientHeight;
+        labels.forEach(l => {
+            const pos = l.position.clone().project(camera);
+            if(pos.z > 1 || Math.abs(pos.x)>1.1 || Math.abs(pos.y)>1.1) { l.container.style.opacity=0; return; }
+            l.container.style.opacity=1; l.container.style.left = (pos.x*0.5+0.5)*w+'px'; l.container.style.top = (-(pos.y*0.5)+0.5)*h+'px';
+            l.line.style.height = (l.element.offsetHeight + 30) + 'px'; l.line.style.top = '0px'; l.line.style.left='50%';
+        });
+    }
+</script>
+</body>
+</html>
