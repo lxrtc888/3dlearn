@@ -27,13 +27,33 @@ body {
     box-shadow: 0 0 50px rgba(0,0,0,0.8);
 }
 
-/* 背景视频 */
-#bg-video {
+/* 背景图 */
+#bg-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
     position: absolute;
     z-index: 1;
+}
+
+/* === 左上：AI老师视频窗口 === */
+#teacher-section {
+    position: absolute;
+    z-index: 20;
+    top: 3.5%;
+    left: 2.5%;
+    width: 24%;
+    height: 48%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+#teacher-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 /* === 布局区域 === */
