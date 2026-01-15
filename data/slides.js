@@ -1,8 +1,4 @@
-/**
- * PPT幻灯片数据
- * LLM原理课件 - 8页
- */
-export const slides = [
+window.pptSlides = [
     {
         title: "大语言模型 (LLM) 原理",
         subtitle: "从 Transformer 到智能涌现的奇幻之旅",
@@ -14,7 +10,7 @@ export const slides = [
                     </div>
                     <div class="absolute inset-0 bg-blue-200 blur-3xl opacity-40 z-0"></div>
                 </div>
-                <h2 class="text-5xl font-extrabold mb-6 text-gray-900">解构 AI 的"大脑"</h2>
+                <h2 class="text-5xl font-extrabold mb-6 text-gray-900">解构 AI 的“大脑”</h2>
                 <p class="text-2xl text-gray-600 max-w-3xl leading-relaxed">
                     探索 GPT、Claude 等顶尖模型背后的核心技术。了解它们如何理解语言、生成内容，以及展现出惊人的推理能力。
                 </p>
@@ -23,7 +19,7 @@ export const slides = [
     },
     {
         title: "第一步：数字化 (Tokenization)",
-        subtitle: "机器如何"阅读"人类语言",
+        subtitle: "机器如何“阅读”人类语言",
         content: `
             <div class="flex flex-col h-full justify-center">
                 <p class="mb-10 text-2xl text-gray-700">计算机无法直接理解文本，它只能处理数字。**Tokenization** 是将文本切分为计算机可识别的最小单位（Token）的过程。</p>
@@ -74,7 +70,7 @@ export const slides = [
     },
     {
         title: "灵魂所在：注意力机制 (Attention)",
-        subtitle: "让模型学会"划重点"",
+        subtitle: "让模型学会“划重点”",
         content: `
             <div class="h-full flex flex-col justify-center">
                 <p class="text-2xl text-gray-700 mb-10 text-center max-w-4xl mx-auto">
@@ -121,18 +117,18 @@ export const slides = [
                             今天天气真 <span class="text-green-600 font-bold">[?]</span> -> 预测为：<span class="text-green-600 font-bold">好</span> (概率 85%)
                         </div>
                     </div>
-                     <p class="text-xl text-gray-600">预训练后的模型是一个"博学者"，但它还不知道如何恰当地与人对话。</p>
+                     <p class="text-xl text-gray-600">预训练后的模型是一个“博学者”，但它还不知道如何恰当地与人对话。</p>
                 </div>
             </div>
         `
     },
     {
         title: "微调 (Fine-tuning) & 指令跟随",
-        subtitle: "从"续写机器"到"得力助手"",
+        subtitle: "从“续写机器”到“得力助手”",
         content: `
             <div class="h-full flex flex-col justify-center">
                 <p class="text-2xl text-gray-700 mb-10 text-center max-w-4xl mx-auto">
-                    为了让模型能够理解和执行人类的指令（如"翻译这段话"、"写一个摘要"），我们需要对其进行微调。
+                    为了让模型能够理解和执行人类的指令（如“翻译这段话”、“写一个摘要”），我们需要对其进行微调。
                 </p>
                 <div class="flex justify-center gap-16">
                     <div class="w-1/3 bg-white p-8 rounded-2xl shadow-xl border border-gray-100 opacity-60">
@@ -153,7 +149,7 @@ export const slides = [
                         <div class="text-center text-green-600 font-bold"><i class="fas fa-check-circle mr-2"></i>完美执行</div>
                     </div>
                 </div>
-                <p class="text-center text-xl text-gray-500 mt-10">使用高质量的"指令-回答"数据对进行有监督学习。</p>
+                <p class="text-center text-xl text-gray-500 mt-10">使用高质量的“指令-回答”数据对进行有监督学习。</p>
             </div>
         `
     },
@@ -213,4 +209,3 @@ export const slides = [
         `
     }
 ];
-

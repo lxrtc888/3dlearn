@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 协作教学系统 V7.0 - 神经元课堂</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+
+    <div id="app-container">
+        <!-- 背景图 -->
+        <img id="bg-image" src="https://s1.imagehub.cc/images/2025/12/03/78c683e1c62e4fad2fd8594d1dc8c07c.jpg"
+            onerror="this.style.display='none'">
+
+        <!-- === 左上：AI老师视频 === -->
+        <div id="teacher-section">
+            <video id="teacher-video" autoplay loop muted playsinline>
+                <source src="assets/Avatar IV Video.mp4" type="video/mp4">
+                您的浏览器不支持视频播放
+            </video>
+        </div>
+
+        <!-- === 右侧：多媒体黑板 (扩展版) === -->
+        <div id="display-section">
+            <!-- Tab 栏 -->
+            <div class="tab-bar">
+                <div class="tab-btn active" id="tab-scene"><i class="fas fa-cube mr-2"></i>全息演示</div>
+                <div class="tab-btn" id="tab-ppt"><i class="fas fa-chalkboard-teacher mr-2"></i>智能课件</div>
+                <div class="tab-btn" id="tab-code"><i class="fas fa-code mr-2"></i>后台代码</div>
+            </div>
+
+            <!-- 内容区域容器 -->
+            <div class="content-container">
+                <!-- 1. 场景视图 -->
+                <div id="view-scene" class="content-view active">
+                    <div id="scene-canvas-container" class="w-full h-full absolute inset-0"></div> <!-- Canvas 容器 -->
+
+                    <!-- 侧边信息面板 -->
+                    <div id="info-panel" class="info-panel">
+                        <div class="info-header">
+                            <span id="info-title">信息面板</span>
+                            <button onclick="document.getElementById('info-panel').classList.remove('visible')"
+                                class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div id="info-content" class="info-content"></div>
+                    </div>
+
+                    <!-- 占位符 -->
+                    <div id="placeholder-text"
+                        class="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none">
+                        <div
+                            class="text-center p-10 border-2 border-dashed border-gray-600/50 rounded-3xl bg-black/40 backdrop-blur-md">
+                            <div class="relative inline-block mb-6">
+                                <i class="fas fa-atom text-7xl text-blue-500 opacity-80 animate-spin-slow"></i>
+                                <div class="absolute inset-0 bg-blue-500 blur-2xl opacity-30"></div>
+                            </div>
+                            <h3 class="text-2xl font-bold mb-3 text-gray-100 tracking-wide">AI 教学实验室</h3>
+                            <p class="text-base opacity-70 mb-4">请输入指令探索物理与AI世界</p>
+                            <div class="flex gap-2 justify-center text-sm">
+                                <span
+                                    class="px-3 py-1.5 bg-blue-500/20 text-blue-300 rounded-full border border-blue-500/30"><i
+                                        class="fas fa-brain mr-1"></i> LLM原理</span>
+                                <span
+                                    class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30"><i
+                                        class="fas fa-wave-square mr-1"></i> 双缝干涉</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 动态控制栏 -->
+                    <div id="scene-controls" style="display:none;"></div>
+                </div>
+
+                <!-- 2. PPT 视图 (V7 明亮版) -->
+                <div id="view-ppt" class="content-view">
+                    <div class="slide-frame">
+                        <div class="slide-bg-deco"></div>
+                        <div id="slide-container" class="w-full h-full">
+                            <!-- JS 注入 -->
+                        </div>
+                        <div class="ppt-controls">
+                            <button class="ppt-btn" id="btn-prev" title="上一页"><i
+                                    class="fas fa-chevron-left text-lg"></i></button>
+                            <div id="slide-num" class="px-4 text-lg">1 / 8</div>
+                            <button class="ppt-btn" id="btn-next" title="下一页"><i
+                                    class="fas fa-chevron-right text-lg"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 代码视图 -->
+                <div id="view-code" class="content-view">
+                    <div id="code-content"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- === 左侧：聊天交互 === -->
+        <div id="chat-section">
+            <div id="chat-history" class="chat-scroll-area flex flex-col"></div>
+
+            <div class="relative w-full mt-auto">
+                <input type="text" id="user-input" class="glass-input w-full rounded-full px-6 py-4 text-base pr-14"
+                    placeholder="输入指令，例如：大模型原理..." autocomplete="off">
+                <button id="btn-send"
+                    class="absolute right-3 top-3 w-10 h-10 flex items-center justify-center rounded-full text-blue-400 hover:text-white hover:bg-blue-600 transition-all">
+                    <i class="fas fa-paper-plane text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 核心脚本 (顺序加载) -->
+    <script src="js/scene-manager.js"></script>
+    
+    <!-- 数据模块 -->
+    <script src="data/cases-config.js"></script>
+    <script src="data/code-snippets.js"></script>
+    <script src="data/slides.js"></script>
+
+    <!-- 场景模块 -->
+    <script src="scenes/hydraulic-scene.js"></script>
+    <script src="scenes/llm-scene.js"></script>
+    <script src="scenes/quantum-scene.js"></script>
+    <script src="scenes/engine-scene.js"></script>
+
+    <!-- 主程序 -->
+    <script src="js/app.js"></script>
+
+</body>
+
+</html>
