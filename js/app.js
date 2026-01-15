@@ -22,15 +22,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 绑定基础事件
     bindEvents();
+    
+    // 初始化快捷案例入口
+    initQuickCases();
 
     // 欢迎语
     setTimeout(() => {
         addMessage('ai', '👋 欢迎回到神经元课堂。');
-        // 使用配置中心生成案例列表
-        const caseList = window.CasesConfig ? window.CasesConfig.getWelcomeList() : '案例加载中...';
-        addMessage('ai', '我是您的 AI 助教。今天准备了一些非常酷的演示：<br>' + caseList);
+        addMessage('ai', '我是您的 AI 助教。点击右侧案例卡片或输入关键词开始探索！');
     }, 800);
 });
+
+/**
+ * 初始化快捷案例卡片
+ */
+function initQuickCases() {
+    const container = document.getElementById('quick-cases');
+    if (!container || !window.CasesConfig) return;
+    
+    // 案例类型映射
+    const typeMap = {
+        'attention': 'ai',
+        'engine': 'physics',
+        'quantum': 'physics',
+        'hydraulic': 'physics',
+        'pendulum': 'physics',
+        'electromagnetic': 'physics',
+        'cell': 'biology',
+        'dna': 'biology',
+        'vector3d': 'math',
+        'conic': 'math',
+        'drumflower': 'math',
+        'ppt': 'ai'
+    };
+    
+    // 案例标签映射
+    const tagMap = {
+        'physics': '物理',
+        'biology': '生物',
+        'math': '数学',
+        'ai': 'AI'
+    };
+    
+    let html = '';
+    window.CasesConfig.CASES.forEach(c => {
+        const cType = typeMap[c.id] || 'ai';
+        const tag = tagMap[cType];
+        html += `
+            <div class="quick-case-card" data-case-id="${c.id}" data-type="${cType}">
+                <div class="quick-case-icon">
+                    <i class="fas ${c.icon}"></i>
+                </div>
+                <div class="quick-case-title">${c.title.split('(')[0].trim()}</div>
+                <span class="quick-case-tag">${tag}</span>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // 绑定点击事件
+    container.querySelectorAll('.quick-case-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const caseId = card.dataset.caseId;
+            const caseConfig = window.CasesConfig.CASES.find(c => c.id === caseId);
+            if (caseConfig) {
+                // 直接触发场景加载
+                startGeneration(caseConfig);
+                addMessage('ai', `🚀 正在加载 <b>${caseConfig.title}</b>...`);
+            }
+        });
+    });
+}
 
 function bindEvents() {
     // 聊天输入
@@ -175,7 +238,7 @@ async function finishGeneration(caseConfig) {
         switchTab('ppt');
         renderSlide(0);
     } else {
-        addMessage('ai', `✅ <b>全息场景构建完成。</b><br>您可以拖动旋转视角。<br>部分场景支持点击交互。`);
+        addMessage('ai', `✅ <b>场景准备就绪。</b>`);
         switchTab('scene');
 
         // 使用配置中心获取场景类
@@ -185,12 +248,19 @@ async function finishGeneration(caseConfig) {
             if (SceneClass) {
                 // 隐藏占位符
                 document.getElementById('placeholder-text').style.display = 'none';
+                
                 // 加载场景
                 state.sceneManager.loadScene(SceneClass);
 
-                // 给新加载的场景注入 SceneManager 的能力 (用于创建 labels)
+                // 创建标签
                 if (state.sceneManager.currentSceneInstance && state.sceneManager.currentSceneInstance.createLabels) {
                     state.sceneManager.currentSceneInstance.createLabels(state.sceneManager);
+                }
+                
+                // 显示场景介绍模态框
+                const intro = window.CasesConfig.getIntro(caseConfig.id);
+                if (intro) {
+                    showIntroModal(intro);
                 }
 
             } else {
@@ -203,6 +273,90 @@ async function finishGeneration(caseConfig) {
         }
     }
 }
+
+/**
+ * 显示场景介绍模态框
+ */
+function showIntroModal(intro) {
+    // 移除旧模态框
+    const oldModal = document.getElementById('scene-intro-modal');
+    if (oldModal) oldModal.remove();
+    
+    // 创建模态框
+    const modal = document.createElement('div');
+    modal.id = 'scene-intro-modal';
+    modal.className = 'scene-intro-modal';
+    
+    const objectivesHtml = intro.objectives.map(obj => `<li>${obj}</li>`).join('');
+    const keyPointsHtml = intro.keyPoints.map(kp => `<span class="key-point">${kp}</span>`).join('');
+    
+    modal.innerHTML = `
+        <div class="intro-content">
+            <div class="intro-header">
+                <i class="fas ${intro.icon} intro-icon"></i>
+                <div>
+                    <h2 class="intro-title">${intro.title}</h2>
+                    <p class="intro-subtitle">${intro.subtitle}</p>
+                </div>
+            </div>
+            
+            <div class="intro-section">
+                <h3><i class="fas fa-bullseye"></i> 学习目标</h3>
+                <ul class="objectives-list">
+                    ${objectivesHtml}
+                </ul>
+            </div>
+            
+            <div class="intro-section">
+                <h3><i class="fas fa-lightbulb"></i> 知识要点</h3>
+                <div class="key-points">
+                    ${keyPointsHtml}
+                </div>
+            </div>
+            
+            <div class="intro-tips">
+                <i class="fas fa-info-circle"></i>
+                ${intro.tips}
+            </div>
+            
+            <button class="intro-start-btn" id="btn-start-scene">
+                <i class="fas fa-play"></i> 开始学习
+            </button>
+        </div>
+    `;
+    
+    // 添加到场景容器
+    const sceneContainer = document.getElementById('view-scene');
+    sceneContainer.appendChild(modal);
+    
+    // 显示动画
+    requestAnimationFrame(() => {
+        modal.classList.add('visible');
+    });
+    
+    // 绑定关闭事件
+    document.getElementById('btn-start-scene').onclick = () => {
+        closeIntroModal();
+        // 开始自动播放
+        if (state.sceneManager.currentSceneInstance && state.sceneManager.currentSceneInstance.startAutoPlay) {
+            state.sceneManager.currentSceneInstance.startAutoPlay();
+        }
+    };
+}
+
+/**
+ * 关闭介绍模态框
+ */
+function closeIntroModal() {
+    const modal = document.getElementById('scene-intro-modal');
+    if (modal) {
+        modal.classList.remove('visible');
+        setTimeout(() => modal.remove(), 400);
+    }
+}
+
+// 暴露给全局
+window.closeIntroModal = closeIntroModal;
 
 // --- Tab 切换 ---
 function switchTab(tabName) {

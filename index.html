@@ -23,10 +23,6 @@
 <body>
 
     <div id="app-container">
-        <!-- 背景图 -->
-        <img id="bg-image" src="https://s1.imagehub.cc/images/2025/12/03/78c683e1c62e4fad2fd8594d1dc8c07c.jpg"
-            onerror="this.style.display='none'">
-
         <!-- === 左上：AI老师视频 === -->
         <div id="teacher-section">
             <video id="teacher-video" autoplay loop muted playsinline>
@@ -60,25 +56,21 @@
                         <div id="info-content" class="info-content"></div>
                     </div>
 
-                    <!-- 占位符 -->
-                    <div id="placeholder-text"
-                        class="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none">
-                        <div
-                            class="text-center p-10 border-2 border-dashed border-gray-600/50 rounded-3xl bg-black/40 backdrop-blur-md">
-                            <div class="relative inline-block mb-6">
-                                <i class="fas fa-atom text-7xl text-blue-500 opacity-80 animate-spin-slow"></i>
-                                <div class="absolute inset-0 bg-blue-500 blur-2xl opacity-30"></div>
+                    <!-- 占位符 + 快捷案例入口 -->
+                    <div id="placeholder-text" class="absolute inset-0 flex flex-col items-center justify-center">
+                        <!-- 顶部标题区域 -->
+                        <div class="text-center mb-8">
+                            <div class="relative inline-block mb-4">
+                                <i class="fas fa-atom text-5xl text-blue-500 opacity-80 animate-spin-slow"></i>
+                                <div class="absolute inset-0 bg-blue-500 blur-2xl opacity-25"></div>
                             </div>
-                            <h3 class="text-2xl font-bold mb-3 text-gray-100 tracking-wide">AI 教学实验室</h3>
-                            <p class="text-base opacity-70 mb-4">请输入指令探索物理与AI世界</p>
-                            <div class="flex gap-2 justify-center text-sm">
-                                <span
-                                    class="px-3 py-1.5 bg-blue-500/20 text-blue-300 rounded-full border border-blue-500/30"><i
-                                        class="fas fa-brain mr-1"></i> 注意力机制</span>
-                                <span
-                                    class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30"><i
-                                        class="fas fa-wave-square mr-1"></i> 双缝干涉</span>
-                            </div>
+                            <h3 class="text-2xl font-bold text-gray-100 tracking-wide">AI 教学实验室</h3>
+                            <p class="text-sm text-gray-400 mt-2">点击案例卡片开始探索</p>
+                        </div>
+                        
+                        <!-- 快捷案例网格 -->
+                        <div id="quick-cases" class="quick-cases-grid">
+                            <!-- JS动态生成 -->
                         </div>
                     </div>
 
@@ -114,7 +106,7 @@
         <div id="chat-section">
             <div id="chat-history" class="chat-scroll-area flex flex-col"></div>
 
-            <div class="relative w-full mt-auto">
+            <div class="chat-input-shell relative w-full mt-auto">
                 <input type="text" id="user-input" class="glass-input w-full rounded-full px-6 py-4 text-base pr-14"
                     placeholder="输入指令，例如：大模型原理..." autocomplete="off">
                 <button id="btn-send"
@@ -134,19 +126,20 @@
     <script src="data/slides.js?v=9"></script>
 
     <!-- 场景模块 -->
-    <script src="scenes/attention-scene.js?v=9"></script>
-    <script src="scenes/quantum-scene.js?v=9"></script>
-    <script src="scenes/hydraulic-scene.js?v=9"></script>
-    <script src="scenes/engine-scene.js?v=9"></script>
-    <script src="scenes/pendulum-scene.js?v=9"></script>
-    <script src="scenes/electromagnetic-scene.js?v=9"></script>
-    <script src="scenes/cell-scene.js?v=9"></script>
-    <script src="scenes/dna-scene.js?v=9"></script>
-    <script src="scenes/vector3d-scene.js?v=9"></script>
-    <script src="scenes/conic-scene.js?v=9"></script>
+    <script src="scenes/attention-scene.js?v=10"></script>
+    <script src="scenes/quantum-scene.js?v=10"></script>
+    <script src="scenes/hydraulic-scene.js?v=10"></script>
+    <script src="scenes/engine-scene.js?v=10"></script>
+    <script src="scenes/pendulum-scene.js?v=10"></script>
+    <script src="scenes/electromagnetic-scene.js?v=10"></script>
+    <script src="scenes/cell-scene.js?v=10"></script>
+    <script src="scenes/dna-scene.js?v=10"></script>
+    <script src="scenes/vector3d-scene.js?v=10"></script>
+    <script src="scenes/conic-scene.js?v=10"></script>
+    <script src="scenes/drum-flower-scene.js?v=11"></script>
 
     <!-- 主程序 -->
-    <script src="js/app.js?v=8"></script>
+    <script src="js/app.js?v=10"></script>
 
 </body>
 

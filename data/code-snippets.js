@@ -147,6 +147,22 @@ function cross(a, b) {
     return 'hyperbola';
 }`,
 
+    drumflower: `// 击鼓传花 - 周期性问题
+function findHolder(passCount, totalChildren = 8) {
+    // 题目1: 传了N次，花在几号手里？
+    // 从1号开始，传N次后位置 = N % 总人数 + 1
+    return (passCount % totalChildren) + 1;
+}
+
+function countPasses(passCount, childNumber = 1, total = 8) {
+    // 题目2: 传了N次，X号传过几次花？
+    // X号传花次数 = floor(N / 总人数) + 1
+    return Math.floor(passCount / total) + 1;
+}
+
+// 示例：传42次，花在 findHolder(42) = 3 号手里
+// 示例：传69次，1号传过 countPasses(69) = 9 次`,
+
     ppt: `// 智能课件系统
 class SlideRenderer {
     constructor(slides) {

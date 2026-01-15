@@ -213,6 +213,26 @@ window.CasesConfig = {
             }
         },
         {
+            id: 'drumflower',
+            title: '击鼓传花',
+            keywords: ['击鼓传花', '传花', '周期', '余数', '循环', '小学数学', '传递'],
+            type: 'scene',
+            sceneClass: 'DrumFlowerScene',
+            icon: 'fa-drum',
+            description: '理解周期性与余数的趣味数学',
+            difficulty: 1,
+            intro: {
+                subtitle: '周期规律与余数应用',
+                objectives: [
+                    '理解循环与周期的概念',
+                    '学会用余数解决"传了N次在谁手里"问题',
+                    '掌握周期性问题的通用解法'
+                ],
+                keyPoints: ['8人围圈', '周期=8', '余数定位置', '循环规律'],
+                tips: '点击"题目1"或"题目2"查看完整解题过程！'
+            }
+        },
+        {
             id: 'ppt',
             title: '注意力机制课件',
             keywords: ['ppt', '原理', '课件', '幻灯片', '讲解'],

@@ -4,7 +4,7 @@
  * 核心原理：
  * - 四冲程循环：进气、压缩、做功、排气
  * - V型布局：减小发动机长度，平衡运转
- * - 点火顺序：确保平稳动力输出
+ * - 曲轴连杆：将往复运动转换为旋转运动
  * ============================================
  */
 window.EngineScene = class EngineScene {
@@ -13,495 +13,846 @@ window.EngineScene = class EngineScene {
         this.camera = camera;
         this.renderer = renderer;
 
-        this.engineGroup = null;
+        this.mainGroup = null;
+        this.interactables = [];
+        this.highlighted = null;
+        
+        // 场景元素
+        this.engineBlock = null;
         this.pistons = [];
         this.crankshaft = null;
-        this.turboFans = [];
-        this.sparkEffects = [];
-        this.exhaustParticles = null;
-
+        this.camshaft = null;
+        this.sparkPlugs = [];
+        this.exhaustPipes = [];
+        this.turboFan = null;
+        
         this.params = {
             rpm: 2000,
             isRunning: true,
-            selectedPiston: null
+            selectedCylinder: null
         };
-
-        this.interactables = [];
+        
+        // 自动播放
+        this.isAutoPlaying = false;
     }
 
     init() {
-        this.camera.position.set(8, 8, 12);
+        // 相机
+        this.camera.position.set(10, 8, 15);
         this.camera.lookAt(0, 0, 0);
         
-        this.scene.background = new THREE.Color(0x050508);
-        this.scene.fog = new THREE.FogExp2(0x050508, 0.02);
-
-        // 多光源
-        const ambient = new THREE.AmbientLight(0x222233, 0.4);
-        this.scene.add(ambient);
-
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(5, 10, 5);
-        this.scene.add(dirLight);
-
-        const redLight = new THREE.PointLight(0xff3300, 2, 15);
-        redLight.position.set(-5, 2, 0);
-        this.scene.add(redLight);
-
-        const blueLight = new THREE.PointLight(0x0066ff, 2, 15);
-        blueLight.position.set(5, 2, 0);
-        this.scene.add(blueLight);
-
+        // 背景
+        this.scene.background = new THREE.Color(0x050510);
+        this.scene.fog = new THREE.FogExp2(0x050510, 0.02);
+        
+        // 光照
+        this.setupLights();
+        
+        // 地面
+        const grid = new THREE.GridHelper(40, 40, 0x333355, 0x1a1a2e);
+        grid.position.y = -5;
+        this.scene.add(grid);
+        
+        // 场景
         this.setupScene();
-        this.setupExhaustParticles();
+        
+        // UI
         this.setupUI();
     }
 
-    setupScene() {
-        this.engineGroup = new THREE.Group();
-        this.scene.add(this.engineGroup);
+    setupLights() {
+        const ambient = new THREE.AmbientLight(0x222233, 0.5);
+        this.scene.add(ambient);
+        
+        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        mainLight.position.set(10, 20, 10);
+        this.scene.add(mainLight);
+        
+        // 赛博朋克风格光源
+        const redLight = new THREE.PointLight(0xff3300, 2, 20);
+        redLight.position.set(-8, 3, 0);
+        this.scene.add(redLight);
+        
+        const blueLight = new THREE.PointLight(0x0066ff, 2, 20);
+        blueLight.position.set(8, 3, 0);
+        this.scene.add(blueLight);
+        
+        const purpleLight = new THREE.PointLight(0x8844ff, 1.5, 15);
+        purpleLight.position.set(0, 8, 5);
+        this.scene.add(purpleLight);
+    }
 
-        // 材质定义
-        const blockMat = new THREE.MeshPhysicalMaterial({
+    setupScene() {
+        this.mainGroup = new THREE.Group();
+        this.scene.add(this.mainGroup);
+        
+        this.createEngineBlock();
+        this.createCylinders();
+        this.createCrankshaft();
+        this.createCamshaft();
+        this.createSparkPlugs();
+        this.createExhaustSystem();
+        this.createTurbo();
+        this.createDecorations();
+    }
+
+    createEngineBlock() {
+        // 发动机缸体
+        const blockMat = new THREE.MeshStandardMaterial({
             color: 0x1a1a1a,
             metalness: 0.95,
             roughness: 0.15,
-            clearcoat: 0.3
+            emissive: 0x111111,
+            emissiveIntensity: 0.2
         });
+        
+        // V型主体
+        const blockGeo = new THREE.BoxGeometry(4, 3, 8);
+        this.engineBlock = new THREE.Mesh(blockGeo, blockMat);
+        this.mainGroup.add(this.engineBlock);
+        
+        // 左侧气缸排
+        const leftBankGeo = new THREE.BoxGeometry(2.5, 2, 7);
+        const leftBank = new THREE.Mesh(leftBankGeo, blockMat.clone());
+        leftBank.position.set(-2.5, 1.5, 0);
+        leftBank.rotation.z = Math.PI / 6; // 30度倾斜
+        this.mainGroup.add(leftBank);
+        
+        // 右侧气缸排
+        const rightBank = new THREE.Mesh(leftBankGeo, blockMat.clone());
+        rightBank.position.set(2.5, 1.5, 0);
+        rightBank.rotation.z = -Math.PI / 6;
+        this.mainGroup.add(rightBank);
+        
+        // 交互
+        this.engineBlock.userData = {
+            hoverTitle: 'V6缸体',
+            hoverDesc: '发动机主体结构',
+            hoverIcon: 'fa-cube',
+            name: '发动机缸体',
+            description: `
+                <p class="text-lg font-bold text-gray-400 mb-3">🔧 V6缸体</p>
+                <p class="text-gray-300 mb-3">发动机的主体结构，容纳气缸和冷却水道。</p>
+                <div class="bg-gray-800 rounded p-3 mb-3">
+                    <p class="text-sm text-gray-400">材质: 铝合金</p>
+                    <p class="text-sm text-gray-400">V型夹角: 60°</p>
+                    <p class="text-sm text-gray-400">排量: 3.0L</p>
+                </div>
+                <p class="text-sm text-blue-400">💡 V型布局比直列更紧凑</p>
+            `,
+            onClick: (target) => {
+                this.highlightObject(target);
+                this.showInfoPanel(target);
+            }
+        };
+        this.interactables.push(this.engineBlock);
+        
+        leftBank.userData = {
+            hoverTitle: '左列气缸',
+            hoverDesc: '1-3号缸（蓝色）',
+            hoverIcon: 'fa-compress-arrows-alt',
+            name: '左侧气缸排',
+            description: `
+                <p class="text-lg font-bold text-blue-400 mb-3">🔵 左列气缸 (1-3缸)</p>
+                <p class="text-gray-300 mb-3">包含3个气缸，与右列交错点火。</p>
+                <div class="bg-gray-800 rounded p-3 mb-3">
+                    <p class="text-sm text-gray-400">点火顺序: 1-4-2-5-3-6</p>
+                    <p class="text-sm text-gray-400">倾斜角度: 30°</p>
+                </div>
+            `,
+            onClick: (target) => {
+                this.highlightObject(target);
+                this.showInfoPanel(target);
+            }
+        };
+        this.interactables.push(leftBank);
+        
+        rightBank.userData = {
+            hoverTitle: '右列气缸',
+            hoverDesc: '4-6号缸（红色）',
+            hoverIcon: 'fa-compress-arrows-alt',
+            name: '右侧气缸排',
+            description: `
+                <p class="text-lg font-bold text-red-400 mb-3">🔴 右列气缸 (4-6缸)</p>
+                <p class="text-gray-300 mb-3">包含3个气缸，与左列交错点火。</p>
+                <div class="bg-gray-800 rounded p-3 mb-3">
+                    <p class="text-sm text-gray-400">每个气缸独立工作</p>
+                    <p class="text-sm text-gray-400">共享曲轴传递动力</p>
+                </div>
+            `,
+            onClick: (target) => {
+                this.highlightObject(target);
+                this.showInfoPanel(target);
+            }
+        };
+        this.interactables.push(rightBank);
+    }
 
-        const cylinderMat = new THREE.MeshPhysicalMaterial({
-            color: 0x222222,
+    createCylinders() {
+        // 活塞和气缸
+        const pistonMat = new THREE.MeshStandardMaterial({
+            color: 0x888899,
             metalness: 0.9,
             roughness: 0.2,
-            transmission: 0.3,
-            transparent: true,
-            opacity: 0.7
+            emissive: 0x333344,
+            emissiveIntensity: 0.3
         });
-
-        const pistonMat = new THREE.MeshStandardMaterial({
-            color: 0xaaaaaa,
-            metalness: 1.0,
-            roughness: 0.15
-        });
-
-        const rodMat = new THREE.MeshStandardMaterial({
-            color: 0x666666,
-            metalness: 0.9,
-            roughness: 0.3
-        });
-
-        // 1. 发动机缸体外壳
-        const blockGeo = new THREE.BoxGeometry(6, 3, 4);
-        const block = new THREE.Mesh(blockGeo, blockMat);
-        block.position.y = -1;
-        block.userData = { 
-            name: '发动机缸体', 
-            desc: 'V6发动机的核心结构，采用铝合金铸造，内部有6个气缸呈V型排列。' 
-        };
-        block.userData.onClick = () => this.showInfo(block.userData);
-        this.engineGroup.add(block);
-        this.interactables.push(block);
-
-        // 2. 六个气缸 (V型60度布局)
-        const firingOrder = [1, 4, 2, 5, 3, 6]; // 点火顺序
-        const strokeNames = ['进气', '压缩', '做功', '排气'];
-
-        for (let i = 0; i < 6; i++) {
-            const bank = i % 2; // 0=左列, 1=右列
-            const posInBank = Math.floor(i / 2); // 在该列的位置
-            
-            const angle = bank === 0 ? Math.PI / 6 : -Math.PI / 6; // 30度倾斜
-            const xOffset = (posInBank - 1) * 2;
-            const zOffset = bank === 0 ? -0.8 : 0.8;
-
-            const cylGroup = new THREE.Group();
-            cylGroup.position.set(xOffset, 0, zOffset);
-            cylGroup.rotation.z = angle;
-
-            // 气缸壁 (透明)
-            const cylinder = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.7, 0.7, 2.8, 32, 1, true),
-                cylinderMat.clone()
-            );
-            cylinder.position.y = 1;
-            cylGroup.add(cylinder);
-
-            // 活塞
-            const piston = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.65, 0.65, 0.6, 32),
-                pistonMat.clone()
-            );
-            piston.position.y = 0.5;
-
-            // 活塞环 (装饰)
-            for (let r = 0; r < 3; r++) {
-                const ring = new THREE.Mesh(
-                    new THREE.TorusGeometry(0.66, 0.03, 8, 32),
-                    new THREE.MeshBasicMaterial({ color: 0x333333 })
-                );
-                ring.rotation.x = Math.PI / 2;
-                ring.position.y = 0.15 - r * 0.15;
-                piston.add(ring);
-            }
-
-            // 连杆
-            const rod = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.12, 0.15, 2.2, 16),
-                rodMat
-            );
-            rod.position.y = -1.4;
-            piston.add(rod);
-
-            // 燃烧室火焰效果
-            const flameGeo = new THREE.SphereGeometry(0.5, 16, 16);
-            const flameMat = new THREE.MeshBasicMaterial({
-                color: 0xff6600,
-                transparent: true,
-                opacity: 0,
-                blending: THREE.AdditiveBlending
-            });
-            const flame = new THREE.Mesh(flameGeo, flameMat);
-            flame.position.y = 0.5;
-            piston.add(flame);
-
-            // 火花塞
-            const sparkPlug = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.08, 0.12, 0.5, 8),
-                new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })
-            );
-            sparkPlug.position.y = 2.5;
-            cylGroup.add(sparkPlug);
-
-            // 数据绑定
-            piston.userData = {
-                id: i,
-                cylinderNum: i + 1,
-                firingOrder: firingOrder.indexOf(i + 1) + 1,
-                flame: flame,
-                bank: bank === 0 ? '左列' : '右列'
-            };
-            piston.userData.name = `气缸 #${i + 1}`;
-            piston.userData.desc = `${piston.userData.bank}第${posInBank + 1}缸，点火顺序第${piston.userData.firingOrder}位。`;
-            piston.userData.onClick = () => this.selectPiston(piston);
-
-            cylGroup.add(piston);
-            this.engineGroup.add(cylGroup);
-            this.pistons.push({ mesh: piston, group: cylGroup, rodMesh: rod });
-            this.interactables.push(piston);
-        }
-
-        // 3. 曲轴
-        const crankGroup = new THREE.Group();
         
-        const mainShaft = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.3, 0.3, 6, 16),
-            new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.95, roughness: 0.2 })
-        );
-        mainShaft.rotation.z = Math.PI / 2;
-        crankGroup.add(mainShaft);
-
-        // 曲轴偏心配重
-        for (let i = 0; i < 3; i++) {
-            const weight = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.6, 0.6, 0.3, 16),
-                new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.9 })
-            );
-            weight.rotation.z = Math.PI / 2;
-            weight.position.set(-2 + i * 2, 0.4, 0);
-            crankGroup.add(weight);
-        }
-
-        crankGroup.position.y = -2;
-        crankGroup.userData = { 
-            name: '曲轴', 
-            desc: '将活塞的往复运动转换为旋转运动，驱动车轮。每转两圈完成一个工作循环。' 
-        };
-        crankGroup.userData.onClick = () => this.showInfo(crankGroup.userData);
-        this.engineGroup.add(crankGroup);
-        this.crankshaft = crankGroup;
-        this.interactables.push(crankGroup);
-
-        // 4. 双涡轮增压器
-        this.createTurbo(new THREE.Vector3(-3.5, 1, 0), '左涡轮');
-        this.createTurbo(new THREE.Vector3(3.5, 1, 0), '右涡轮');
-
-        // 5. 进气歧管
-        const intakeGeo = new THREE.TorusGeometry(1.5, 0.2, 8, 16, Math.PI);
-        const intakeMat = new THREE.MeshStandardMaterial({ 
-            color: 0x2222aa, 
-            metalness: 0.7, 
-            roughness: 0.4 
+        const cylinderMat = new THREE.MeshPhysicalMaterial({
+            color: 0x333344,
+            metalness: 0.8,
+            roughness: 0.3,
+            transmission: 0.2,
+            transparent: true,
+            opacity: 0.8
         });
-        const intake = new THREE.Mesh(intakeGeo, intakeMat);
-        intake.rotation.x = Math.PI / 2;
-        intake.rotation.z = Math.PI;
-        intake.position.set(0, 2.5, -1.5);
-        intake.userData = { 
-            name: '进气歧管', 
-            desc: '将经过涡轮增压的空气均匀分配到各个气缸。' 
-        };
-        intake.userData.onClick = () => this.showInfo(intake.userData);
-        this.engineGroup.add(intake);
-        this.interactables.push(intake);
+        
+        // 6个气缸（V型排列）
+        const positions = [
+            // 左列
+            { x: -3, z: -2.5, side: 'left', num: 1 },
+            { x: -3, z: 0, side: 'left', num: 2 },
+            { x: -3, z: 2.5, side: 'left', num: 3 },
+            // 右列
+            { x: 3, z: -2.5, side: 'right', num: 4 },
+            { x: 3, z: 0, side: 'right', num: 5 },
+            { x: 3, z: 2.5, side: 'right', num: 6 }
+        ];
+        
+        positions.forEach((pos, i) => {
+            const group = new THREE.Group();
+            group.position.set(pos.x, 2.5, pos.z);
+            group.rotation.z = pos.side === 'left' ? Math.PI / 6 : -Math.PI / 6;
+            
+            // 气缸壁（透明）
+            const cylinderGeo = new THREE.CylinderGeometry(0.8, 0.8, 2.5, 32, 1, true);
+            const cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+            group.add(cylinder);
+            
+            // 活塞
+            const pistonGeo = new THREE.CylinderGeometry(0.75, 0.75, 0.5, 32);
+            const piston = new THREE.Mesh(pistonGeo, pistonMat.clone());
+            piston.position.y = 0;
+            group.add(piston);
+            
+            // 连杆
+            const rodGeo = new THREE.CylinderGeometry(0.1, 0.15, 2, 16);
+            const rodMat = new THREE.MeshStandardMaterial({
+                color: 0x666677,
+                metalness: 0.9,
+                roughness: 0.2
+            });
+            const rod = new THREE.Mesh(rodGeo, rodMat);
+            rod.position.y = -1.2;
+            piston.add(rod);
+            
+            // 交互
+            piston.userData = {
+                hoverTitle: `${pos.num}号活塞`,
+                hoverDesc: '四冲程往复运动',
+                hoverIcon: 'fa-cog',
+                name: `${pos.num}号气缸活塞`,
+                cylinderNum: pos.num,
+                description: `
+                    <p class="text-lg font-bold text-orange-400 mb-3">🔥 ${pos.num}号气缸</p>
+                    <p class="text-gray-300 mb-3">四冲程循环中往复运动的核心部件。</p>
+                    <div class="bg-gray-800 rounded p-3 mb-3">
+                        <p class="text-sm text-cyan-400">进气冲程: 活塞下行，吸入混合气</p>
+                        <p class="text-sm text-green-400">压缩冲程: 活塞上行，压缩混合气</p>
+                        <p class="text-sm text-red-400">做功冲程: 点火爆炸，推动活塞</p>
+                        <p class="text-sm text-purple-400">排气冲程: 活塞上行，排出废气</p>
+                    </div>
+                    <p class="text-sm text-yellow-400">⚡ 曲轴每转两圈完成一个循环</p>
+                `,
+                onClick: (target) => {
+                    this.highlightObject(target);
+                    this.showInfoPanel(target);
+                    this.params.selectedCylinder = pos.num;
+                }
+            };
+            
+            this.interactables.push(piston);
+            this.pistons.push({ group, piston, rod, phase: i * Math.PI / 3 });
+            this.mainGroup.add(group);
+        });
     }
 
-    createTurbo(pos, name) {
-        const turboGroup = new THREE.Group();
-        turboGroup.position.copy(pos);
+    createCrankshaft() {
+        const group = new THREE.Group();
+        group.position.set(0, -1, 0);
+        
+        // 主轴
+        const shaftMat = new THREE.MeshStandardMaterial({
+            color: 0x666677,
+            metalness: 0.95,
+            roughness: 0.1,
+            emissive: 0x222233,
+            emissiveIntensity: 0.3
+        });
+        
+        const mainShaftGeo = new THREE.CylinderGeometry(0.4, 0.4, 10, 32);
+        const mainShaft = new THREE.Mesh(mainShaftGeo, shaftMat);
+        mainShaft.rotation.x = Math.PI / 2;
+        group.add(mainShaft);
+        
+        // 曲柄（6个）
+        for (let i = 0; i < 6; i++) {
+            const crankGeo = new THREE.BoxGeometry(0.8, 0.3, 0.3);
+            const crank = new THREE.Mesh(crankGeo, shaftMat);
+            crank.position.set(0.6, 0, -4 + i * 1.6);
+            crank.rotation.z = i * Math.PI / 3; // 每个曲柄相位差60度
+            group.add(crank);
+        }
+        
+        // 飞轮
+        const flywheelGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.5, 32);
+        const flywheelMat = new THREE.MeshStandardMaterial({
+            color: 0x444455,
+            metalness: 0.9,
+            roughness: 0.2
+        });
+        const flywheel = new THREE.Mesh(flywheelGeo, flywheelMat);
+        flywheel.rotation.x = Math.PI / 2;
+        flywheel.position.z = 5.5;
+        group.add(flywheel);
+        
+        // 交互
+        mainShaft.userData = {
+            hoverTitle: '曲轴',
+            hoverDesc: '直线转旋转运动',
+            hoverIcon: 'fa-sync',
+            name: '曲轴',
+            description: `
+                <p class="text-lg font-bold text-purple-400 mb-3">🔄 曲轴</p>
+                <p class="text-gray-300 mb-3">将活塞的往复运动转换为旋转运动。</p>
+                <div class="bg-gray-800 rounded p-3 mb-3">
+                    <p class="text-sm text-gray-400">曲柄数: 6个</p>
+                    <p class="text-sm text-gray-400">相位差: 60°</p>
+                    <p class="text-sm text-gray-400">材质: 锻钢</p>
+                </div>
+                <p class="text-sm text-green-400">✨ 曲轴是发动机的动力输出轴</p>
+            `,
+            onClick: (target) => {
+                this.highlightObject(target);
+                this.showInfoPanel(target);
+            }
+        };
+        this.interactables.push(mainShaft);
+        
+        flywheel.userData = {
+            hoverTitle: '飞轮',
+            hoverDesc: '储存能量平滑输出',
+            hoverIcon: 'fa-compact-disc',
+            name: '飞轮',
+            description: `
+                <p class="text-lg font-bold text-gray-400 mb-3">⚙️ 飞轮</p>
+                <p class="text-gray-300 mb-3">储存旋转能量，平滑动力输出。</p>
+                <div class="bg-gray-800 rounded p-3 mb-3">
+                    <p class="text-sm text-gray-400">作用: 平衡各缸点火间隙</p>
+                    <p class="text-sm text-gray-400">惯量: 提供转动惯性</p>
+                </div>
+            `,
+            onClick: (target) => {
+                this.highlightObject(target);
+                this.showInfoPanel(target);
+            }
+        };
+        this.interactables.push(flywheel);
+        
+        this.crankshaft = group;
+        this.mainGroup.add(group);
+    }
 
+    createCamshaft() {
+        const group = new THREE.Group();
+        group.position.set(0, 4, 0);
+        
+        const shaftMat = new THREE.MeshStandardMaterial({
+            color: 0x555566,
+            metalness: 0.9,
+            roughness: 0.2
+        });
+        
+        // 凸轮轴
+        const shaftGeo = new THREE.CylinderGeometry(0.2, 0.2, 8, 16);
+        const shaft = new THREE.Mesh(shaftGeo, shaftMat);
+        shaft.rotation.x = Math.PI / 2;
+        group.add(shaft);
+        
+        // 凸轮
+        for (let i = 0; i < 6; i++) {
+            const camGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 32);
+            const cam = new THREE.Mesh(camGeo, shaftMat);
+            cam.rotation.x = Math.PI / 2;
+            cam.position.z = -3 + i * 1.2;
+            group.add(cam);
+        }
+        
+        shaft.userData = {
+            hoverTitle: '凸轮轴',
+            hoverDesc: '控制气门开闭时机',
+            hoverIcon: 'fa-wave-square',
+            name: '凸轮轴',
+            description: `
+                <p class="text-lg font-bold text-cyan-400 mb-3">🎛️ 凸轮轴</p>
+                <p class="text-gray-300 mb-3">控制气门的开闭时机。</p>
+                <div class="bg-gray-800 rounded p-3 mb-3">
+                    <p class="text-sm text-gray-400">转速: 曲轴的1/2</p>
+                    <p class="text-sm text-gray-400">作用: 控制进气门和排气门</p>
+                </div>
+                <p class="text-sm text-yellow-400">⏱️ 正时链条与曲轴同步</p>
+            `,
+            onClick: (target) => {
+                this.highlightObject(target);
+                this.showInfoPanel(target);
+            }
+        };
+        this.interactables.push(shaft);
+        
+        this.camshaft = group;
+        this.mainGroup.add(group);
+    }
+
+    createSparkPlugs() {
+        const sparkMat = new THREE.MeshStandardMaterial({
+            color: 0xffffcc,
+            emissive: 0xffaa00,
+            emissiveIntensity: 0.5,
+            metalness: 0.3,
+            roughness: 0.5
+        });
+        
+        // 6个火花塞
+        const positions = [
+            { x: -3.5, z: -2.5 },
+            { x: -3.5, z: 0 },
+            { x: -3.5, z: 2.5 },
+            { x: 3.5, z: -2.5 },
+            { x: 3.5, z: 0 },
+            { x: 3.5, z: 2.5 }
+        ];
+        
+        positions.forEach((pos, i) => {
+            const group = new THREE.Group();
+            group.position.set(pos.x, 4.5, pos.z);
+            
+            // 火花塞主体
+            const plugGeo = new THREE.CylinderGeometry(0.15, 0.2, 0.8, 16);
+            const plug = new THREE.Mesh(plugGeo, sparkMat.clone());
+            group.add(plug);
+            
+            // 点火光效（初始隐藏）
+            const sparkGeo = new THREE.SphereGeometry(0.3, 16, 16);
+            const sparkGlow = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                transparent: true,
+                opacity: 0
+            });
+            const spark = new THREE.Mesh(sparkGeo, sparkGlow);
+            spark.position.y = -0.5;
+            group.add(spark);
+            
+            plug.userData = {
+                hoverTitle: `${i + 1}号火花塞`,
+                hoverDesc: '点火引爆混合气',
+                hoverIcon: 'fa-bolt',
+                name: `${i + 1}号火花塞`,
+                description: `
+                    <p class="text-lg font-bold text-yellow-400 mb-3">⚡ 火花塞</p>
+                    <p class="text-gray-300 mb-3">在压缩冲程末产生电火花，点燃混合气。</p>
+                    <div class="bg-gray-800 rounded p-3 mb-3">
+                        <p class="text-sm text-gray-400">电压: 20,000-40,000V</p>
+                        <p class="text-sm text-gray-400">点火间隙: 0.8-1.0mm</p>
+                    </div>
+                    <p class="text-sm text-red-400">🔥 点火时机精确到毫秒级</p>
+                `,
+                onClick: (target) => {
+                    this.highlightObject(target);
+                    this.showInfoPanel(target);
+                    // 闪烁效果
+                    gsap.to(spark.material, {
+                        opacity: 1,
+                        duration: 0.1,
+                        yoyo: true,
+                        repeat: 3
+                    });
+                }
+            };
+            
+            this.interactables.push(plug);
+            this.sparkPlugs.push({ group, spark });
+            this.mainGroup.add(group);
+        });
+    }
+
+    createExhaustSystem() {
+        const exhaustMat = new THREE.MeshStandardMaterial({
+            color: 0x443333,
+            metalness: 0.7,
+            roughness: 0.4,
+            emissive: 0x331111,
+            emissiveIntensity: 0.3
+        });
+        
+        // 排气管（两侧）
+        const pipeGeo = new THREE.CylinderGeometry(0.3, 0.4, 4, 16);
+        
+        const leftPipe = new THREE.Mesh(pipeGeo, exhaustMat);
+        leftPipe.position.set(-5, 0, 0);
+        leftPipe.rotation.z = Math.PI / 4;
+        this.mainGroup.add(leftPipe);
+        
+        const rightPipe = new THREE.Mesh(pipeGeo, exhaustMat);
+        rightPipe.position.set(5, 0, 0);
+        rightPipe.rotation.z = -Math.PI / 4;
+        this.mainGroup.add(rightPipe);
+        
+        leftPipe.userData = {
+            name: '左侧排气管',
+            description: `
+                <p class="text-lg font-bold text-red-400 mb-3">💨 排气系统</p>
+                <p class="text-gray-300 mb-3">将燃烧后的废气排出发动机。</p>
+                <div class="bg-gray-800 rounded p-3 mb-3">
+                    <p class="text-sm text-gray-400">排气温度: 600-800°C</p>
+                    <p class="text-sm text-gray-400">材质: 不锈钢</p>
+                </div>
+                <p class="text-sm text-orange-400">🌡️ 高温废气需要隔热处理</p>
+            `,
+            onClick: (target) => {
+                this.highlightObject(target);
+                this.showInfoPanel(target);
+            }
+        };
+        this.interactables.push(leftPipe);
+        
+        this.exhaustPipes.push(leftPipe, rightPipe);
+    }
+
+    createTurbo() {
+        const group = new THREE.Group();
+        group.position.set(0, 2, -5);
+        
         // 涡轮壳体
-        const housing = new THREE.Mesh(
-            new THREE.SphereGeometry(0.8, 16, 16),
-            new THREE.MeshPhysicalMaterial({
-                color: 0x333333,
-                metalness: 0.95,
-                roughness: 0.2,
-                clearcoat: 0.5
-            })
-        );
-        turboGroup.add(housing);
-
+        const housingMat = new THREE.MeshStandardMaterial({
+            color: 0x333344,
+            metalness: 0.9,
+            roughness: 0.2
+        });
+        
+        const housingGeo = new THREE.TorusGeometry(1.2, 0.5, 16, 32);
+        const housing = new THREE.Mesh(housingGeo, housingMat);
+        housing.rotation.y = Math.PI / 2;
+        group.add(housing);
+        
         // 涡轮叶片
+        const bladeMat = new THREE.MeshStandardMaterial({
+            color: 0x6688aa,
+            metalness: 0.95,
+            roughness: 0.1,
+            emissive: 0x223344,
+            emissiveIntensity: 0.4
+        });
+        
         const bladeGroup = new THREE.Group();
         for (let i = 0; i < 8; i++) {
-            const blade = new THREE.Mesh(
-                new THREE.BoxGeometry(0.05, 0.5, 0.2),
-                new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9 })
-            );
-            blade.position.y = 0.2;
-            blade.rotation.y = (i / 8) * Math.PI * 2;
-            bladeGroup.add(blade);
+            const bladeGeo = new THREE.BoxGeometry(0.1, 0.8, 0.3);
+            const blade = new THREE.Mesh(bladeGeo, bladeMat);
+            blade.position.y = 0.5;
+            blade.rotation.z = (i / 8) * Math.PI * 2;
+            const pivot = new THREE.Group();
+            pivot.add(blade);
+            pivot.rotation.z = (i / 8) * Math.PI * 2;
+            bladeGroup.add(pivot);
         }
-        bladeGroup.position.z = 0.4;
-        turboGroup.add(bladeGroup);
-
-        // 入口管
-        const inlet = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.3, 0.4, 1, 16),
-            new THREE.MeshStandardMaterial({ color: 0x222222 })
-        );
-        inlet.rotation.x = Math.PI / 2;
-        inlet.position.z = 1;
-        turboGroup.add(inlet);
-
-        turboGroup.userData = { 
-            name: name, 
-            desc: '利用排气能量驱动涡轮，压缩进气，提升发动机功率30-50%！',
-            bladeGroup: bladeGroup
+        bladeGroup.rotation.y = Math.PI / 2;
+        group.add(bladeGroup);
+        this.turboFan = bladeGroup;
+        
+        housing.userData = {
+            name: '涡轮增压器',
+            description: `
+                <p class="text-lg font-bold text-blue-400 mb-3">🌀 涡轮增压</p>
+                <p class="text-gray-300 mb-3">利用废气能量压缩进气，提升动力。</p>
+                <div class="bg-gray-800 rounded p-3 mb-3">
+                    <p class="text-sm text-gray-400">增压压力: 0.5-1.5 bar</p>
+                    <p class="text-sm text-gray-400">转速: 100,000+ RPM</p>
+                    <p class="text-sm text-green-400">动力提升: 30-50%</p>
+                </div>
+                <p class="text-sm text-cyan-400">⚡ 废气驱动，无需额外能量</p>
+            `,
+            onClick: (target) => {
+                this.highlightObject(target);
+                this.showInfoPanel(target);
+            }
         };
-        turboGroup.userData.onClick = () => this.showInfo(turboGroup.userData);
+        this.interactables.push(housing);
         
-        this.engineGroup.add(turboGroup);
-        this.turboFans.push(bladeGroup);
-        this.interactables.push(turboGroup);
+        this.mainGroup.add(group);
     }
 
-    setupExhaustParticles() {
-        // 排气粒子效果
-        const count = 100;
-        const geo = new THREE.BufferGeometry();
-        const positions = new Float32Array(count * 3);
-        const colors = new Float32Array(count * 3);
-
-        for (let i = 0; i < count; i++) {
-            positions[i * 3] = 0;
-            positions[i * 3 + 1] = -3;
-            positions[i * 3 + 2] = 3;
-            colors[i * 3] = 0.3;
-            colors[i * 3 + 1] = 0.3;
-            colors[i * 3 + 2] = 0.3;
-        }
-
-        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        const mat = new THREE.PointsMaterial({
-            size: 0.1,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.5,
-            blending: THREE.AdditiveBlending
-        });
-
-        this.exhaustParticles = new THREE.Points(geo, mat);
-        this.engineGroup.add(this.exhaustParticles);
-    }
-
-    selectPiston(piston) {
-        this.params.selectedPiston = piston;
+    createDecorations() {
+        // RPM 显示
+        const rpmCanvas = document.createElement('canvas');
+        rpmCanvas.width = 256;
+        rpmCanvas.height = 128;
+        this.rpmCanvas = rpmCanvas;
+        this.updateRPMDisplay();
         
-        // 重置所有活塞
-        this.pistons.forEach(p => {
-            p.mesh.material.emissive = new THREE.Color(0x000000);
-        });
-
-        // 高亮选中的
-        piston.material.emissive = new THREE.Color(0x333300);
-
-        this.showInfo({
-            name: piston.userData.name,
-            desc: piston.userData.desc,
-            isPiston: true,
-            pistonData: piston.userData
-        });
+        const rpmTexture = new THREE.CanvasTexture(rpmCanvas);
+        const rpmMat = new THREE.SpriteMaterial({ map: rpmTexture, transparent: true });
+        const rpmSprite = new THREE.Sprite(rpmMat);
+        rpmSprite.scale.set(5, 2.5, 1);
+        rpmSprite.position.set(0, 7, 0);
+        this.mainGroup.add(rpmSprite);
+        this.rpmSprite = rpmSprite;
+        this.rpmTexture = rpmTexture;
     }
 
-    showInfo(data) {
-        const info = document.getElementById('info-content');
-        if (info) {
-            let extraContent = '';
-            
-            if (data.isPiston) {
-                const pd = data.pistonData;
-                extraContent = `
-                    <div class="grid grid-cols-2 gap-2 mb-4 text-center text-xs">
-                        <div class="bg-red-900/30 p-2 rounded border border-red-500/30">
-                            <div class="text-gray-400">气缸编号</div>
-                            <div class="text-xl font-bold text-red-400">#${pd.cylinderNum}</div>
-                        </div>
-                        <div class="bg-orange-900/30 p-2 rounded border border-orange-500/30">
-                            <div class="text-gray-400">点火顺序</div>
-                            <div class="text-xl font-bold text-orange-400">${pd.firingOrder}</div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-800/50 p-3 rounded-lg mb-4">
-                        <div class="text-xs text-gray-400 mb-2">四冲程循环</div>
-                        <div class="flex justify-between text-xs">
-                            <span class="text-blue-400">① 进气</span>
-                            <span class="text-green-400">② 压缩</span>
-                            <span class="text-red-400">③ 做功</span>
-                            <span class="text-gray-400">④ 排气</span>
-                        </div>
-                    </div>
-                `;
-            }
-
-            info.innerHTML = `
-                <div class="mb-4">
-                    <div class="text-2xl font-bold text-white mb-2">${data.name}</div>
-                    <div class="text-gray-300 text-sm leading-relaxed">${data.desc}</div>
-                </div>
-                ${extraContent}
-                <div class="bg-gradient-to-r from-red-900/30 to-orange-900/30 p-4 rounded-lg border border-red-500/30 mb-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-red-400 font-bold"><i class="fas fa-tachometer-alt"></i> 转速 RPM</span>
-                        <span id="rpm-display" class="font-mono text-2xl text-white">${this.params.rpm}</span>
-                    </div>
-                    <input type="range" min="800" max="9000" value="${this.params.rpm}" 
-                        class="w-full h-2 bg-gray-700 rounded-lg accent-red-600" id="rpm-slider">
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div class="bg-gray-800 p-2 rounded">
-                        <div class="text-gray-500">排量</div>
-                        <div class="text-white font-mono">3.0L</div>
-                    </div>
-                    <div class="bg-gray-800 p-2 rounded">
-                        <div class="text-gray-500">功率</div>
-                        <div class="text-white font-mono">340HP</div>
-                    </div>
-                    <div class="bg-gray-800 p-2 rounded">
-                        <div class="text-gray-500">扭矩</div>
-                        <div class="text-white font-mono">450Nm</div>
-                    </div>
-                </div>
-            `;
-
-            const slider = document.getElementById('rpm-slider');
-            if (slider) {
-                slider.addEventListener('input', (e) => {
-                    this.params.rpm = parseInt(e.target.value);
-                    document.getElementById('rpm-display').innerText = this.params.rpm;
-                });
-            }
+    updateRPMDisplay() {
+        const ctx = this.rpmCanvas.getContext('2d');
+        ctx.clearRect(0, 0, 256, 128);
+        
+        // 背景
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.roundRect(4, 4, 248, 120, 12);
+        ctx.fill();
+        
+        // 边框
+        ctx.strokeStyle = '#ff4444';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // RPM 数值
+        ctx.fillStyle = '#ff6666';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.params.rpm.toString(), 128, 70);
+        
+        // 单位
+        ctx.fillStyle = '#888888';
+        ctx.font = '20px Arial';
+        ctx.fillText('RPM', 128, 100);
+        
+        if (this.rpmTexture) {
+            this.rpmTexture.needsUpdate = true;
         }
+    }
+
+    toggleEngine() {
+        this.params.isRunning = !this.params.isRunning;
+        
+        const btn = document.getElementById('btn-toggle-engine');
+        if (btn) {
+            btn.innerHTML = this.params.isRunning 
+                ? '<i class="fas fa-stop"></i> 停止引擎'
+                : '<i class="fas fa-play"></i> 启动引擎';
+        }
+    }
+
+    adjustRPM(delta) {
+        this.params.rpm = Math.max(800, Math.min(8000, this.params.rpm + delta));
+        this.updateRPMDisplay();
     }
 
     setupUI() {
-        const infoTitle = document.getElementById('info-title');
-        if (infoTitle) infoTitle.innerText = "V6 双涡轮增压发动机";
-
-        this.showInfo({ 
-            name: 'V6 涡轮增压发动机', 
-            desc: '高性能3.0升V6发动机，采用双涡轮增压技术，最大功率340马力。点击各个部件了解工作原理！' 
-        });
-
-        document.getElementById('info-panel').classList.add('visible');
-
-        // 底部提示
         const controlsDiv = document.getElementById('scene-controls');
-        if (controlsDiv) {
-            controlsDiv.style.display = 'flex';
-            controlsDiv.innerHTML = `
-                <div class="tip-pill"><i class="fas fa-mouse-pointer"></i> 点击部件查看说明</div>
-                <div class="tip-pill"><i class="fas fa-sliders-h"></i> 调节转速观察动画</div>
-            `;
+        controlsDiv.style.display = 'flex';
+        controlsDiv.innerHTML = `
+            <button class="control-btn" id="btn-step-intake">
+                <i class="fas fa-wind"></i> 进气
+            </button>
+            <button class="control-btn" id="btn-step-compress">
+                <i class="fas fa-compress-alt"></i> 压缩
+            </button>
+            <button class="control-btn" id="btn-step-ignite">
+                <i class="fas fa-fire"></i> 点火
+            </button>
+            <button class="control-btn" id="btn-step-exhaust">
+                <i class="fas fa-smog"></i> 排气
+            </button>
+            <button class="control-btn active" id="btn-toggle-engine">
+                <i class="fas fa-play"></i> 运行
+            </button>
+            <button class="control-btn" id="btn-reset-view">
+                <i class="fas fa-video"></i> 重置视角
+            </button>
+        `;
+        
+        // 四冲程教学按钮
+        document.getElementById('btn-step-intake').onclick = () => this.showStroke('intake');
+        document.getElementById('btn-step-compress').onclick = () => this.showStroke('compress');
+        document.getElementById('btn-step-ignite').onclick = () => this.showStroke('ignite');
+        document.getElementById('btn-step-exhaust').onclick = () => this.showStroke('exhaust');
+        document.getElementById('btn-toggle-engine').onclick = () => this.toggleEngine();
+        document.getElementById('btn-reset-view').onclick = () => this.resetView();
+        
+        // 默认相机位置
+        this.defaultCameraPos = { x: 10, y: 8, z: 15 };
+    }
+    
+    resetView() {
+        gsap.to(this.camera.position, {
+            x: this.defaultCameraPos.x,
+            y: this.defaultCameraPos.y,
+            z: this.defaultCameraPos.z,
+            duration: 0.8,
+            ease: 'power2.out'
+        });
+        this.camera.lookAt(0, 0, 0);
+    }
+    
+    showStroke(strokeType) {
+        // 暂停引擎
+        this.params.isRunning = false;
+        
+        const strokes = {
+            intake: {
+                name: '进气冲程',
+                desc: '🌬️ 活塞下行，进气门打开，混合气进入气缸',
+                pistonY: -1.5,
+                color: 0x3b82f6
+            },
+            compress: {
+                name: '压缩冲程',
+                desc: '💨 活塞上行，气门关闭，混合气被压缩',
+                pistonY: 1,
+                color: 0x8b5cf6
+            },
+            ignite: {
+                name: '做功冲程',
+                desc: '🔥 火花塞点火，燃烧膨胀推动活塞下行',
+                pistonY: -1.5,
+                color: 0xef4444
+            },
+            exhaust: {
+                name: '排气冲程',
+                desc: '💨 活塞上行，排气门打开，废气排出',
+                pistonY: 1,
+                color: 0x10b981
+            }
+        };
+        
+        const stroke = strokes[strokeType];
+        this.showEngineGuide(`${stroke.desc}`);
+        
+        // 更新按钮状态
+        ['intake', 'compress', 'ignite', 'exhaust'].forEach(s => {
+            const btn = document.getElementById(`btn-step-${s}`);
+            if (btn) btn.classList.toggle('active', s === strokeType);
+        });
+        
+        // 动画演示
+        this.pistons.forEach((piston, i) => {
+            gsap.to(piston.position, {
+                y: stroke.pistonY + (i % 2 === 0 ? 0 : 0.5),
+                duration: 0.8,
+                ease: 'power2.inOut'
+            });
+        });
+    }
+    
+    showEngineGuide(message) {
+        const container = document.getElementById('scene-canvas-container');
+        const old = container.querySelector('.scene-guide-message');
+        if (old) old.remove();
+        
+        const guide = document.createElement('div');
+        guide.className = 'scene-guide-message';
+        guide.innerHTML = message;
+        container.appendChild(guide);
+        
+        setTimeout(() => guide.classList.add('visible'), 100);
+        setTimeout(() => {
+            guide.classList.remove('visible');
+            setTimeout(() => guide.remove(), 300);
+        }, 4000);
+    }
+    
+    // 开始自动播放
+    startAutoPlay() {
+        this.isAutoPlaying = true;
+        this.params.isRunning = true;
+        // 更新按钮状态
+        const btn = document.getElementById('btn-toggle-engine');
+        if (btn) btn.innerHTML = '<i class="fas fa-pause"></i> 暂停';
+        
+        // 显示提示
+        setTimeout(() => {
+            this.showEngineGuide('🔧 V6发动机正在运转，点击各冲程按钮了解工作原理');
+        }, 500);
+    }
+    
+    toggleAutoPlay() {
+        this.isAutoPlaying = !this.isAutoPlaying;
+        this.params.isRunning = this.isAutoPlaying;
+    }
+
+    highlightObject(target) {
+        if (this.highlighted && this.highlighted.material && this.highlighted.material.emissive) {
+            this.highlighted.material.emissive.setHex(
+                this.highlighted.userData.originalEmissive || 0
+            );
         }
+        
+        if (target.material && target.material.emissive) {
+            target.userData.originalEmissive = target.material.emissive.getHex();
+            target.material.emissive.setHex(0x00ffff);
+        }
+        this.highlighted = target;
+        
+        gsap.to(target.scale, { x: 1.15, y: 1.15, z: 1.15, duration: 0.2 });
+        gsap.to(target.scale, { x: 1, y: 1, z: 1, duration: 0.2, delay: 0.2 });
+    }
+
+    showInfoPanel(target) {
+        const panel = document.getElementById('info-panel');
+        const title = document.getElementById('info-title');
+        const content = document.getElementById('info-content');
+        
+        title.innerHTML = `<i class="fas fa-cogs mr-2"></i>${target.userData.name}`;
+        content.innerHTML = target.userData.description;
+        
+        panel.classList.add('visible');
+    }
+
+    createLabels(manager) {
+        manager.createLabel('V6发动机', new THREE.Vector3(0, 6, 5), 'car');
+        manager.createLabel('涡轮增压', new THREE.Vector3(0, 4, -5), 'fan');
     }
 
     animate(time, delta) {
         if (!this.params.isRunning) return;
-
-        // 转速转为角速度
-        const rpmFactor = this.params.rpm / 60;
-        const cycleSpeed = time * rpmFactor * Math.PI * 2;
-
+        
+        const speed = this.params.rpm / 60 * Math.PI * 2;
+        
         // 曲轴旋转
         if (this.crankshaft) {
-            this.crankshaft.rotation.x = cycleSpeed;
+            this.crankshaft.rotation.z += speed * delta;
         }
-
+        
+        // 凸轮轴旋转（1/2速度）
+        if (this.camshaft) {
+            this.camshaft.rotation.z += speed * delta * 0.5;
+        }
+        
+        // 活塞往复运动
+        this.pistons.forEach((p, i) => {
+            const phase = time * speed + p.phase;
+            const stroke = 0.8;
+            p.piston.position.y = Math.sin(phase) * stroke;
+        });
+        
         // 涡轮旋转
-        this.turboFans.forEach(fan => {
-            fan.rotation.z = cycleSpeed * 2;
-        });
-
-        // 活塞运动
-        const firingOrder = [0, 4, 2, 5, 1, 3]; // 实际索引
-        this.pistons.forEach((obj, i) => {
-            const offset = firingOrder[i] * (Math.PI / 3);
-            const cycle = cycleSpeed + offset;
-
-            // 活塞简谐运动
-            const pistonY = Math.sin(cycle) * 0.7;
-            obj.mesh.position.y = 0.5 + pistonY;
-
-            // 连杆摆动
-            const rodAngle = Math.cos(cycle) * 0.12;
-            obj.mesh.children[3].rotation.z = rodAngle; // rod是第4个子对象
-
-            // 燃烧效果 - 做功冲程
-            const flame = obj.mesh.userData.flame;
-            const isFiring = Math.sin(cycle) > 0.85 && Math.cos(cycle) < 0;
-            
-            if (isFiring) {
-                flame.material.opacity = 0.8 + Math.random() * 0.2;
-                flame.scale.setScalar(1 + Math.random() * 0.3);
-            } else {
-                flame.material.opacity *= 0.85;
-            }
-        });
-
-        // 发动机整体微震
-        const vibration = (this.params.rpm / 9000) * 0.02;
-        this.engineGroup.position.y = Math.sin(cycleSpeed * 6) * vibration;
-        this.engineGroup.rotation.z = Math.sin(cycleSpeed * 3) * vibration * 0.5;
-
-        // 排气粒子
-        if (this.exhaustParticles) {
-            const positions = this.exhaustParticles.geometry.attributes.position.array;
-            for (let i = 0; i < positions.length / 3; i++) {
-                const idx = i * 3;
-                positions[idx + 2] += 0.1 * (this.params.rpm / 2000);
-                positions[idx + 1] += (Math.random() - 0.5) * 0.02;
-                
-                if (positions[idx + 2] > 6) {
-                    positions[idx] = (Math.random() - 0.5) * 0.5;
-                    positions[idx + 1] = -3 + (Math.random() - 0.5) * 0.3;
-                    positions[idx + 2] = 3;
-                }
-            }
-            this.exhaustParticles.geometry.attributes.position.needsUpdate = true;
+        if (this.turboFan) {
+            this.turboFan.rotation.x += speed * delta * 3;
         }
+        
+        // 火花塞闪烁
+        const fireInterval = 60 / this.params.rpm * 1000; // ms
+        this.sparkPlugs.forEach((sp, i) => {
+            const shouldFire = Math.floor(time * 1000 / fireInterval) % 6 === i;
+            sp.spark.material.opacity = shouldFire ? 0.8 : 0;
+        });
     }
 
     getInteractables() {
@@ -509,6 +860,19 @@ window.EngineScene = class EngineScene {
     }
 
     dispose() {
-        this.scene.remove(this.engineGroup);
+        if (this.mainGroup) this.scene.remove(this.mainGroup);
     }
-}
+
+    onBackgroundClick() {
+        const panel = document.getElementById('info-panel');
+        if (panel) panel.classList.remove('visible');
+        
+        if (this.highlighted && this.highlighted.material && this.highlighted.material.emissive) {
+            this.highlighted.material.emissive.setHex(
+                this.highlighted.userData.originalEmissive || 0
+            );
+            this.highlighted = null;
+        }
+        this.params.selectedCylinder = null;
+    }
+};
