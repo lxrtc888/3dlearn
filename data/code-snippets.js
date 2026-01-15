@@ -7,24 +7,28 @@
  */
 
 window.CodeSnippets = {
-    llm: `class TransformerNetwork extends InteractiveScene {
-    init() {
-        // 1. 创建 Token 嵌入层可视化
-        this.tokens = this.createTokenNodes(inputText);
-        
-        // 2. 构建多头注意力机制连接
-        this.attentionHeads.forEach(head => {
-            head.calculateWeights(this.tokens);
-            this.drawConnections(head.weights);
-        });
+    attention: `class SelfAttention {
+    /**
+     * 自注意力机制计算
+     * Attention(Q, K, V) = softmax(QK^T / √d_k) × V
+     */
+    forward(inputEmbedding) {
+        // 1. 线性变换生成 Q, K, V
+        const Q = inputEmbedding.matmul(this.Wq); // Query
+        const K = inputEmbedding.matmul(this.Wk); // Key  
+        const V = inputEmbedding.matmul(this.Wv); // Value
 
-        // 3. 启用光线投射交互
-        this.raycaster.on('click', (intersectedToken) => {
-            // 高亮相关的注意力连接
-            this.highlightAttention(intersectedToken);
-            // 显示 Token 信息面板
-            this.ui.showTooltip(intersectedToken.data);
-        });
+        // 2. 计算注意力分数
+        const d_k = K.shape[-1];
+        const scores = Q.matmul(K.T) / Math.sqrt(d_k);
+        
+        // 3. Softmax 归一化
+        const weights = softmax(scores); // 每行和为1
+        
+        // 4. 加权求和
+        const output = weights.matmul(V);
+        
+        return output; // 融合了上下文信息的新表示
     }
 }`,
 
@@ -80,6 +84,67 @@ window.CodeSnippets = {
     
     // 机械传动反馈
     largePiston.position.y += (smallPiston.deltaY / ratio);
+}`,
+
+    pendulum: `function pendulumPeriod(length, gravity = 9.8) {
+    // 单摆周期：T = 2π√(L/g)
+    return 2 * Math.PI * Math.sqrt(length / gravity);
+}
+
+// 小角度近似下的角位移
+function pendulumAngle(theta0, time, length) {
+    const omega = Math.sqrt(9.8 / length);
+    return theta0 * Math.cos(omega * time);
+}`,
+
+    electromagnetic: `function inducedEMF(fluxNow, fluxPrev, dt) {
+    // 法拉第定律：ε = -dΦ/dt
+    return -(fluxNow - fluxPrev) / dt;
+}
+
+function lenzDirection(deltaFlux) {
+    // 楞次定律：阻碍磁通量变化
+    return deltaFlux > 0 ? '产生反向磁场' : '产生同向磁场';
+}`,
+
+    cell: `class CellOrganelle {
+    constructor(name, role) {
+        this.name = name;
+        this.role = role;
+    }
+}
+
+const mitochondria = new CellOrganelle('线粒体', '能量工厂');
+const nucleus = new CellOrganelle('细胞核', '遗传信息中心');`,
+
+    dna: `const basePairs = {
+    A: 'T',
+    T: 'A',
+    G: 'C',
+    C: 'G'
+};
+
+function pairBase(base) {
+    return basePairs[base];
+}`,
+
+    vector3d: `function dot(a, b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+function cross(a, b) {
+    return {
+        x: a.y * b.z - a.z * b.y,
+        y: a.z * b.x - a.x * b.z,
+        z: a.x * b.y - a.y * b.x
+    };
+}`,
+
+    conic: `function conicType(eccentricity) {
+    if (eccentricity === 0) return 'circle';
+    if (eccentricity < 1) return 'ellipse';
+    if (eccentricity === 1) return 'parabola';
+    return 'hyperbola';
 }`,
 
     ppt: `// 智能课件系统
