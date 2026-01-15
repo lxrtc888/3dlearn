@@ -521,6 +521,13 @@ class SceneManager {
         this.camera.aspect = w / h;
         this.camera.updateProjectionMatrix();
     }
+    
+    /**
+     * 公开的调整大小方法
+     */
+    handleResize() {
+        this.onResize();
+    }
 
     onClick(event) {
         if (!this.currentSceneInstance || this.interactableObjects.length === 0) return;

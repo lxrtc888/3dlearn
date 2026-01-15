@@ -114,6 +114,60 @@ function bindEvents() {
     // PPT 按钮
     document.getElementById('btn-prev').addEventListener('click', prevSlide);
     document.getElementById('btn-next').addEventListener('click', nextSlide);
+    
+    // 全屏按钮（移动端）
+    const fullscreenBtn = document.getElementById('btn-fullscreen');
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+    }
+}
+
+/**
+ * 切换场景全屏模式
+ */
+function toggleFullscreen() {
+    const displaySection = document.getElementById('display-section');
+    const fullscreenBtn = document.getElementById('btn-fullscreen');
+    const icon = fullscreenBtn?.querySelector('i');
+    
+    if (!displaySection) return;
+    
+    const isFullscreen = displaySection.classList.contains('scene-fullscreen');
+    
+    if (isFullscreen) {
+        // 退出全屏
+        displaySection.classList.remove('scene-fullscreen');
+        if (icon) {
+            icon.classList.remove('fa-compress');
+            icon.classList.add('fa-expand');
+        }
+        fullscreenBtn.title = '全屏观看';
+        
+        // 退出浏览器全屏
+        if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        }
+    } else {
+        // 进入全屏
+        displaySection.classList.add('scene-fullscreen');
+        if (icon) {
+            icon.classList.remove('fa-expand');
+            icon.classList.add('fa-compress');
+        }
+        fullscreenBtn.title = '退出全屏';
+        
+        // 尝试浏览器全屏API
+        if (displaySection.requestFullscreen) {
+            displaySection.requestFullscreen().catch(() => {});
+        }
+    }
+    
+    // 通知场景管理器调整大小
+    if (state.sceneManager) {
+        setTimeout(() => {
+            state.sceneManager.handleResize();
+        }, 100);
+    }
 }
 
 

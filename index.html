@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/main.css?v=9">
+    <link rel="stylesheet" href="css/main.css?v=12">
 </head>
 
 <body>
@@ -45,6 +45,11 @@
                 <!-- 1. 场景视图 -->
                 <div id="view-scene" class="content-view active">
                     <div id="scene-canvas-container" class="w-full h-full absolute inset-0"></div> <!-- Canvas 容器 -->
+                    
+                    <!-- 全屏按钮（移动端显示） -->
+                    <button class="fullscreen-btn" id="btn-fullscreen" title="全屏观看">
+                        <i class="fas fa-expand"></i>
+                    </button>
 
                     <!-- 侧边信息面板 -->
                     <div id="info-panel" class="info-panel">
@@ -118,28 +123,28 @@
     </div>
 
     <!-- 核心脚本 (顺序加载) -->
-    <script src="js/scene-manager.js?v=9"></script>
+    <script src="js/scene-manager.js?v=12"></script>
     
     <!-- 数据模块 -->
-    <script src="data/cases-config.js?v=9"></script>
-    <script src="data/code-snippets.js?v=9"></script>
-    <script src="data/slides.js?v=9"></script>
+    <script src="data/cases-config.js?v=12"></script>
+    <script src="data/code-snippets.js?v=12"></script>
+    <script src="data/slides.js?v=12"></script>
 
     <!-- 场景模块 -->
-    <script src="scenes/attention-scene.js?v=10"></script>
-    <script src="scenes/quantum-scene.js?v=10"></script>
-    <script src="scenes/hydraulic-scene.js?v=10"></script>
-    <script src="scenes/engine-scene.js?v=10"></script>
-    <script src="scenes/pendulum-scene.js?v=10"></script>
-    <script src="scenes/electromagnetic-scene.js?v=10"></script>
-    <script src="scenes/cell-scene.js?v=10"></script>
-    <script src="scenes/dna-scene.js?v=10"></script>
-    <script src="scenes/vector3d-scene.js?v=10"></script>
-    <script src="scenes/conic-scene.js?v=10"></script>
-    <script src="scenes/drum-flower-scene.js?v=11"></script>
+    <script src="scenes/attention-scene.js?v=12"></script>
+    <script src="scenes/quantum-scene.js?v=12"></script>
+    <script src="scenes/hydraulic-scene.js?v=12"></script>
+    <script src="scenes/engine-scene.js?v=12"></script>
+    <script src="scenes/pendulum-scene.js?v=12"></script>
+    <script src="scenes/electromagnetic-scene.js?v=12"></script>
+    <script src="scenes/cell-scene.js?v=12"></script>
+    <script src="scenes/dna-scene.js?v=12"></script>
+    <script src="scenes/vector3d-scene.js?v=12"></script>
+    <script src="scenes/conic-scene.js?v=12"></script>
+    <script src="scenes/drum-flower-scene.js?v=12"></script>
 
     <!-- 主程序 -->
-    <script src="js/app.js?v=10"></script>
+    <script src="js/app.js?v=12"></script>
 
 </body>
 

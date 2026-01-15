@@ -1193,3 +1193,341 @@ body {
 .intro-start-btn i {
     font-size: 16px;
 }
+
+/* ============================================
+   移动端响应式布局 - 上下结构
+   ============================================ */
+
+/* 全屏按钮 */
+.fullscreen-btn {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s;
+}
+
+.fullscreen-btn:hover {
+    background: rgba(59, 130, 246, 0.6);
+}
+
+/* 场景全屏模式 */
+.scene-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    border-radius: 0 !important;
+}
+
+.scene-fullscreen .tab-bar {
+    display: none;
+}
+
+.scene-fullscreen .fullscreen-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 平板及以下 (max-width: 1024px) */
+@media screen and (max-width: 1024px) {
+    #teacher-section {
+        width: 28%;
+        height: 35%;
+    }
+    
+    #chat-section {
+        width: 28%;
+        height: 58%;
+    }
+    
+    #display-section {
+        left: calc(2% + 28% + 10px);
+    }
+    
+    .tab-btn {
+        padding: 0 12px;
+        font-size: 13px;
+    }
+}
+
+/* 手机端 (max-width: 768px) - 上下结构 */
+@media screen and (max-width: 768px) {
+    body {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    
+    #app-container {
+        height: auto;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 8px;
+        gap: 8px;
+    }
+    
+    /* 顶部：老师视频 - 小尺寸 */
+    #teacher-section {
+        position: relative;
+        top: auto;
+        left: auto;
+        width: 100%;
+        height: 120px;
+        border-radius: 12px;
+        flex-shrink: 0;
+        order: 1;
+    }
+    
+    /* 中间：场景展示 - 主要区域 */
+    #display-section {
+        position: relative;
+        top: auto;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        width: 100%;
+        height: 50vh;
+        min-height: 320px;
+        border-radius: 12px;
+        flex-shrink: 0;
+        order: 2;
+    }
+    
+    /* 底部：聊天区 */
+    #chat-section {
+        position: relative;
+        top: auto;
+        left: auto;
+        bottom: auto;
+        width: 100%;
+        height: auto;
+        min-height: 200px;
+        max-height: 35vh;
+        border-radius: 12px;
+        flex-shrink: 0;
+        order: 3;
+        padding: 10px;
+    }
+    
+    /* 显示全屏按钮 */
+    .fullscreen-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Tab栏优化 */
+    .tab-bar {
+        height: 44px;
+        padding: 0 12px;
+    }
+    
+    .tab-btn {
+        padding: 0 10px;
+        font-size: 12px;
+    }
+    
+    .tab-btn i {
+        margin-right: 4px;
+    }
+    
+    /* 隐藏部分Tab文字，只显示图标 */
+    .tab-btn span {
+        display: none;
+    }
+    
+    /* 快捷案例网格 - 2列 */
+    .quick-cases-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        max-width: 100%;
+        padding: 0 10px;
+    }
+    
+    .quick-case-card {
+        padding: 14px 10px;
+    }
+    
+    .quick-case-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .quick-case-title {
+        font-size: 12px;
+    }
+    
+    /* 聊天气泡 */
+    .chat-bubble {
+        padding: 10px 14px;
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    
+    /* 输入框 */
+    .glass-input {
+        padding: 12px 16px !important;
+        padding-right: 50px !important;
+        font-size: 14px;
+    }
+    
+    /* 场景控制按钮 */
+    #scene-controls {
+        flex-wrap: wrap;
+        gap: 6px !important;
+        padding: 8px !important;
+    }
+    
+    #scene-controls .control-btn {
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+    }
+    
+    /* Blender风格UI隐藏部分 */
+    .viewport-header {
+        height: 24px;
+        font-size: 11px;
+    }
+    
+    .viewport-tools {
+        right: 6px;
+        top: 30px;
+    }
+    
+    .tool-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+    
+    .viewport-footer {
+        height: 22px;
+        font-size: 10px;
+        padding: 0 8px;
+    }
+    
+    /* 坐标轴指示器 */
+    .axis-gizmo {
+        width: 60px !important;
+        height: 60px !important;
+        left: 8px !important;
+        bottom: 30px !important;
+    }
+    
+    /* 信息面板 */
+    .info-panel {
+        width: 260px;
+        max-height: 50vh;
+    }
+    
+    /* 介绍模态框 */
+    .intro-content {
+        padding: 24px;
+        max-width: 90%;
+    }
+    
+    .intro-icon {
+        font-size: 36px;
+    }
+    
+    .intro-title {
+        font-size: 22px;
+    }
+    
+    .intro-subtitle {
+        font-size: 13px;
+    }
+    
+    .objectives-list li {
+        font-size: 13px;
+        padding: 8px 0;
+        padding-left: 24px;
+    }
+    
+    .key-point {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .intro-tips {
+        font-size: 12px;
+        padding: 10px 14px;
+    }
+    
+    .intro-start-btn {
+        padding: 14px 24px;
+        font-size: 16px;
+    }
+}
+
+/* 更小屏幕 (max-width: 480px) */
+@media screen and (max-width: 480px) {
+    #app-container {
+        padding: 6px;
+        gap: 6px;
+    }
+    
+    #teacher-section {
+        height: 100px;
+        border-radius: 10px;
+    }
+    
+    #display-section {
+        height: 45vh;
+        min-height: 280px;
+        border-radius: 10px;
+    }
+    
+    #chat-section {
+        min-height: 160px;
+        border-radius: 10px;
+    }
+    
+    .quick-cases-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .quick-case-card {
+        padding: 12px 8px;
+    }
+    
+    .quick-case-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+    
+    .quick-case-title {
+        font-size: 11px;
+    }
+    
+    .quick-case-tag {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+    
+    /* 隐藏部分工具按钮 */
+    .viewport-tools .tool-divider,
+    .viewport-tools .tool-btn:nth-child(n+5) {
+        display: none;
+    }
+}
