@@ -12,10 +12,14 @@
  */
 
 class GravityScene {
-    constructor() {
+    constructor(scene, camera, renderer) {
+        // Three.js 核心对象（由 SceneManager 传入）
+        this.scene = scene;
+        this.camera = camera;
+        this.renderer = renderer;
+        
         this.name = 'GravityScene';
-        this.scene = null;
-        this.sceneManager = null;
+        this.mainGroup = null;
         
         // 场景元素
         this.spacetimeGrid = null;
@@ -67,9 +71,10 @@ class GravityScene {
     /**
      * 初始化场景
      */
-    init(scene, sceneManager) {
-        this.scene = scene;
-        this.sceneManager = sceneManager;
+    init() {
+        // 创建主容器
+        this.mainGroup = new THREE.Group();
+        this.scene.add(this.mainGroup);
         
         // 创建深空背景
         this.createSpaceBackground();
@@ -84,9 +89,9 @@ class GravityScene {
         this.createControls();
         
         // 设置相机位置
-        if (sceneManager.camera) {
-            sceneManager.camera.position.set(0, 15, 20);
-            sceneManager.camera.lookAt(0, 0, 0);
+        if (this.camera) {
+            this.camera.position.set(0, 15, 20);
+            this.camera.lookAt(0, 0, 0);
         }
         
         // 设置灯光
@@ -918,8 +923,16 @@ class GravityScene {
         };
         
         const modeInfo = info[mode];
-        if (modeInfo && this.sceneManager) {
-            this.sceneManager.showInfoPanel(modeInfo.title, modeInfo.content);
+        if (modeInfo) {
+            // 显示信息面板
+            const panel = document.getElementById('info-panel');
+            const title = document.getElementById('info-title');
+            const content = document.getElementById('info-content');
+            if (panel && title && content) {
+                title.textContent = modeInfo.title;
+                content.innerHTML = modeInfo.content;
+                panel.classList.add('visible');
+            }
         }
     }
 
