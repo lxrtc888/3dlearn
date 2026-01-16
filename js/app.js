@@ -3,6 +3,7 @@
  * ============================================
  * 使用 CasesConfig 进行案例管理
  * 使用 CodeSnippets 获取代码片段
+ * 使用 AIService 进行智能对话
  * ============================================
  */
 
@@ -12,6 +13,8 @@ const state = {
     activeTab: 'scene',
     pptIndex: 0,
     sceneManager: null,
+    isAIChatting: false, // AI正在回复中
+    currentSceneConfig: null, // 当前场景配置
 };
 
 // 初始化
@@ -177,10 +180,85 @@ function handleSend() {
     const userInput = document.getElementById('user-input');
     const text = userInput.value.trim();
     if (!text) return;
+    
+    // 防止重复发送
+    if (state.isAIChatting) return;
+    
     addMessage('user', text);
     userInput.value = '';
 
-    analyzeIntent(text);
+    // 先尝试匹配案例关键词
+    const matchedCase = window.CasesConfig ? window.CasesConfig.matchCase(text) : null;
+    
+    if (matchedCase) {
+        // 如果匹配到案例，显示确认卡片
+        setTimeout(() => showConfirmCard(matchedCase), 600);
+    } else if (state.currentSceneConfig && window.AIService) {
+        // 如果当前有场景加载，使用AI辅导对话
+        handleAIChat(text);
+    } else if (window.AIService) {
+        // 没有场景时也可以通用对话
+        handleAIChat(text);
+    } else {
+        // 降级处理
+        setTimeout(() => addMessage('ai', '🤔 请尝试输入关键词，例如"大模型3D"、"双缝干涉"或"原理课件"。'), 600);
+    }
+}
+
+/**
+ * AI智能对话
+ */
+async function handleAIChat(text) {
+    state.isAIChatting = true;
+    
+    // 显示"正在思考"提示
+    const thinkingId = 'ai-thinking-' + Date.now();
+    addThinkingMessage(thinkingId);
+    
+    try {
+        const result = await window.AIService.chat(text);
+        
+        // 移除"正在思考"提示
+        removeThinkingMessage(thinkingId);
+        
+        if (result.success) {
+            addMessage('ai', result.message);
+        } else {
+            addMessage('ai', '😅 ' + result.message);
+        }
+    } catch (error) {
+        removeThinkingMessage(thinkingId);
+        addMessage('ai', '😅 抱歉，网络似乎有点问题，请稍后再试。');
+        console.error('AI Chat Error:', error);
+    }
+    
+    state.isAIChatting = false;
+}
+
+/**
+ * 添加"正在思考"消息
+ */
+function addThinkingMessage(id) {
+    const chatHistory = document.getElementById('chat-history');
+    const div = document.createElement('div');
+    div.id = id;
+    div.className = 'chat-bubble bubble-ai thinking-bubble flex items-center';
+    div.innerHTML = `
+        <div class="thinking-dots">
+            <span></span><span></span><span></span>
+        </div>
+        <span class="ml-2 text-gray-400">老师正在思考...</span>
+    `;
+    chatHistory.appendChild(div);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
+/**
+ * 移除"正在思考"消息
+ */
+function removeThinkingMessage(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
 }
 
 function addMessage(role, text) {
@@ -192,21 +270,6 @@ function addMessage(role, text) {
     chatHistory.scrollTop = chatHistory.scrollHeight;
 }
 
-/**
- * 分析用户意图 - 使用配置中心匹配案例
- */
-function analyzeIntent(text) {
-    // 使用配置中心匹配
-    const matchedCase = window.CasesConfig ? window.CasesConfig.matchCase(text) : null;
-
-    if (!matchedCase) {
-        setTimeout(() => addMessage('ai', '🤔 请尝试输入关键词，例如"大模型3D"、"双缝干涉"或"原理课件"。'), 600);
-        return;
-    }
-
-    // 生成确认卡片
-    setTimeout(() => showConfirmCard(matchedCase), 600);
-}
 
 /**
  * 显示确认卡片
@@ -292,6 +355,12 @@ async function finishGeneration(caseConfig) {
         addMessage('ai', '✅ <b>课件已投屏。</b><br>请使用右下角按钮翻页。');
         switchTab('ppt');
         renderSlide(0);
+        
+        // 设置AI上下文（PPT模式）
+        state.currentSceneConfig = caseConfig;
+        if (window.AIService) {
+            window.AIService.setSceneContext(caseConfig);
+        }
     } else {
         addMessage('ai', `✅ <b>场景准备就绪。</b>`);
         switchTab('scene');
@@ -310,6 +379,12 @@ async function finishGeneration(caseConfig) {
                 // 创建标签
                 if (state.sceneManager.currentSceneInstance && state.sceneManager.currentSceneInstance.createLabels) {
                     state.sceneManager.currentSceneInstance.createLabels(state.sceneManager);
+                }
+                
+                // 设置AI辅导上下文
+                state.currentSceneConfig = caseConfig;
+                if (window.AIService) {
+                    window.AIService.setSceneContext(caseConfig);
                 }
                 
                 // 显示场景介绍模态框
@@ -390,11 +465,21 @@ function showIntroModal(intro) {
     });
     
     // 绑定关闭事件
-    document.getElementById('btn-start-scene').onclick = () => {
+    document.getElementById('btn-start-scene').onclick = async () => {
         closeIntroModal();
         // 开始自动播放
         if (state.sceneManager.currentSceneInstance && state.sceneManager.currentSceneInstance.startAutoPlay) {
             state.sceneManager.currentSceneInstance.startAutoPlay();
+        }
+        
+        // AI老师发送场景引导消息
+        if (window.AIService && state.currentSceneConfig) {
+            setTimeout(async () => {
+                const result = await window.AIService.getSceneIntroduction();
+                if (result.success) {
+                    addMessage('ai', '🎓 ' + result.message);
+                }
+            }, 1000);
         }
     };
 }
