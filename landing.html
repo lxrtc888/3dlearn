@@ -403,62 +403,6 @@
             transform: translateY(0);
         }
         
-        /* 微信二维码弹出层 */
-        .wechat-qr-trigger {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .wechat-qr-popup {
-            position: absolute;
-            bottom: calc(100% + 20px);
-            left: 50%;
-            transform: translateX(-50%) scale(0.8);
-            background: rgba(13, 20, 35, 0.98);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 20px;
-            padding: 20px;
-            text-align: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
-            box-shadow: 
-                0 20px 50px rgba(0, 0, 0, 0.5),
-                0 0 30px rgba(34, 197, 94, 0.2);
-        }
-        
-        .wechat-qr-trigger:hover .wechat-qr-popup {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) scale(1);
-        }
-        
-        .qr-arrow {
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 12px solid transparent;
-            border-right: 12px solid transparent;
-            border-top: 12px solid rgba(34, 197, 94, 0.3);
-        }
-        
-        .qr-arrow::before {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            left: -10px;
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 10px solid rgba(13, 20, 35, 0.98);
-        }
-        
         /* 动态更新徽章 */
         .update-badge {
             position: relative;
@@ -504,12 +448,69 @@
             box-shadow: 
                 0 15px 40px rgba(0, 0, 0, 0.5),
                 0 0 20px rgba(34, 197, 94, 0.2);
+            white-space: nowrap;
+        }
+        
+        .footer-wechat-popup img {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #fff;
+            padding: 4px;
         }
         
         .footer-wechat-trigger:hover .footer-wechat-popup {
             opacity: 1;
             visibility: visible;
             transform: translateX(-50%) scale(1);
+        }
+        
+        /* 复制字段样式 */
+        .copy-field {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .copy-field:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .copy-field:hover .copy-icon {
+            color: var(--accent-cyan);
+        }
+        
+        .copy-tip {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background: #22c55e;
+            color: #000;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .copy-field.copied .copy-tip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) scale(1);
+        }
+        
+        .copy-field.copied .copy-icon {
+            color: #22c55e;
         }
     </style>
 </head>
@@ -958,41 +959,29 @@
             <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 <!-- 邮箱联系 -->
                 <div class="glass-card rounded-3xl p-8 reveal text-center">
-                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-envelope text-cyan-400 text-3xl"></i>
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center mx-auto mb-5">
+                        <i class="fas fa-envelope text-cyan-400 text-2xl"></i>
                     </div>
-                    <h3 class="text-2xl font-bold mb-2">发送邮件</h3>
-                    <p class="text-gray-400 mb-4">商务合作、功能建议、问题反馈</p>
-                    <a href="mailto:lxrtc8@gmail.com" class="text-xl font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
-                        lxrtc8@gmail.com
-                    </a>
-                    <div class="mt-6">
-                        <a href="mailto:lxrtc8@gmail.com" class="btn-secondary inline-flex items-center">
-                            <i class="fas fa-paper-plane mr-2"></i>
-                            发送邮件
-                        </a>
+                    <h3 class="text-xl font-bold mb-2">发送邮件</h3>
+                    <p class="text-gray-400 text-sm mb-4">商务合作、功能建议、问题反馈</p>
+                    <div class="copy-field" onclick="copyToClipboard('lxrtc8@gmail.com', this)">
+                        <span class="text-cyan-400 font-medium">lxrtc8@gmail.com</span>
+                        <i class="fas fa-copy text-gray-500 text-sm ml-2 copy-icon"></i>
+                        <span class="copy-tip">已复制!</span>
                     </div>
                 </div>
                 
                 <!-- 微信联系 -->
-                <div class="glass-card rounded-3xl p-8 reveal text-center wechat-card" style="transition-delay: 0.1s;">
-                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center mx-auto mb-6">
-                        <i class="fab fa-weixin text-green-400 text-3xl"></i>
+                <div class="glass-card rounded-3xl p-8 reveal text-center" style="transition-delay: 0.1s;">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center mx-auto mb-5">
+                        <i class="fab fa-weixin text-green-400 text-2xl"></i>
                     </div>
-                    <h3 class="text-2xl font-bold mb-2">添加微信</h3>
-                    <p class="text-gray-400 mb-4">场景定制、即时沟通、技术交流</p>
-                    <span class="text-xl font-medium text-green-400">RTC520</span>
-                    <div class="mt-6 relative wechat-qr-trigger">
-                        <button class="btn-secondary inline-flex items-center border-green-500 text-green-400 hover:bg-green-500/10">
-                            <i class="fas fa-qrcode mr-2"></i>
-                            扫码添加
-                        </button>
-                        <!-- 微信二维码弹出层 -->
-                        <div class="wechat-qr-popup">
-                            <div class="qr-arrow"></div>
-                            <img src="rtcvx.png" alt="微信二维码" class="w-48 h-48 rounded-xl">
-                            <p class="text-gray-400 text-sm mt-3">扫码添加微信好友</p>
-                        </div>
+                    <h3 class="text-xl font-bold mb-2">添加微信</h3>
+                    <p class="text-gray-400 text-sm mb-4">场景定制、即时沟通、技术交流</p>
+                    <div class="copy-field" onclick="copyToClipboard('RTC520', this)">
+                        <span class="text-green-400 font-medium">RTC520</span>
+                        <i class="fas fa-copy text-gray-500 text-sm ml-2 copy-icon"></i>
+                        <span class="copy-tip">已复制!</span>
                     </div>
                 </div>
             </div>
@@ -1124,6 +1113,28 @@
                 }
             });
         });
+        
+        // 复制到剪贴板
+        function copyToClipboard(text, element) {
+            navigator.clipboard.writeText(text).then(() => {
+                element.classList.add('copied');
+                setTimeout(() => {
+                    element.classList.remove('copied');
+                }, 1500);
+            }).catch(err => {
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                element.classList.add('copied');
+                setTimeout(() => {
+                    element.classList.remove('copied');
+                }, 1500);
+            });
+        }
     </script>
 </body>
 </html>
