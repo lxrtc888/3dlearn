@@ -402,6 +402,115 @@
             opacity: 1;
             transform: translateY(0);
         }
+        
+        /* 微信二维码弹出层 */
+        .wechat-qr-trigger {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .wechat-qr-popup {
+            position: absolute;
+            bottom: calc(100% + 20px);
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background: rgba(13, 20, 35, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.5),
+                0 0 30px rgba(34, 197, 94, 0.2);
+        }
+        
+        .wechat-qr-trigger:hover .wechat-qr-popup {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) scale(1);
+        }
+        
+        .qr-arrow {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 12px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .qr-arrow::before {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: -10px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid rgba(13, 20, 35, 0.98);
+        }
+        
+        /* 动态更新徽章 */
+        .update-badge {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .update-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* Footer微信二维码 */
+        .footer-wechat-trigger {
+            position: relative;
+        }
+        
+        .footer-wechat-popup {
+            position: absolute;
+            bottom: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background: rgba(13, 20, 35, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            box-shadow: 
+                0 15px 40px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(34, 197, 94, 0.2);
+        }
+        
+        .footer-wechat-trigger:hover .footer-wechat-popup {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) scale(1);
+        }
     </style>
 </head>
 <body>
@@ -488,7 +597,7 @@
                 </div>
                 
                 <!-- 信任标识 -->
-                <div class="mt-12 flex items-center gap-8 text-gray-500 text-sm">
+                <div class="mt-12 flex flex-wrap items-center gap-6 text-gray-500 text-sm">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-check-circle text-cyan-400"></i>
                         <span>免费使用</span>
@@ -500,6 +609,9 @@
                     <div class="flex items-center gap-2">
                         <i class="fas fa-check-circle text-cyan-400"></i>
                         <span>即开即用</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="update-badge text-green-400">持续更新</span>
                     </div>
                 </div>
             </div>
@@ -584,11 +696,14 @@
                 <!-- 特性6 -->
                 <div class="glass-card rounded-3xl p-8 reveal" style="transition-delay: 0.6s;">
                     <div class="feature-icon bg-gradient-to-br from-pink-500/20 to-pink-600/20 text-pink-400">
-                        <i class="fas fa-infinity"></i>
+                        <i class="fas fa-sync-alt"></i>
                     </div>
-                    <h3 class="text-2xl font-bold mb-4">永久免费体验</h3>
+                    <h3 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        持续动态更新
+                        <span class="update-badge text-xs text-green-400 font-normal">实时扩展</span>
+                    </h3>
                     <p class="text-gray-400 leading-relaxed">
-                        核心功能完全免费开放，无需注册账号，即开即用。让知识没有门槛。
+                        场景库<span class="text-cyan-400">动态增加</span>，根据需求免费定制。永久维护更新，让学习资源永不过时。
                     </p>
                 </div>
             </div>
@@ -606,14 +721,15 @@
                     精彩<span class="gradient-text">3D场景</span>预览
                 </h2>
                 <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                    每个场景都经过精心设计，确保知识传递的准确性和体验的趣味性
+                    每个场景都经过专业团队精心设计，确保科学准确性和学习趣味性<br>
+                    <span class="text-cyan-400">场景库持续扩展中</span>，可根据需求<span class="text-orange-400">免费定制</span>专属教学场景
                 </p>
             </div>
             
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- 场景卡片 -->
+                <!-- 场景卡片1: 注意力机制 -->
                 <div class="scene-card reveal">
-                    <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&h=400&fit=crop" alt="注意力机制">
+                    <img src="anli-1.jpg" alt="注意力机制">
                     <div class="overlay">
                         <span class="text-cyan-400 text-sm font-medium mb-2">
                             <i class="fas fa-brain mr-2"></i>人工智能
@@ -623,8 +739,9 @@
                     </div>
                 </div>
                 
+                <!-- 场景卡片2: 双缝干涉实验 -->
                 <div class="scene-card reveal" style="transition-delay: 0.1s;">
-                    <img src="https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=600&h=400&fit=crop" alt="量子物理">
+                    <img src="anli-2.jpg" alt="双缝干涉实验">
                     <div class="overlay">
                         <span class="text-purple-400 text-sm font-medium mb-2">
                             <i class="fas fa-atom mr-2"></i>量子物理
@@ -634,55 +751,63 @@
                     </div>
                 </div>
                 
+                <!-- 场景卡片3: 细菌鞭毛马达 -->
                 <div class="scene-card reveal" style="transition-delay: 0.2s;">
-                    <img src="https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&h=400&fit=crop" alt="细胞生物">
+                    <img src="anli-3.jpg" alt="细菌鞭毛马达">
                     <div class="overlay">
                         <span class="text-green-400 text-sm font-medium mb-2">
-                            <i class="fas fa-dna mr-2"></i>细胞生物
+                            <i class="fas fa-bacterium mr-2"></i>微生物学
                         </span>
                         <h3 class="text-xl font-bold">细菌鞭毛马达</h3>
                         <p class="text-gray-400 text-sm mt-2">探秘自然界最精密的纳米机器</p>
                     </div>
                 </div>
                 
+                <!-- 场景卡片4: 液压传动原理 -->
                 <div class="scene-card reveal" style="transition-delay: 0.3s;">
-                    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop" alt="机械原理">
+                    <img src="anli-4.jpg" alt="液压传动原理">
                     <div class="overlay">
                         <span class="text-orange-400 text-sm font-medium mb-2">
-                            <i class="fas fa-cogs mr-2"></i>机械原理
+                            <i class="fas fa-cogs mr-2"></i>物理力学
                         </span>
-                        <h3 class="text-xl font-bold">V6发动机工作原理</h3>
-                        <p class="text-gray-400 text-sm mt-2">四冲程循环完整可视化</p>
+                        <h3 class="text-xl font-bold">液压传动原理</h3>
+                        <p class="text-gray-400 text-sm mt-2">帕斯卡原理的直观演示</p>
                     </div>
                 </div>
                 
+                <!-- 场景卡片5: 三维向量运算 -->
                 <div class="scene-card reveal" style="transition-delay: 0.4s;">
-                    <img src="https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600&h=400&fit=crop" alt="数学几何">
+                    <img src="anli-5.jpg" alt="三维向量运算">
                     <div class="overlay">
                         <span class="text-yellow-400 text-sm font-medium mb-2">
-                            <i class="fas fa-shapes mr-2"></i>数学几何
+                            <i class="fas fa-vector-square mr-2"></i>数学几何
                         </span>
-                        <h3 class="text-xl font-bold">圆锥曲线</h3>
-                        <p class="text-gray-400 text-sm mt-2">直观理解椭圆、双曲线、抛物线</p>
+                        <h3 class="text-xl font-bold">三维向量运算</h3>
+                        <p class="text-gray-400 text-sm mt-2">空间向量加减与叉乘可视化</p>
                     </div>
                 </div>
                 
+                <!-- 场景卡片6: DNA双螺旋结构 -->
                 <div class="scene-card reveal" style="transition-delay: 0.5s;">
-                    <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=600&h=400&fit=crop" alt="电磁学">
+                    <img src="anli-6.jpg" alt="DNA双螺旋结构">
                     <div class="overlay">
-                        <span class="text-blue-400 text-sm font-medium mb-2">
-                            <i class="fas fa-bolt mr-2"></i>电磁学
+                        <span class="text-pink-400 text-sm font-medium mb-2">
+                            <i class="fas fa-dna mr-2"></i>分子生物学
                         </span>
-                        <h3 class="text-xl font-bold">电磁感应</h3>
-                        <p class="text-gray-400 text-sm mt-2">法拉第定律动态演示</p>
+                        <h3 class="text-xl font-bold">DNA双螺旋结构</h3>
+                        <p class="text-gray-400 text-sm mt-2">碱基配对与遗传密码可视化</p>
                     </div>
                 </div>
             </div>
             
             <div class="text-center mt-12 reveal">
                 <a href="index.html" class="btn-primary inline-flex items-center">
-                    探索全部场景 <i class="fas fa-arrow-right ml-3"></i>
+                    探索更多场景 <i class="fas fa-arrow-right ml-3"></i>
                 </a>
+                <p class="text-gray-500 text-sm mt-4">
+                    <i class="fas fa-plus-circle mr-1"></i>
+                    场景持续增加中，您也可以联系我们<span class="text-cyan-400">免费定制</span>专属场景
+                </p>
             </div>
         </div>
     </section>
@@ -732,11 +857,11 @@
                     <div class="space-y-6">
                         <div class="flex items-start gap-4">
                             <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-microchip text-cyan-400"></i>
+                                <i class="fas fa-cube text-cyan-400"></i>
                             </div>
                             <div>
-                                <h4 class="font-bold text-lg mb-1">Three.js 3D引擎</h4>
-                                <p class="text-gray-400">WebGL高性能渲染，流畅的60fps交互体验</p>
+                                <h4 class="font-bold text-lg mb-1">专业级3D渲染</h4>
+                                <p class="text-gray-400">高性能实时渲染，流畅的60fps交互体验</p>
                             </div>
                         </div>
                         
@@ -745,8 +870,8 @@
                                 <i class="fas fa-brain text-orange-400"></i>
                             </div>
                             <div>
-                                <h4 class="font-bold text-lg mb-1">AI智能交互</h4>
-                                <p class="text-gray-400">大语言模型驱动的智能问答和个性化学习</p>
+                                <h4 class="font-bold text-lg mb-1">AI智能助教</h4>
+                                <p class="text-gray-400">智能问答引导，个性化学习路径推荐</p>
                             </div>
                         </div>
                         
@@ -755,8 +880,18 @@
                                 <i class="fas fa-flask text-purple-400"></i>
                             </div>
                             <div>
-                                <h4 class="font-bold text-lg mb-1">科学模拟算法</h4>
-                                <p class="text-gray-400">真实物理引擎，确保每个实验结果的准确性</p>
+                                <h4 class="font-bold text-lg mb-1">科学模拟验证</h4>
+                                <p class="text-gray-400">专业团队监修，确保每个场景的科学准确性</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-sync-alt text-green-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1">持续更新维护</h4>
+                                <p class="text-gray-400">场景库动态扩展，永久免费维护升级</p>
                             </div>
                         </div>
                     </div>
@@ -809,64 +944,67 @@
     <!-- 联系我们 -->
     <section id="contact" class="py-24 relative">
         <div class="container mx-auto px-6 lg:px-12">
-            <div class="grid lg:grid-cols-2 gap-16">
-                <div class="reveal">
-                    <span class="text-cyan-400 font-medium mb-4 block">CONTACT</span>
-                    <h2 class="text-4xl lg:text-5xl font-bold mb-6">
-                        联系我们
-                    </h2>
-                    <p class="text-gray-400 text-lg mb-8 leading-relaxed">
-                        无论您是教育机构、学校、培训中心，还是个人学习者，我们都期待与您交流。
-                        如有合作意向、功能建议或任何问题，欢迎随时联系。
-                    </p>
-                    
-                    <div class="space-y-6">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center">
-                                <i class="fas fa-envelope text-cyan-400 text-xl"></i>
-                            </div>
-                            <div>
-                                <div class="text-gray-400 text-sm">电子邮箱</div>
-                                <a href="mailto:lxrtc8@gmail.com" class="text-lg font-medium hover:text-cyan-400 transition-colors">
-                                    lxrtc8@gmail.com
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center">
-                                <i class="fab fa-weixin text-green-400 text-xl"></i>
-                            </div>
-                            <div>
-                                <div class="text-gray-400 text-sm">微信号</div>
-                                <span class="text-lg font-medium">RTC520</span>
-                            </div>
-                        </div>
+            <div class="text-center mb-16 reveal">
+                <span class="text-cyan-400 font-medium mb-4 block">CONTACT</span>
+                <h2 class="text-4xl lg:text-5xl font-bold mb-6">
+                    联系我们
+                </h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+                    无论您是教育机构、学校、培训中心，还是个人学习者，我们都期待与您交流。<br>
+                    如需<span class="text-cyan-400 font-medium">免费定制3D教学场景</span>、合作洽谈或功能建议，欢迎随时联系！
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- 邮箱联系 -->
+                <div class="glass-card rounded-3xl p-8 reveal text-center">
+                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-envelope text-cyan-400 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">发送邮件</h3>
+                    <p class="text-gray-400 mb-4">商务合作、功能建议、问题反馈</p>
+                    <a href="mailto:lxrtc8@gmail.com" class="text-xl font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
+                        lxrtc8@gmail.com
+                    </a>
+                    <div class="mt-6">
+                        <a href="mailto:lxrtc8@gmail.com" class="btn-secondary inline-flex items-center">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            发送邮件
+                        </a>
                     </div>
                 </div>
                 
-                <div class="reveal" style="transition-delay: 0.2s;">
-                    <div class="glass-card rounded-3xl p-8">
-                        <h3 class="text-2xl font-bold mb-6">发送消息</h3>
-                        <form class="space-y-4">
-                            <div>
-                                <input type="text" placeholder="您的姓名" 
-                                    class="w-full px-5 py-4 rounded-xl bg-gray-800/50 border border-gray-700 focus:border-cyan-500 focus:outline-none transition-colors text-white placeholder-gray-500">
-                            </div>
-                            <div>
-                                <input type="email" placeholder="电子邮箱" 
-                                    class="w-full px-5 py-4 rounded-xl bg-gray-800/50 border border-gray-700 focus:border-cyan-500 focus:outline-none transition-colors text-white placeholder-gray-500">
-                            </div>
-                            <div>
-                                <textarea rows="4" placeholder="您的留言..." 
-                                    class="w-full px-5 py-4 rounded-xl bg-gray-800/50 border border-gray-700 focus:border-cyan-500 focus:outline-none transition-colors text-white placeholder-gray-500 resize-none"></textarea>
-                            </div>
-                            <button type="submit" class="btn-primary w-full">
-                                <i class="fas fa-paper-plane mr-2"></i>
-                                发送消息
-                            </button>
-                        </form>
+                <!-- 微信联系 -->
+                <div class="glass-card rounded-3xl p-8 reveal text-center wechat-card" style="transition-delay: 0.1s;">
+                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center mx-auto mb-6">
+                        <i class="fab fa-weixin text-green-400 text-3xl"></i>
                     </div>
+                    <h3 class="text-2xl font-bold mb-2">添加微信</h3>
+                    <p class="text-gray-400 mb-4">场景定制、即时沟通、技术交流</p>
+                    <span class="text-xl font-medium text-green-400">RTC520</span>
+                    <div class="mt-6 relative wechat-qr-trigger">
+                        <button class="btn-secondary inline-flex items-center border-green-500 text-green-400 hover:bg-green-500/10">
+                            <i class="fas fa-qrcode mr-2"></i>
+                            扫码添加
+                        </button>
+                        <!-- 微信二维码弹出层 -->
+                        <div class="wechat-qr-popup">
+                            <div class="qr-arrow"></div>
+                            <img src="rtcvx.png" alt="微信二维码" class="w-48 h-48 rounded-xl">
+                            <p class="text-gray-400 text-sm mt-3">扫码添加微信好友</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 免费定制提示 -->
+            <div class="mt-16 text-center reveal">
+                <div class="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500/10 to-orange-500/10 border border-cyan-500/20">
+                    <i class="fas fa-gift text-orange-400"></i>
+                    <span class="text-gray-300">
+                        <span class="text-orange-400 font-medium">限时福利：</span>
+                        根据您的需求，我们可免费为您定制上架专属3D教学场景！
+                    </span>
                 </div>
             </div>
         </div>
@@ -888,14 +1026,18 @@
                 </div>
                 
                 <div class="flex items-center gap-4">
-                    <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-cyan-500/20 transition-colors">
-                        <i class="fab fa-weixin text-gray-400 hover:text-cyan-400"></i>
-                    </a>
+                    <div class="footer-wechat-trigger relative">
+                        <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-green-500/20 transition-colors cursor-pointer">
+                            <i class="fab fa-weixin text-gray-400 hover:text-green-400"></i>
+                        </div>
+                        <!-- 微信二维码弹出层 -->
+                        <div class="footer-wechat-popup">
+                            <img src="rtcvx.png" alt="微信二维码" class="w-36 h-36 rounded-lg">
+                            <p class="text-gray-400 text-xs mt-2">扫码添加微信</p>
+                        </div>
+                    </div>
                     <a href="mailto:lxrtc8@gmail.com" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-cyan-500/20 transition-colors">
                         <i class="fas fa-envelope text-gray-400 hover:text-cyan-400"></i>
-                    </a>
-                    <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-cyan-500/20 transition-colors">
-                        <i class="fab fa-github text-gray-400 hover:text-cyan-400"></i>
                     </a>
                 </div>
             </div>
