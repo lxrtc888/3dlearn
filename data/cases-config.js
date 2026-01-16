@@ -233,6 +233,26 @@ window.CasesConfig = {
             }
         },
         {
+            id: 'flagellar',
+            title: '细菌鞭毛马达',
+            keywords: ['鞭毛', '细菌', '马达', '纳米', '分子机器', '生物马达', 'flagellar', '鞭毛马达'],
+            type: 'scene',
+            sceneClass: 'FlagellarScene',
+            icon: 'fa-bacterium',
+            description: '自然界最精密的纳米分子机器',
+            difficulty: 3,
+            intro: {
+                subtitle: '探秘细菌的"发动机"',
+                objectives: [
+                    '了解鞭毛马达的多层结构组成',
+                    '理解质子动力驱动原理',
+                    '认识自然界纳米机器的精密设计'
+                ],
+                keyPoints: ['C环', 'MS环', '定子/转子', 'L环P环', '质子动力'],
+                tips: '点击各部件了解详情，观察质子流动如何驱动旋转！'
+            }
+        },
+        {
             id: 'ppt',
             title: '注意力机制课件',
             keywords: ['ppt', '原理', '课件', '幻灯片', '讲解'],

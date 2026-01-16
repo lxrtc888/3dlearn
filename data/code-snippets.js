@@ -163,6 +163,34 @@ function countPasses(passCount, childNumber = 1, total = 8) {
 // 示例：传42次，花在 findHolder(42) = 3 号手里
 // 示例：传69次，1号传过 countPasses(69) = 9 次`,
 
+    flagellar: `// 细菌鞭毛马达 - 生物纳米机器
+class FlagellarMotor {
+    constructor() {
+        // 马达结构
+        this.stators = 8;         // 定子单元数
+        this.protonGradient = 0;  // 质子梯度
+        this.rotationSpeed = 0;   // 转速 (RPM)
+        this.direction = 'CCW';   // 旋转方向
+    }
+    
+    // 质子动力驱动
+    driveRotation(protonFlow) {
+        // 质子流过定子通道产生扭矩
+        const torque = protonFlow * this.stators;
+        this.rotationSpeed = torque * 1000; // 可达100,000 RPM
+        return this.rotationSpeed;
+    }
+    
+    // 切换旋转方向 (趋化反应)
+    switchDirection() {
+        // C环开关复合体控制方向
+        this.direction = this.direction === 'CCW' ? 'CW' : 'CCW';
+        // CCW = 游泳前进, CW = 翻滚改变方向
+    }
+}
+
+// 鞭毛马达效率接近100%，远超人造马达！`,
+
     ppt: `// 智能课件系统
 class SlideRenderer {
     constructor(slides) {

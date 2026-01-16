@@ -50,6 +50,7 @@ function initQuickCases() {
         'electromagnetic': 'physics',
         'cell': 'biology',
         'dna': 'biology',
+        'flagellar': 'biology',
         'vector3d': 'math',
         'conic': 'math',
         'drumflower': 'math',
