@@ -191,6 +191,58 @@ class FlagellarMotor {
 
 // 鞭毛马达效率接近100%，远超人造马达！`,
 
+    gravity: `/**
+ * 万有引力与时空弯曲模拟器
+ * 从牛顿到爱因斯坦的引力理论可视化
+ */
+class GravitySimulator {
+    // 牛顿万有引力定律
+    static newtonGravity(m1, m2, r) {
+        const G = 6.674e-11; // 万有引力常数
+        return G * m1 * m2 / (r * r);
+    }
+    
+    // 爱因斯坦时空弯曲 - 网格变形算法
+    deformSpacetime(gridVertex, masses) {
+        let totalCurvature = 0;
+        for (const mass of masses) {
+            const distance = gridVertex.distanceTo(mass.position);
+            // 高斯函数模拟质量导致的时空下沉
+            const sigma = mass.schwarzschildRadius * 2;
+            totalCurvature += mass.value * 
+                Math.exp(-distance² / (2 * sigma²));
+        }
+        return totalCurvature;
+    }
+    
+    // 引力波传播
+    gravitationalWave(position, time) {
+        const wavelength = 3.0;
+        const speed = 299792458; // 光速
+        const distance = position.length();
+        const phase = distance / wavelength - time * speed;
+        return Math.sin(phase * 2 * Math.PI);
+    }
+    
+    // 史瓦西半径（事件视界）
+    schwarzschildRadius(mass) {
+        const G = 6.674e-11;
+        const c = 299792458;
+        return 2 * G * mass / (c * c);
+    }
+    
+    // 霍金辐射温度
+    hawkingTemperature(mass) {
+        const h = 6.626e-34; // 普朗克常数
+        const c = 299792458;
+        const k = 1.381e-23; // 玻尔兹曼常数
+        const G = 6.674e-11;
+        return (h * c³) / (8 * Math.PI * G * mass * k);
+    }
+}
+
+// "质量告诉时空如何弯曲，时空告诉物质如何运动" - 爱因斯坦`,
+
     ppt: `// 智能课件系统
 class SlideRenderer {
     constructor(slides) {

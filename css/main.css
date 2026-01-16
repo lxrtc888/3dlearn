@@ -1612,3 +1612,121 @@ body {
         opacity: 1;
     }
 }
+
+/* === 万有引力场景控制面板 === */
+.gravity-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 12px;
+    background: rgba(10, 15, 26, 0.9);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.gravity-controls .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gravity-controls .control-group label {
+    font-size: 12px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gravity-controls .mode-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.gravity-controls .mode-btn {
+    padding: 8px 12px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gravity-controls .mode-btn:hover {
+    background: rgba(51, 65, 85, 0.8);
+    border-color: rgba(0, 212, 255, 0.4);
+    color: #e2e8f0;
+}
+
+.gravity-controls .mode-btn.active {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: #00D4FF;
+    color: #00D4FF;
+}
+
+.gravity-controls .mode-btn i {
+    font-size: 14px;
+}
+
+.gravity-controls input[type="range"] {
+    width: 120px;
+    height: 6px;
+    background: rgba(51, 65, 85, 0.8);
+    border-radius: 3px;
+    -webkit-appearance: none;
+}
+
+.gravity-controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #00D4FF;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.gravity-controls .action-btn {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 150, 200, 0.2));
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    border-radius: 8px;
+    color: #00D4FF;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gravity-controls .action-btn:hover {
+    background: rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+/* 公式样式 */
+.info-content .formula {
+    font-family: 'Georgia', serif;
+    font-size: 18px;
+    color: #FFD700;
+    background: rgba(255, 215, 0, 0.1);
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 12px 0;
+    text-align: center;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.info-content .highlight {
+    color: #00D4FF;
+    background: rgba(0, 212, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 12px;
+    display: block;
+}

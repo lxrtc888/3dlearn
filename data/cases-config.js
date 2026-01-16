@@ -253,6 +253,27 @@ window.CasesConfig = {
             }
         },
         {
+            id: 'gravity',
+            title: '万有引力与时空弯曲',
+            keywords: ['万有引力', '引力', '时空', '弯曲', '爱因斯坦', '牛顿', '引力波', '黑洞', '霍金', '广义相对论'],
+            type: 'scene',
+            sceneClass: 'GravityScene',
+            icon: 'fa-globe',
+            description: '从牛顿到爱因斯坦，探索引力的本质',
+            difficulty: 3,
+            intro: {
+                subtitle: '牛顿万有引力 × 爱因斯坦广义相对论',
+                objectives: [
+                    '理解牛顿万有引力定律 F = GMm/r²',
+                    '认识爱因斯坦的时空弯曲概念',
+                    '观察引力波的传播和探测原理',
+                    '了解黑洞和霍金辐射'
+                ],
+                keyPoints: ['万有引力', '时空弯曲', '引力波', '黑洞', '事件视界', '霍金辐射'],
+                tips: '使用模式按钮切换不同教学内容，释放测试粒子观察轨道运动！'
+            }
+        },
+        {
             id: 'ppt',
             title: '注意力机制课件',
             keywords: ['ppt', '原理', '课件', '幻灯片', '讲解'],

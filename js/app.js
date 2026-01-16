@@ -51,6 +51,7 @@ function initQuickCases() {
         'hydraulic': 'physics',
         'pendulum': 'physics',
         'electromagnetic': 'physics',
+        'gravity': 'physics',
         'cell': 'biology',
         'dna': 'biology',
         'flagellar': 'biology',
