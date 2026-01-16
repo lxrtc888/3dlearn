@@ -397,9 +397,9 @@ class GravityScene {
     updateOrbits(delta) {
         if (!this.isPlaying) return;
         
-        // 地球公转
+        // 地球公转 - 增加速度
         if (this.earth) {
-            this.orbitAngle += delta * 0.3;
+            this.orbitAngle += delta * 0.8;  // 加快速度
             const earthRadius = this.celestialData.earth.orbitRadius;
             this.earth.position.x = Math.cos(this.orbitAngle) * earthRadius;
             this.earth.position.z = Math.sin(this.orbitAngle) * earthRadius;
@@ -407,7 +407,7 @@ class GravityScene {
         
         // 月球公转（绕地球）
         if (this.moon && this.earth) {
-            this.moonOrbitAngle += delta * 1.2;
+            this.moonOrbitAngle += delta * 2.5;  // 加快速度
             const moonRadius = this.celestialData.moon.orbitRadius;
             this.moon.position.x = this.earth.position.x + Math.cos(this.moonOrbitAngle) * moonRadius;
             this.moon.position.z = this.earth.position.z + Math.sin(this.moonOrbitAngle) * moonRadius;
@@ -471,23 +471,25 @@ class GravityScene {
      * 绑定控制事件
      */
     bindControlEvents() {
+        const self = this;  // 保存 this 引用
+        
         // 模式切换
         document.querySelectorAll('.mode-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', function() {
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.switchMode(btn.dataset.mode);
+                this.classList.add('active');
+                self.switchMode(this.dataset.mode);
             });
         });
         
         // 质量滑块
         const sunMassSlider = document.getElementById('sun-mass');
         if (sunMassSlider) {
-            sunMassSlider.addEventListener('input', (e) => {
+            sunMassSlider.addEventListener('input', function(e) {
                 const value = parseFloat(e.target.value);
                 document.getElementById('sun-mass-value').textContent = value;
-                if (this.sun) {
-                    this.sun.userData.mass = value;
+                if (self.sun) {
+                    self.sun.userData.mass = value;
                 }
             });
         }
@@ -495,24 +497,29 @@ class GravityScene {
         // 播放/暂停
         const playBtn = document.getElementById('btn-play-pause');
         if (playBtn) {
-            playBtn.addEventListener('click', () => {
-                this.isPlaying = !this.isPlaying;
-                playBtn.innerHTML = this.isPlaying 
+            playBtn.addEventListener('click', function() {
+                self.isPlaying = !self.isPlaying;
+                this.innerHTML = self.isPlaying 
                     ? '<i class="fas fa-pause"></i> 暂停'
                     : '<i class="fas fa-play"></i> 播放';
+                console.log('isPlaying:', self.isPlaying);
             });
         }
         
         // 释放粒子
         const particleBtn = document.getElementById('btn-add-particle');
         if (particleBtn) {
-            particleBtn.addEventListener('click', () => this.addTestParticle());
+            particleBtn.addEventListener('click', function() {
+                self.addTestParticle();
+            });
         }
         
         // 重置
         const resetBtn = document.getElementById('btn-reset');
         if (resetBtn) {
-            resetBtn.addEventListener('click', () => this.resetScene());
+            resetBtn.addEventListener('click', function() {
+                self.resetScene();
+            });
         }
     }
 
@@ -1020,6 +1027,17 @@ class GravityScene {
         if (playBtn) {
             playBtn.innerHTML = '<i class="fas fa-pause"></i> 暂停';
         }
+        console.log('Auto play started, isPlaying:', this.isPlaying);
+        
+        // 初始显示牛顿模式信息
+        this.showModeInfo('newton');
+    }
+    
+    /**
+     * 获取可交互对象
+     */
+    getInteractables() {
+        return this.masses.filter(m => m && m.userData && m.userData.isInteractive);
     }
 
     /**
