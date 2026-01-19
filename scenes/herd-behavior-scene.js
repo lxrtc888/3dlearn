@@ -253,27 +253,46 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
      */
     createPersonMesh(person) {
         const group = new THREE.Group();
+        const personColor = person.isInformed ? this.colors.informed : this.colors.person;
 
-        // 身体
-        const bodyGeom = new THREE.CapsuleGeometry(0.4, 1, 4, 8);
+        // 身体 - 使用圆柱体代替CapsuleGeometry（r128版本不支持Capsule）
+        const bodyGeom = new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8);
         const bodyMat = new THREE.MeshStandardMaterial({
-            color: person.isInformed ? this.colors.informed : this.colors.person
+            color: personColor,
+            emissive: personColor,
+            emissiveIntensity: person.isInformed ? 0.3 : 0.1
         });
         const body = new THREE.Mesh(bodyGeom, bodyMat);
-        body.position.y = 1;
+        body.position.y = 0.8;
         group.add(body);
 
         // 头
-        const headGeom = new THREE.SphereGeometry(0.35, 8, 8);
+        const headGeom = new THREE.SphereGeometry(0.35, 12, 12);
         const headMat = new THREE.MeshStandardMaterial({
-            color: person.isInformed ? this.colors.informed : this.colors.person
+            color: personColor,
+            emissive: personColor,
+            emissiveIntensity: person.isInformed ? 0.3 : 0.1
         });
         const head = new THREE.Mesh(headGeom, headMat);
-        head.position.y = 2;
+        head.position.y = 1.7;
         group.add(head);
+        
+        // 知情者头顶光环
+        if (person.isInformed) {
+            const haloGeom = new THREE.TorusGeometry(0.45, 0.06, 8, 16);
+            const haloMat = new THREE.MeshStandardMaterial({
+                color: 0xffd700,
+                emissive: 0xffd700,
+                emissiveIntensity: 0.8
+            });
+            const halo = new THREE.Mesh(haloGeom, haloMat);
+            halo.rotation.x = Math.PI / 2;
+            halo.position.y = 2.2;
+            group.add(halo);
+        }
 
         // 决策指示器（箭头，初始隐藏）
-        const arrowGeom = new THREE.ConeGeometry(0.3, 0.6, 4);
+        const arrowGeom = new THREE.ConeGeometry(0.3, 0.6, 6);
         const arrowMat = new THREE.MeshStandardMaterial({
             color: this.colors.arrow,
             emissive: this.colors.arrow,
@@ -281,17 +300,18 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
         });
         const arrow = new THREE.Mesh(arrowGeom, arrowMat);
         arrow.rotation.z = Math.PI / 2;  // 指向右
-        arrow.position.y = 2.8;
+        arrow.position.y = 2.5;
         arrow.visible = false;
         group.add(arrow);
 
         group.position.set(person.x, 0, person.z);
         group.userData = { 
             person, 
-            body, 
+            body,
+            head,
             arrow,
-            hoverTitle: person.isInformed ? '知情者' : '普通人',
-            hoverDesc: person.isInformed ? '知道正确方向' : '需要观察他人决策'
+            hoverTitle: person.isInformed ? '🌟 知情者' : '👤 普通人',
+            hoverDesc: person.isInformed ? '知道正确方向（左边）' : '会观察他人决策后跟随'
         };
 
         this.mainGroup.add(group);
@@ -325,10 +345,14 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
         });
 
         this.peopleMeshes.forEach(mesh => {
+            const personColor = mesh.userData.person.isInformed ? this.colors.informed : this.colors.person;
             mesh.userData.arrow.visible = false;
-            mesh.userData.body.material.color.setHex(
-                mesh.userData.person.isInformed ? this.colors.informed : this.colors.person
-            );
+            mesh.userData.body.material.color.setHex(personColor);
+            mesh.userData.body.material.emissive.setHex(personColor);
+            if (mesh.userData.head) {
+                mesh.userData.head.material.color.setHex(personColor);
+                mesh.userData.head.material.emissive.setHex(personColor);
+            }
         });
 
         this.currentStep = 0;
@@ -399,15 +423,26 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
     updatePersonVisual(mesh, decision) {
         const arrow = mesh.userData.arrow;
         const body = mesh.userData.body;
+        const head = mesh.userData.head;
         const isCorrect = decision === this.correctDirection;
+        const resultColor = isCorrect ? this.colors.correct : this.colors.wrong;
 
         // 显示箭头
         arrow.visible = true;
         arrow.rotation.z = decision === 0 ? -Math.PI / 2 : Math.PI / 2;
-        arrow.material.color.setHex(isCorrect ? this.colors.correct : this.colors.wrong);
+        arrow.material.color.setHex(resultColor);
+        arrow.material.emissive.setHex(resultColor);
 
-        // 改变身体颜色
-        body.material.color.setHex(isCorrect ? this.colors.correct : this.colors.wrong);
+        // 改变身体和头部颜色
+        body.material.color.setHex(resultColor);
+        body.material.emissive.setHex(resultColor);
+        body.material.emissiveIntensity = 0.3;
+        
+        if (head) {
+            head.material.color.setHex(resultColor);
+            head.material.emissive.setHex(resultColor);
+            head.material.emissiveIntensity = 0.3;
+        }
 
         // 动画
         if (typeof gsap !== 'undefined') {
