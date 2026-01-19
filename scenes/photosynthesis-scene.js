@@ -1,16 +1,9 @@
 /**
- * 光合作用与呼吸作用 3D教学场景
+ * 光合作用与呼吸作用 3D教学场景 v2.0
  * ============================================
- * 展示植物和动物的能量交换
+ * 全新重构版本 - 清晰的结构与动态流程
  * 
- * 教学内容：
- * 1. 光合作用：光能→化学能
- * 2. 呼吸作用：化学能→ATP
- * 3. 叶绿体与线粒体结构
- * 4. 碳循环与氧循环
- * 5. 分子运动可视化
- * 
- * 目标学生：初中-高中
+ * 参考设计：剖面图+动态分子流+分步教学
  * ============================================
  */
 
@@ -23,216 +16,225 @@ class PhotosynthesisScene {
         this.name = 'PhotosynthesisScene';
         this.mainGroup = null;
         
-        // 场景元素
-        this.chloroplast = null;      // 叶绿体
-        this.mitochondria = null;     // 线粒体
-        this.molecules = [];          // 分子集合
-        this.arrows = [];             // 流程箭头
+        // 核心元素
+        this.chloroplast = null;      // 叶绿体（左侧）
+        this.mitochondria = null;     // 线粒体（右侧）
+        this.molecules = [];          // 所有分子
+        this.flowArrows = [];         // 流程箭头
+        this.labels = [];             // 标签
         
         // 动画状态
-        this.isPlaying = true;
+        this.isAutoPlaying = false;
         this.animationTime = 0;
-        this.currentStep = 0;
-        this.totalSteps = 6;
+        this.currentPhase = 0;        // 0=概览, 1=光反应, 2=暗反应, 3=呼吸作用
         
-        // 分子颜色
+        // 颜色方案 - 清晰区分
         this.colors = {
-            co2: 0x888888,        // 二氧化碳 - 灰色
-            o2: 0x4fc3f7,         // 氧气 - 浅蓝
-            h2o: 0x2196f3,        // 水 - 蓝色
-            glucose: 0xffeb3b,    // 葡萄糖 - 黄色
-            atp: 0xff5722,        // ATP - 橙红
-            adp: 0xff9800,        // ADP - 橙色
-            nadph: 0x9c27b0,      // NADPH - 紫色
-            light: 0xffff00,      // 光 - 亮黄
-            chloroplast: 0x4caf50, // 叶绿体 - 绿色
-            mitochondria: 0xe91e63 // 线粒体 - 粉红
+            // 结构颜色
+            chloroplastOuter: 0x2e7d32,   // 叶绿体外膜 - 深绿
+            chloroplastInner: 0x4caf50,   // 叶绿体内膜 - 绿
+            thylakoid: 0x81c784,          // 类囊体 - 浅绿
+            grana: 0x388e3c,              // 基粒 - 翠绿
+            stroma: 0xa5d6a7,             // 基质 - 淡绿
+            
+            mitochondriaOuter: 0xc2185b,  // 线粒体外膜 - 深粉
+            mitochondriaInner: 0xe91e63,  // 线粒体内膜 - 粉红
+            cristae: 0xf06292,            // 嵴 - 浅粉
+            matrix: 0xf8bbd9,             // 基质 - 淡粉
+            
+            // 分子颜色
+            light: 0xffeb3b,       // 光 - 黄色
+            h2o: 0x2196f3,         // 水 - 蓝色
+            co2: 0x9e9e9e,         // CO₂ - 灰色
+            o2: 0x00bcd4,          // O₂ - 青色
+            glucose: 0xff9800,     // 葡萄糖 - 橙色
+            atp: 0xf44336,         // ATP - 红色
+            nadph: 0x9c27b0,       // NADPH - 紫色
+            
+            // UI颜色
+            arrow: 0x00e676,       // 箭头 - 亮绿
+            highlight: 0xffeb3b,   // 高亮 - 黄
+            text: 0xffffff         // 文字 - 白
         };
         
-        // 步骤信息
-        this.stepInfo = [
+        // 教学阶段
+        this.phases = [
             {
-                title: '1. 光能吸收',
-                desc: '叶绿体中的叶绿素吸收太阳光能，激发电子跃迁',
-                highlight: 'chloroplast'
+                id: 0,
+                title: '🌍 整体概览',
+                subtitle: '光合作用与呼吸作用的关系',
+                description: '植物通过光合作用将光能转化为化学能（葡萄糖），再通过呼吸作用释放能量（ATP）。这两个过程构成了生命的能量循环！',
+                focus: 'overview'
             },
             {
-                title: '2. 水的光解',
-                desc: '光能分解水分子：2H₂O → 4H⁺ + 4e⁻ + O₂↑',
-                highlight: 'water'
+                id: 1,
+                title: '☀️ 光反应',
+                subtitle: '发生在类囊体膜上',
+                description: '光能被叶绿素吸收 → 水分子光解产生O₂ → 电子传递产生ATP和NADPH',
+                formula: '2H₂O + 光能 → O₂↑ + 4H⁺ + 4e⁻ → ATP + NADPH',
+                focus: 'lightReaction'
             },
             {
-                title: '3. ATP与NADPH合成',
-                desc: '电子传递产生ATP和NADPH，储存化学能',
-                highlight: 'atp'
+                id: 2,
+                title: '🌑 暗反应（卡尔文循环）',
+                subtitle: '发生在叶绿体基质中',
+                description: 'CO₂被固定 → 利用ATP和NADPH还原 → 合成葡萄糖C₆H₁₂O₆',
+                formula: '6CO₂ + ATP + NADPH → C₆H₁₂O₆',
+                focus: 'darkReaction'
             },
             {
-                title: '4. 碳固定（卡尔文循环）',
-                desc: 'CO₂ + ATP + NADPH → 葡萄糖(C₆H₁₂O₆)',
-                highlight: 'glucose'
-            },
-            {
-                title: '5. 细胞呼吸启动',
-                desc: '葡萄糖进入线粒体，开始有氧呼吸',
-                highlight: 'mitochondria'
-            },
-            {
-                title: '6. ATP大量生成',
-                desc: 'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + 38ATP',
-                highlight: 'respiration'
+                id: 3,
+                title: '🔥 细胞呼吸',
+                subtitle: '发生在线粒体中',
+                description: '葡萄糖被氧化分解 → 电子传递链产生大量ATP → 为生命活动提供能量',
+                formula: 'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + 38ATP',
+                focus: 'respiration'
             }
         ];
+        
+        // 相机默认位置
+        this.defaultCameraPos = { x: 0, y: 2, z: 18 };
     }
 
     init() {
         this.mainGroup = new THREE.Group();
         this.scene.add(this.mainGroup);
         
-        // 创建背景
-        this.createBackground();
+        // 设置环境
+        this.setupEnvironment();
+        this.setupLighting();
         
-        // 创建叶绿体
-        this.createChloroplast();
+        // 创建主要结构
+        this.createChloroplastCrossSection();  // 叶绿体剖面
+        this.createMitochondriaCrossSection(); // 线粒体剖面
         
-        // 创建线粒体
-        this.createMitochondria();
-        
-        // 创建分子
+        // 创建分子和箭头
         this.createMolecules();
+        this.createFlowSystem();
         
-        // 创建流程箭头
-        this.createFlowArrows();
-        
-        // 创建碳循环示意
-        this.createCarbonCycle();
-        
-        // 创建公式标签
-        this.createFormulaLabels();
+        // 创建信息标签
+        this.createStructureLabels();
         
         // 设置相机
         if (this.camera) {
-            this.camera.position.set(0, 2, 15);
+            this.camera.position.set(this.defaultCameraPos.x, this.defaultCameraPos.y, this.defaultCameraPos.z);
             this.camera.lookAt(0, 0, 0);
         }
         
-        // 设置灯光
-        this.setupLighting();
-        
         // 创建UI
         this.setupUI();
+        this.createInfoPanel();
         
-        console.log('PhotosynthesisScene initialized');
+        // 初始引导
+        setTimeout(() => {
+            this.showGuide('🌱 欢迎来到光合作用与呼吸作用的世界！');
+            this.updatePhaseDisplay();
+        }, 500);
+        
+        console.log('PhotosynthesisScene v2.0 initialized');
     }
 
     /**
-     * 创建背景
+     * 设置环境
      */
-    createBackground() {
-        // 渐变背景
-        const bgGeometry = new THREE.PlaneGeometry(60, 40);
-        const bgMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-                colorTop: { value: new THREE.Color(0x1a237e) },
-                colorBottom: { value: new THREE.Color(0x004d40) }
-            },
-            vertexShader: `
-                varying vec2 vUv;
-                void main() {
-                    vUv = uv;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                uniform vec3 colorTop;
-                uniform vec3 colorBottom;
-                varying vec2 vUv;
-                void main() {
-                    gl_FragColor = vec4(mix(colorBottom, colorTop, vUv.y), 1.0);
-                }
-            `,
-            side: THREE.DoubleSide
-        });
-        const bg = new THREE.Mesh(bgGeometry, bgMaterial);
-        bg.position.z = -15;
-        this.mainGroup.add(bg);
+    setupEnvironment() {
+        // 深色背景
+        this.scene.background = new THREE.Color(0x0a0a18);
+        this.scene.fog = new THREE.FogExp2(0x0a0a18, 0.015);
         
-        // 环境粒子
-        this.createAmbientParticles();
+        // 网格地面
+        const grid = new THREE.GridHelper(40, 40, 0x1a3a1a, 0x0d1f0d);
+        grid.position.y = -6;
+        this.mainGroup.add(grid);
     }
 
     /**
-     * 创建环境粒子
+     * 设置灯光
      */
-    createAmbientParticles() {
-        const count = 300;
-        const positions = new Float32Array(count * 3);
-        const colors = new Float32Array(count * 3);
+    setupLighting() {
+        // 环境光
+        const ambient = new THREE.AmbientLight(0x404050, 0.6);
+        this.scene.add(ambient);
         
-        for (let i = 0; i < count; i++) {
-            positions[i * 3] = (Math.random() - 0.5) * 30;
-            positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
-            
-            // 绿色调粒子
-            colors[i * 3] = 0.2 + Math.random() * 0.3;
-            colors[i * 3 + 1] = 0.5 + Math.random() * 0.5;
-            colors[i * 3 + 2] = 0.2 + Math.random() * 0.3;
-        }
+        // 主光源（从上方，模拟阳光）
+        const sunLight = new THREE.DirectionalLight(0xffffcc, 0.8);
+        sunLight.position.set(-5, 15, 10);
+        this.scene.add(sunLight);
         
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        // 叶绿体区域绿光
+        const greenLight = new THREE.PointLight(0x4caf50, 0.6, 15);
+        greenLight.position.set(-6, 2, 5);
+        this.mainGroup.add(greenLight);
         
-        const material = new THREE.PointsMaterial({
-            size: 0.08,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.6
-        });
-        
-        this.ambientParticles = new THREE.Points(geometry, material);
-        this.mainGroup.add(this.ambientParticles);
+        // 线粒体区域红光
+        const pinkLight = new THREE.PointLight(0xe91e63, 0.6, 15);
+        pinkLight.position.set(6, 2, 5);
+        this.mainGroup.add(pinkLight);
     }
 
     /**
-     * 创建叶绿体（左侧）
+     * 创建叶绿体剖面图（左侧）
      */
-    createChloroplast() {
+    createChloroplastCrossSection() {
         this.chloroplast = new THREE.Group();
-        this.chloroplast.position.set(-5, 0, 0);
+        this.chloroplast.position.set(-6, 0, 0);
         
-        // 叶绿体外膜（椭球形）
-        const outerGeometry = new THREE.SphereGeometry(2.5, 32, 32);
-        outerGeometry.scale(1.5, 1, 0.8);
+        // 外膜（椭圆剖面）
+        const outerShape = new THREE.Shape();
+        outerShape.ellipse(0, 0, 3.5, 2.2, 0, Math.PI * 2);
+        const outerGeometry = new THREE.ExtrudeGeometry(outerShape, { depth: 0.3, bevelEnabled: false });
         const outerMaterial = new THREE.MeshPhongMaterial({
-            color: this.colors.chloroplast,
+            color: this.colors.chloroplastOuter,
             transparent: true,
-            opacity: 0.4,
+            opacity: 0.5,
             side: THREE.DoubleSide
         });
-        const outer = new THREE.Mesh(outerGeometry, outerMaterial);
-        this.chloroplast.add(outer);
+        const outerMembrane = new THREE.Mesh(outerGeometry, outerMaterial);
+        outerMembrane.rotation.x = -Math.PI / 2;
+        outerMembrane.position.y = 1;
+        this.chloroplast.add(outerMembrane);
         
-        // 类囊体（内部膜结构）
-        this.createThylakoids();
+        // 基质（内部填充）
+        const stromaGeometry = new THREE.CylinderGeometry(3.2, 3.2, 0.4, 32, 1, false, 0, Math.PI * 2);
+        stromaGeometry.scale(1.1, 1, 0.7);
+        const stromaMaterial = new THREE.MeshPhongMaterial({
+            color: this.colors.stroma,
+            transparent: true,
+            opacity: 0.3
+        });
+        const stroma = new THREE.Mesh(stromaGeometry, stromaMaterial);
+        stroma.position.y = 0;
+        stroma.userData = {
+            name: '叶绿体基质 (Stroma)',
+            info: '<b>基质</b>是叶绿体内部的液态部分<br><br><b>暗反应（卡尔文循环）</b>在此进行：<br>• CO₂固定<br>• ATP和NADPH参与还原<br>• 合成葡萄糖',
+            hoverTitle: '基质',
+            hoverDesc: '暗反应（卡尔文循环）场所',
+            hoverIcon: 'fa-circle',
+            isInteractive: true
+        };
+        this.chloroplast.add(stroma);
         
-        // 基粒（类囊体堆叠）
-        this.createGrana();
+        // 创建基粒（类囊体堆叠）
+        this.createGranaStacks();
         
-        // 叶绿体标签
-        const label = this.createLabel('叶绿体', this.colors.chloroplast);
-        label.position.set(0, 3.2, 0);
-        this.chloroplast.add(label);
+        // 创建类囊体连接
+        this.createThylakoidConnections();
+        
+        // 标题标签
+        const titleLabel = this.create3DLabel('叶绿体', this.colors.chloroplastOuter, { fontSize: 40, width: 200 });
+        titleLabel.position.set(0, 3.5, 0);
+        this.chloroplast.add(titleLabel);
         
         // 交互信息
         this.chloroplast.userData = {
             name: '叶绿体 (Chloroplast)',
-            info: `<b>叶绿体</b> - 光合作用的场所<br><br>
-                <b>结构特点：</b><br>
-                • 双层膜结构<br>
-                • 内含类囊体膜（光反应）<br>
-                • 基质（暗反应/卡尔文循环）<br><br>
-                <b>主要功能：</b><br>
+            info: `<b>叶绿体</b> - 光合作用的"工厂"<br><br>
+                <b>结构组成：</b><br>
+                • 外膜和内膜（双层膜）<br>
+                • 类囊体膜（光反应场所）<br>
+                • 基粒（类囊体堆叠）<br>
+                • 基质（暗反应场所）<br><br>
+                <b>总反应式：</b><br>
                 6CO₂ + 6H₂O + 光能 → C₆H₁₂O₆ + 6O₂`,
             hoverTitle: '叶绿体',
             hoverDesc: '光合作用的场所',
@@ -244,104 +246,136 @@ class PhotosynthesisScene {
     }
 
     /**
-     * 创建类囊体
+     * 创建基粒堆叠
      */
-    createThylakoids() {
-        const thylakoidGroup = new THREE.Group();
-        
-        for (let i = 0; i < 5; i++) {
-            const geometry = new THREE.TorusGeometry(0.8 + i * 0.15, 0.08, 8, 32);
-            const material = new THREE.MeshPhongMaterial({
-                color: 0x2e7d32,
-                emissive: 0x1b5e20,
-                emissiveIntensity: 0.2
-            });
-            const torus = new THREE.Mesh(geometry, material);
-            torus.rotation.x = Math.PI / 2;
-            torus.position.y = -0.8 + i * 0.4;
-            thylakoidGroup.add(torus);
-        }
-        
-        thylakoidGroup.userData = {
-            name: '类囊体膜',
-            info: '<b>类囊体膜</b><br><br>光反应发生的场所，含有叶绿素和光合色素，进行光能捕获和电子传递。',
-            isInteractive: true
-        };
-        
-        this.chloroplast.add(thylakoidGroup);
-    }
-
-    /**
-     * 创建基粒
-     */
-    createGrana() {
+    createGranaStacks() {
         const granaGroup = new THREE.Group();
         
-        // 堆叠的圆盘
-        for (let stack = 0; stack < 2; stack++) {
-            const stackGroup = new THREE.Group();
-            stackGroup.position.set(stack === 0 ? -0.8 : 0.8, 0, 0);
+        // 三个基粒堆
+        const positions = [
+            { x: -1.5, y: 0, z: 0 },
+            { x: 0, y: 0, z: 0.5 },
+            { x: 1.5, y: 0, z: -0.3 }
+        ];
+        
+        positions.forEach((pos, idx) => {
+            const stack = new THREE.Group();
+            stack.position.set(pos.x, pos.y, pos.z);
             
-            for (let i = 0; i < 6; i++) {
-                const geometry = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16);
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0x388e3c,
-                    emissive: 0x1b5e20,
-                    emissiveIntensity: 0.3
+            // 每个基粒由5-7层类囊体组成
+            const layers = 5 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < layers; i++) {
+                const diskGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.12, 16);
+                const diskMaterial = new THREE.MeshPhongMaterial({
+                    color: this.colors.grana,
+                    emissive: this.colors.grana,
+                    emissiveIntensity: 0.2
                 });
-                const disk = new THREE.Mesh(geometry, material);
-                disk.position.y = -0.5 + i * 0.15;
-                stackGroup.add(disk);
+                const disk = new THREE.Mesh(diskGeometry, diskMaterial);
+                disk.position.y = -0.6 + i * 0.15;
+                stack.add(disk);
             }
             
-            granaGroup.add(stackGroup);
-        }
-        
-        granaGroup.userData = {
-            name: '基粒',
-            info: '<b>基粒 (Granum)</b><br><br>类囊体堆叠形成的结构，光合色素集中的地方，光反应的主要场所。',
-            isInteractive: true
-        };
+            stack.userData = {
+                name: `基粒 ${idx + 1}`,
+                info: '<b>基粒 (Granum)</b><br><br>由多层类囊体堆叠而成，是<b>光反应</b>的主要场所。<br><br>含有：<br>• 叶绿素（吸收光能）<br>• 光系统I和II<br>• 电子传递链<br>• ATP合酶',
+                hoverTitle: '基粒',
+                hoverDesc: '类囊体堆叠，光反应场所',
+                hoverIcon: 'fa-layer-group',
+                isInteractive: true
+            };
+            
+            granaGroup.add(stack);
+        });
         
         this.chloroplast.add(granaGroup);
+        this.granaGroup = granaGroup;
     }
 
     /**
-     * 创建线粒体（右侧）
+     * 创建类囊体连接
      */
-    createMitochondria() {
-        this.mitochondria = new THREE.Group();
-        this.mitochondria.position.set(5, 0, 0);
-        
-        // 线粒体外膜（椭球形）
-        const outerGeometry = new THREE.SphereGeometry(2, 32, 32);
-        outerGeometry.scale(1.5, 1, 0.8);
-        const outerMaterial = new THREE.MeshPhongMaterial({
-            color: this.colors.mitochondria,
+    createThylakoidConnections() {
+        const connectionsMaterial = new THREE.MeshPhongMaterial({
+            color: this.colors.thylakoid,
             transparent: true,
-            opacity: 0.35,
+            opacity: 0.6
+        });
+        
+        // 连接基粒的片层
+        for (let i = 0; i < 3; i++) {
+            const curve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-1.5, -0.3 + i * 0.3, 0),
+                new THREE.Vector3(-0.5, -0.2 + i * 0.3, 0.3),
+                new THREE.Vector3(0.5, -0.3 + i * 0.3, 0.4),
+                new THREE.Vector3(1.5, -0.2 + i * 0.3, 0)
+            ]);
+            
+            const tubeGeometry = new THREE.TubeGeometry(curve, 20, 0.06, 8, false);
+            const tube = new THREE.Mesh(tubeGeometry, connectionsMaterial);
+            this.chloroplast.add(tube);
+        }
+    }
+
+    /**
+     * 创建线粒体剖面图（右侧）
+     */
+    createMitochondriaCrossSection() {
+        this.mitochondria = new THREE.Group();
+        this.mitochondria.position.set(6, 0, 0);
+        
+        // 外膜（椭圆剖面）
+        const outerShape = new THREE.Shape();
+        outerShape.ellipse(0, 0, 3, 2, 0, Math.PI * 2);
+        const outerGeometry = new THREE.ExtrudeGeometry(outerShape, { depth: 0.3, bevelEnabled: false });
+        const outerMaterial = new THREE.MeshPhongMaterial({
+            color: this.colors.mitochondriaOuter,
+            transparent: true,
+            opacity: 0.5,
             side: THREE.DoubleSide
         });
-        const outer = new THREE.Mesh(outerGeometry, outerMaterial);
-        this.mitochondria.add(outer);
+        const outerMembrane = new THREE.Mesh(outerGeometry, outerMaterial);
+        outerMembrane.rotation.x = -Math.PI / 2;
+        outerMembrane.position.y = 1;
+        this.mitochondria.add(outerMembrane);
         
-        // 内膜嵴（褶皱结构）
+        // 基质
+        const matrixGeometry = new THREE.CylinderGeometry(2.7, 2.7, 0.4, 32);
+        matrixGeometry.scale(1.1, 1, 0.75);
+        const matrixMaterial = new THREE.MeshPhongMaterial({
+            color: this.colors.matrix,
+            transparent: true,
+            opacity: 0.3
+        });
+        const matrix = new THREE.Mesh(matrixGeometry, matrixMaterial);
+        matrix.userData = {
+            name: '线粒体基质 (Matrix)',
+            info: '<b>基质</b>是线粒体内膜围成的空间<br><br><b>三羧酸循环（柠檬酸循环）</b>在此进行：<br>• 丙酮酸氧化分解<br>• 产生NADH和FADH₂<br>• 释放CO₂',
+            hoverTitle: '基质',
+            hoverDesc: '三羧酸循环场所',
+            hoverIcon: 'fa-circle',
+            isInteractive: true
+        };
+        this.mitochondria.add(matrix);
+        
+        // 创建内膜嵴
         this.createCristae();
         
-        // 线粒体标签
-        const label = this.createLabel('线粒体', this.colors.mitochondria);
-        label.position.set(0, 2.8, 0);
-        this.mitochondria.add(label);
+        // 标题标签
+        const titleLabel = this.create3DLabel('线粒体', this.colors.mitochondriaOuter, { fontSize: 40, width: 200 });
+        titleLabel.position.set(0, 3.2, 0);
+        this.mitochondria.add(titleLabel);
         
         // 交互信息
         this.mitochondria.userData = {
             name: '线粒体 (Mitochondria)',
             info: `<b>线粒体</b> - 细胞的"能量工厂"<br><br>
-                <b>结构特点：</b><br>
-                • 双层膜结构<br>
-                • 内膜形成嵴（增大表面积）<br>
-                • 基质含有酶和DNA<br><br>
-                <b>主要功能：</b><br>
+                <b>结构组成：</b><br>
+                • 外膜（通透性高）<br>
+                • 内膜（折叠成嵴）<br>
+                • 嵴（电子传递链）<br>
+                • 基质（三羧酸循环）<br><br>
+                <b>总反应式：</b><br>
                 C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + 38ATP`,
             hoverTitle: '线粒体',
             hoverDesc: '细胞呼吸的场所',
@@ -353,203 +387,90 @@ class PhotosynthesisScene {
     }
 
     /**
-     * 创建线粒体内膜嵴
+     * 创建内膜嵴
      */
     createCristae() {
         const cristaeGroup = new THREE.Group();
         
-        // 多个褶皱
-        for (let i = 0; i < 6; i++) {
+        // 褶皱状内膜
+        for (let i = 0; i < 5; i++) {
             const curve = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(-1.5, -0.8 + i * 0.3, 0),
-                new THREE.Vector3(-0.5, -0.6 + i * 0.3, 0.3),
-                new THREE.Vector3(0.5, -0.8 + i * 0.3, -0.2),
-                new THREE.Vector3(1.5, -0.6 + i * 0.3, 0.1)
+                new THREE.Vector3(-2, -0.5 + i * 0.25, 0),
+                new THREE.Vector3(-1, -0.3 + i * 0.25, 0.4),
+                new THREE.Vector3(0, -0.5 + i * 0.25, -0.3),
+                new THREE.Vector3(1, -0.3 + i * 0.25, 0.2),
+                new THREE.Vector3(2, -0.5 + i * 0.25, 0)
             ]);
             
-            const geometry = new THREE.TubeGeometry(curve, 20, 0.08, 8, false);
+            const geometry = new THREE.TubeGeometry(curve, 30, 0.1, 8, false);
             const material = new THREE.MeshPhongMaterial({
-                color: 0xad1457,
-                emissive: 0x880e4f,
-                emissiveIntensity: 0.2
+                color: this.colors.cristae,
+                emissive: this.colors.cristae,
+                emissiveIntensity: 0.15
             });
             const tube = new THREE.Mesh(geometry, material);
             cristaeGroup.add(tube);
         }
         
         cristaeGroup.userData = {
-            name: '线粒体内膜嵴',
-            info: '<b>内膜嵴 (Cristae)</b><br><br>内膜向内折叠形成，大大增加了表面积。电子传递链和ATP合酶位于此处，是有氧呼吸产生ATP的主要场所。',
+            name: '内膜嵴 (Cristae)',
+            info: '<b>嵴</b>是内膜向内折叠形成的结构<br><br>大大增加了表面积，是<b>氧化磷酸化</b>的场所：<br>• 电子传递链<br>• ATP合酶<br>• 产生大量ATP（约34个/葡萄糖）',
+            hoverTitle: '内膜嵴',
+            hoverDesc: '电子传递链和ATP合成场所',
+            hoverIcon: 'fa-wave-square',
             isInteractive: true
         };
         
         this.mitochondria.add(cristaeGroup);
+        this.cristaeGroup = cristaeGroup;
     }
 
     /**
      * 创建分子
      */
     createMolecules() {
-        // CO₂分子（进入叶绿体）
-        this.createCO2Molecules();
+        // 光子（太阳光）
+        this.createPhotonGroup();
         
-        // O₂分子（从叶绿体释放）
-        this.createO2Molecules();
+        // 水分子 H₂O
+        this.createMoleculeGroup('H₂O', this.colors.h2o, 5, { x: -10, y: 2, z: 0 }, 'water');
         
-        // H₂O分子
-        this.createH2OMolecules();
+        // 二氧化碳 CO₂
+        this.createMoleculeGroup('CO₂', this.colors.co2, 6, { x: -10, y: -1, z: 0 }, 'co2');
         
-        // 葡萄糖分子
-        this.createGlucoseMolecules();
+        // 氧气 O₂（光合作用产物）
+        this.createMoleculeGroup('O₂', this.colors.o2, 6, { x: -6, y: 1, z: 2 }, 'o2');
         
-        // ATP分子
-        this.createATPMolecules();
+        // 葡萄糖
+        this.createMoleculeGroup('葡萄糖', this.colors.glucose, 3, { x: 0, y: 0, z: 0 }, 'glucose');
         
-        // 光子
-        this.createPhotons();
+        // ATP（光反应产物）
+        this.createMoleculeGroup('ATP', this.colors.atp, 4, { x: -4, y: 0.5, z: 1 }, 'atp_light');
+        
+        // ATP（呼吸作用产物）
+        this.createMoleculeGroup('ATP', this.colors.atp, 8, { x: 8, y: 0, z: 2 }, 'atp_resp');
+        
+        // NADPH
+        this.createMoleculeGroup('NADPH', this.colors.nadph, 3, { x: -5, y: 0, z: 1 }, 'nadph');
     }
 
     /**
-     * 创建CO₂分子
+     * 创建光子群
      */
-    createCO2Molecules() {
-        for (let i = 0; i < 6; i++) {
-            const co2 = this.createMolecule('CO₂', this.colors.co2, 0.15);
-            co2.position.set(-10 - i * 0.5, 2 + Math.random() * 2, Math.random() * 2 - 1);
-            co2.userData = {
-                type: 'co2',
-                phase: Math.random() * Math.PI * 2,
-                speed: 0.3 + Math.random() * 0.2,
-                targetX: -6,
-                name: '二氧化碳 CO₂',
-                info: '<b>二氧化碳 CO₂</b><br><br>光合作用的原料之一，在暗反应（卡尔文循环）中被固定，最终转化为葡萄糖。',
-                isInteractive: true
-            };
-            this.molecules.push(co2);
-            this.mainGroup.add(co2);
-        }
-    }
-
-    /**
-     * 创建O₂分子
-     */
-    createO2Molecules() {
-        for (let i = 0; i < 6; i++) {
-            const o2 = this.createMolecule('O₂', this.colors.o2, 0.12);
-            o2.position.set(-5 + Math.random(), -1 + Math.random() * 0.5, Math.random() * 2 - 1);
-            o2.userData = {
-                type: 'o2',
-                phase: Math.random() * Math.PI * 2,
-                speed: 0.4 + Math.random() * 0.3,
-                released: false,
-                name: '氧气 O₂',
-                info: '<b>氧气 O₂</b><br><br>光合作用的副产物！来自水的光解：2H₂O → 4H⁺ + 4e⁻ + O₂↑<br>这就是地球大气中氧气的来源。',
-                isInteractive: true
-            };
-            this.molecules.push(o2);
-            this.mainGroup.add(o2);
-        }
-    }
-
-    /**
-     * 创建H₂O分子
-     */
-    createH2OMolecules() {
-        for (let i = 0; i < 4; i++) {
-            const h2o = this.createMolecule('H₂O', this.colors.h2o, 0.1);
-            h2o.position.set(-7 - i * 0.3, -3 + Math.random(), Math.random() - 0.5);
-            h2o.userData = {
-                type: 'h2o',
-                phase: Math.random() * Math.PI * 2,
-                speed: 0.25,
-                name: '水 H₂O',
-                info: '<b>水 H₂O</b><br><br>光合作用的原料之一。在光反应中被光解，提供电子和氢离子，同时释放O₂。',
-                isInteractive: true
-            };
-            this.molecules.push(h2o);
-            this.mainGroup.add(h2o);
-        }
-    }
-
-    /**
-     * 创建葡萄糖分子
-     */
-    createGlucoseMolecules() {
-        for (let i = 0; i < 3; i++) {
-            const glucose = this.createMolecule('C₆H₁₂O₆', this.colors.glucose, 0.25);
-            glucose.position.set(-3 + i * 0.5, 0, 0);
-            glucose.visible = false; // 初始隐藏，在卡尔文循环后显示
-            glucose.userData = {
-                type: 'glucose',
-                phase: Math.random() * Math.PI * 2,
-                speed: 0.15,
-                name: '葡萄糖 C₆H₁₂O₆',
-                info: '<b>葡萄糖 C₆H₁₂O₆</b><br><br>光合作用的产物！储存了化学能。可用于：<br>• 呼吸作用产生ATP<br>• 合成淀粉储存<br>• 合成纤维素等',
-                isInteractive: true
-            };
-            this.molecules.push(glucose);
-            this.mainGroup.add(glucose);
-        }
-    }
-
-    /**
-     * 创建ATP分子
-     */
-    createATPMolecules() {
-        // 叶绿体中的ATP
-        for (let i = 0; i < 4; i++) {
-            const atp = this.createMolecule('ATP', this.colors.atp, 0.18);
-            atp.position.set(-5 + Math.random() * 2, Math.random() - 0.5, 0.5);
-            atp.userData = {
-                type: 'atp',
-                source: 'chloroplast',
-                phase: Math.random() * Math.PI * 2,
-                speed: 0.2,
-                name: 'ATP (三磷酸腺苷)',
-                info: '<b>ATP</b> - 细胞的"能量货币"<br><br>结构：腺嘌呤 + 核糖 + 3个磷酸基团<br><br>ATP → ADP + Pi + 能量<br><br>一个葡萄糖完全氧化可产生约38个ATP！',
-                isInteractive: true
-            };
-            this.molecules.push(atp);
-            this.mainGroup.add(atp);
-        }
-        
-        // 线粒体中的ATP（更多）
-        for (let i = 0; i < 8; i++) {
-            const atp = this.createMolecule('ATP', this.colors.atp, 0.18);
-            atp.position.set(5 + (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 1.5, 0.5);
-            atp.visible = false; // 呼吸作用步骤后显示
-            atp.userData = {
-                type: 'atp',
-                source: 'mitochondria',
-                phase: Math.random() * Math.PI * 2,
-                speed: 0.25,
-                name: 'ATP (三磷酸腺苷)',
-                info: '<b>ATP</b> - 细胞呼吸的主要产物<br><br>线粒体是产生ATP的主要场所，通过电子传递链和氧化磷酸化，一个葡萄糖可产生约34个ATP！',
-                isInteractive: true
-            };
-            this.molecules.push(atp);
-            this.mainGroup.add(atp);
-        }
-    }
-
-    /**
-     * 创建光子
-     */
-    createPhotons() {
+    createPhotonGroup() {
         this.photons = [];
-        for (let i = 0; i < 10; i++) {
+        
+        for (let i = 0; i < 12; i++) {
             const photon = new THREE.Group();
             
-            // 光子核心
-            const coreGeometry = new THREE.SphereGeometry(0.08, 8, 8);
-            const coreMaterial = new THREE.MeshBasicMaterial({
-                color: this.colors.light
-            });
+            // 核心
+            const coreGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const coreMaterial = new THREE.MeshBasicMaterial({ color: this.colors.light });
             const core = new THREE.Mesh(coreGeometry, coreMaterial);
             photon.add(core);
             
             // 光晕
-            const glowGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+            const glowGeometry = new THREE.SphereGeometry(0.2, 8, 8);
             const glowMaterial = new THREE.MeshBasicMaterial({
                 color: this.colors.light,
                 transparent: true,
@@ -558,12 +479,23 @@ class PhotosynthesisScene {
             const glow = new THREE.Mesh(glowGeometry, glowMaterial);
             photon.add(glow);
             
-            photon.position.set(-12 + Math.random() * 2, 5 + Math.random() * 3, Math.random() * 4 - 2);
+            // 光线（射线效果）
+            const rayGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 4);
+            const rayMaterial = new THREE.MeshBasicMaterial({ color: this.colors.light, transparent: true, opacity: 0.6 });
+            for (let r = 0; r < 4; r++) {
+                const ray = new THREE.Mesh(rayGeometry, rayMaterial);
+                ray.rotation.z = (Math.PI / 4) * r;
+                ray.position.y = 0.15;
+                photon.add(ray);
+            }
+            
+            photon.position.set(-14 + Math.random() * 2, 6 + Math.random() * 2, Math.random() * 4 - 2);
             photon.userData = {
                 phase: Math.random() * Math.PI * 2,
-                speed: 0.8 + Math.random() * 0.5,
-                name: '光子',
-                info: '<b>光子</b> - 光能的载体<br><br>太阳光子被叶绿素捕获，激发电子跃迁到高能态，开启光合作用的光反应！'
+                speed: 1.5 + Math.random() * 0.5,
+                name: '光子 (Photon)',
+                info: '<b>光子</b> - 光能的载体<br><br>太阳光子被叶绿素捕获，激发电子跃迁到高能态，启动光合作用！',
+                type: 'photon'
             };
             
             this.photons.push(photon);
@@ -572,17 +504,43 @@ class PhotosynthesisScene {
     }
 
     /**
-     * 创建分子模型
+     * 创建分子组
      */
-    createMolecule(formula, color, size) {
+    createMoleculeGroup(label, color, count, startPos, type) {
+        for (let i = 0; i < count; i++) {
+            const mol = this.createMolecule(label, color, type);
+            mol.position.set(
+                startPos.x + (Math.random() - 0.5) * 2,
+                startPos.y + (Math.random() - 0.5) * 1,
+                startPos.z + (Math.random() - 0.5) * 2
+            );
+            mol.userData.type = type;
+            mol.userData.phase = Math.random() * Math.PI * 2;
+            mol.userData.basePos = mol.position.clone();
+            
+            // 某些分子初始隐藏
+            if (type === 'glucose' || type === 'atp_resp' || type === 'o2') {
+                mol.visible = false;
+            }
+            
+            this.molecules.push(mol);
+            this.mainGroup.add(mol);
+        }
+    }
+
+    /**
+     * 创建单个分子
+     */
+    createMolecule(label, color, type) {
         const group = new THREE.Group();
         
-        // 分子球体
+        // 分子球
+        const size = type === 'glucose' ? 0.3 : 0.18;
         const geometry = new THREE.SphereGeometry(size, 16, 16);
         const material = new THREE.MeshPhongMaterial({
             color: color,
             emissive: color,
-            emissiveIntensity: 0.3,
+            emissiveIntensity: 0.4,
             transparent: true,
             opacity: 0.9
         });
@@ -594,180 +552,193 @@ class PhotosynthesisScene {
         const glowMaterial = new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
-            opacity: 0.2,
+            opacity: 0.25,
             side: THREE.BackSide
         });
         const glow = new THREE.Mesh(glowGeometry, glowMaterial);
         group.add(glow);
         
+        // 分子标签
+        const molLabel = this.create3DLabel(label, color, { fontSize: 24, width: 100 });
+        molLabel.position.y = size + 0.3;
+        molLabel.scale.setScalar(0.5);
+        group.add(molLabel);
+        
+        // 交互信息
+        const infoMap = {
+            'water': { name: '水 H₂O', info: '<b>水 H₂O</b><br><br>光合作用的原料，在光反应中被光解：<br>2H₂O → 4H⁺ + 4e⁻ + O₂↑' },
+            'co2': { name: '二氧化碳 CO₂', info: '<b>二氧化碳 CO₂</b><br><br>光合作用的原料，在暗反应中被固定，最终合成葡萄糖。' },
+            'o2': { name: '氧气 O₂', info: '<b>氧气 O₂</b><br><br>光合作用的副产物！来自水的光解，这就是地球大气氧气的来源。' },
+            'glucose': { name: '葡萄糖 C₆H₁₂O₆', info: '<b>葡萄糖</b><br><br>光合作用的产物，储存了化学能。可用于呼吸作用产生ATP。' },
+            'atp_light': { name: 'ATP', info: '<b>ATP</b> - 光反应产物<br><br>用于暗反应中CO₂的还原。' },
+            'atp_resp': { name: 'ATP', info: '<b>ATP</b> - 呼吸作用产物<br><br>一个葡萄糖完全氧化可产生约38个ATP！' },
+            'nadph': { name: 'NADPH', info: '<b>NADPH</b><br><br>光反应产物，为暗反应提供还原力（电子和H⁺）。' }
+        };
+        
+        const info = infoMap[type] || { name: label, info: label };
+        group.userData = {
+            ...info,
+            hoverTitle: info.name,
+            hoverDesc: '点击查看详情',
+            hoverIcon: 'fa-atom',
+            isInteractive: true
+        };
+        
         return group;
     }
 
     /**
-     * 创建流程箭头
+     * 创建流程系统（箭头和路径）
      */
-    createFlowArrows() {
+    createFlowSystem() {
         // 光 → 叶绿体
-        this.createArrow(
+        this.createFlowArrow(
             new THREE.Vector3(-10, 4, 0),
             new THREE.Vector3(-7, 2, 0),
             this.colors.light,
             '光能'
         );
         
-        // 叶绿体 → 线粒体（葡萄糖）
-        this.createArrow(
-            new THREE.Vector3(-2.5, 0, 0),
+        // H₂O → 叶绿体
+        this.createFlowArrow(
+            new THREE.Vector3(-10, 2, 0),
+            new THREE.Vector3(-8, 1, 0),
+            this.colors.h2o,
+            'H₂O'
+        );
+        
+        // CO₂ → 叶绿体
+        this.createFlowArrow(
+            new THREE.Vector3(-10, -1, 0),
+            new THREE.Vector3(-8, -0.5, 0),
+            this.colors.co2,
+            'CO₂'
+        );
+        
+        // 叶绿体 → O₂（向上释放）
+        this.createFlowArrow(
+            new THREE.Vector3(-6, 2, 0),
+            new THREE.Vector3(-6, 4.5, 0),
+            this.colors.o2,
+            'O₂↑'
+        );
+        
+        // 叶绿体 → 葡萄糖 → 线粒体
+        this.createFlowArrow(
+            new THREE.Vector3(-3, 0, 0),
             new THREE.Vector3(3, 0, 0),
             this.colors.glucose,
             '葡萄糖'
         );
         
         // 线粒体 → ATP
-        this.createArrow(
-            new THREE.Vector3(7, 0, 0),
-            new THREE.Vector3(10, 0, 0),
+        this.createFlowArrow(
+            new THREE.Vector3(8.5, 0, 0),
+            new THREE.Vector3(11, 0, 0),
             this.colors.atp,
-            'ATP'
+            'ATP × 38'
+        );
+        
+        // 线粒体 → CO₂（循环回）
+        this.createFlowArrow(
+            new THREE.Vector3(6, 2.5, 0),
+            new THREE.Vector3(6, 4.5, 0),
+            this.colors.co2,
+            'CO₂↑'
         );
     }
 
     /**
-     * 创建箭头
+     * 创建流程箭头
      */
-    createArrow(start, end, color, labelText) {
+    createFlowArrow(start, end, color, label) {
         const direction = end.clone().sub(start);
         const length = direction.length();
         direction.normalize();
         
-        const arrowHelper = new THREE.ArrowHelper(
-            direction, start, length, color, 0.4, 0.2
-        );
-        arrowHelper.userData = { label: labelText };
-        this.arrows.push(arrowHelper);
-        this.mainGroup.add(arrowHelper);
-    }
-
-    /**
-     * 创建碳循环示意
-     */
-    createCarbonCycle() {
-        const cycleGroup = new THREE.Group();
-        cycleGroup.position.set(0, -4, 0);
-        
-        // 循环曲线
-        const curve = new THREE.EllipseCurve(0, 0, 8, 1.5, 0, Math.PI * 2, false, 0);
-        const points = curve.getPoints(50);
-        const geometry = new THREE.BufferGeometry().setFromPoints(
-            points.map(p => new THREE.Vector3(p.x, p.y, 0))
-        );
-        const material = new THREE.LineDashedMaterial({
-            color: 0x66bb6a,
-            dashSize: 0.3,
-            gapSize: 0.15,
-            transparent: true,
-            opacity: 0.6
-        });
-        const ellipse = new THREE.Line(geometry, material);
-        ellipse.computeLineDistances();
-        cycleGroup.add(ellipse);
+        // 箭头
+        const arrow = new THREE.ArrowHelper(direction, start, length, color, 0.3, 0.15);
+        this.flowArrows.push(arrow);
+        this.mainGroup.add(arrow);
         
         // 标签
-        const co2Label = this.createLabel('CO₂', 0x888888);
-        co2Label.position.set(-8, 0, 0);
-        co2Label.scale.setScalar(0.7);
-        cycleGroup.add(co2Label);
-        
-        const o2Label = this.createLabel('O₂', this.colors.o2);
-        o2Label.position.set(8, 0, 0);
-        o2Label.scale.setScalar(0.7);
-        cycleGroup.add(o2Label);
-        
-        cycleGroup.userData = {
-            name: '碳-氧循环',
-            info: '<b>碳-氧循环</b><br><br>植物通过光合作用吸收CO₂释放O₂<br>动物通过呼吸作用吸收O₂释放CO₂<br><br>这就是生态系统中物质循环的基础！',
-            isInteractive: true
-        };
-        
-        this.mainGroup.add(cycleGroup);
+        const midpoint = start.clone().add(end).multiplyScalar(0.5);
+        const arrowLabel = this.create3DLabel(label, color, { fontSize: 24, width: 120 });
+        arrowLabel.position.copy(midpoint);
+        arrowLabel.position.y += 0.4;
+        arrowLabel.position.z += 0.5;
+        this.mainGroup.add(arrowLabel);
     }
 
     /**
-     * 创建公式标签
+     * 创建结构标签
      */
-    createFormulaLabels() {
-        // 光合作用公式
-        const photoFormula = this.createLabel(
-            '6CO₂ + 6H₂O + 光能 → C₆H₁₂O₆ + 6O₂',
-            0x4caf50
-        );
-        photoFormula.position.set(-5, 4.5, 0);
-        photoFormula.scale.setScalar(0.8);
-        this.mainGroup.add(photoFormula);
+    createStructureLabels() {
+        // 叶绿体内部结构标签
+        const chloroLabels = [
+            { text: '类囊体膜', pos: { x: -1.5, y: 1.5, z: 1 }, color: this.colors.thylakoid },
+            { text: '基粒', pos: { x: 0, y: -1.2, z: 1 }, color: this.colors.grana },
+            { text: '基质', pos: { x: 2, y: 0.5, z: 1 }, color: this.colors.stroma }
+        ];
         
-        // 呼吸作用公式
-        const respFormula = this.createLabel(
-            'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + 38ATP',
-            0xe91e63
-        );
-        respFormula.position.set(5, 4.5, 0);
-        respFormula.scale.setScalar(0.8);
-        this.mainGroup.add(respFormula);
+        chloroLabels.forEach(item => {
+            const label = this.create3DLabel(item.text, item.color, { fontSize: 20, width: 100 });
+            label.position.set(item.pos.x, item.pos.y, item.pos.z);
+            label.scale.setScalar(0.6);
+            this.chloroplast.add(label);
+        });
+        
+        // 线粒体内部结构标签
+        const mitoLabels = [
+            { text: '内膜嵴', pos: { x: 0, y: -1, z: 1 }, color: this.colors.cristae },
+            { text: '基质', pos: { x: 1.5, y: 0.5, z: 1 }, color: this.colors.matrix }
+        ];
+        
+        mitoLabels.forEach(item => {
+            const label = this.create3DLabel(item.text, item.color, { fontSize: 20, width: 100 });
+            label.position.set(item.pos.x, item.pos.y, item.pos.z);
+            label.scale.setScalar(0.6);
+            this.mitochondria.add(label);
+        });
     }
 
     /**
-     * 创建文字标签
+     * 创建3D文字标签
      */
-    createLabel(text, color) {
+    create3DLabel(text, color, options = {}) {
+        const { fontSize = 32, width = 256, height = 64 } = options;
+        
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
-        canvas.width = 512;
-        canvas.height = 128;
+        canvas.width = width;
+        canvas.height = height;
         
         context.fillStyle = 'transparent';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        context.font = 'bold 36px Arial';
-        context.fillStyle = '#' + color.toString(16).padStart(6, '0');
+        context.font = `bold ${fontSize}px Arial, sans-serif`;
+        context.fillStyle = '#' + new THREE.Color(color).getHexString();
         context.textAlign = 'center';
-        context.fillText(text, 256, 80);
+        context.textBaseline = 'middle';
+        
+        // 描边
+        context.strokeStyle = '#000000';
+        context.lineWidth = 2;
+        context.strokeText(text, width / 2, height / 2);
+        context.fillText(text, width / 2, height / 2);
         
         const texture = new THREE.CanvasTexture(canvas);
-        const material = new THREE.SpriteMaterial({ 
-            map: texture, 
-            transparent: true 
-        });
+        texture.needsUpdate = true;
+        
+        const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
         const sprite = new THREE.Sprite(material);
-        sprite.scale.set(4, 1, 1);
+        sprite.scale.set(width / 64, height / 64, 1);
         
         return sprite;
     }
 
     /**
-     * 设置灯光
-     */
-    setupLighting() {
-        const ambient = new THREE.AmbientLight(0x404040, 0.5);
-        this.scene.add(ambient);
-        
-        // 主光源（模拟阳光）
-        const sunLight = new THREE.DirectionalLight(0xffffcc, 0.8);
-        sunLight.position.set(-10, 10, 5);
-        this.scene.add(sunLight);
-        
-        // 叶绿体区域绿光
-        const greenLight = new THREE.PointLight(0x4caf50, 0.5, 10);
-        greenLight.position.set(-5, 0, 3);
-        this.mainGroup.add(greenLight);
-        
-        // 线粒体区域红光
-        const redLight = new THREE.PointLight(0xe91e63, 0.5, 10);
-        redLight.position.set(5, 0, 3);
-        this.mainGroup.add(redLight);
-    }
-
-    /**
-     * 设置UI
+     * 设置UI控制面板
      */
     setupUI() {
         const controlsDiv = document.getElementById('scene-controls');
@@ -775,216 +746,450 @@ class PhotosynthesisScene {
         
         controlsDiv.style.display = 'flex';
         controlsDiv.innerHTML = `
-            <div class="photosynthesis-controls">
-                <div class="control-group">
-                    <label>教学步骤</label>
-                    <div class="step-nav">
-                        <button class="step-btn" id="btn-prev-step"><i class="fas fa-chevron-left"></i></button>
-                        <div class="step-indicators" id="step-indicators">
-                            ${[1,2,3,4,5,6].map(s => `<span class="step-dot ${s === 1 ? 'active' : ''}" data-step="${s-1}">${s}</span>`).join('')}
-                        </div>
-                        <button class="step-btn" id="btn-next-step"><i class="fas fa-chevron-right"></i></button>
-                    </div>
+            <div class="photosynthesis-controls-v2">
+                <div class="phase-nav">
+                    <button class="phase-btn ${this.currentPhase === 0 ? 'active' : ''}" data-phase="0">
+                        <i class="fas fa-globe"></i> 概览
+                    </button>
+                    <button class="phase-btn ${this.currentPhase === 1 ? 'active' : ''}" data-phase="1">
+                        <i class="fas fa-sun"></i> 光反应
+                    </button>
+                    <button class="phase-btn ${this.currentPhase === 2 ? 'active' : ''}" data-phase="2">
+                        <i class="fas fa-moon"></i> 暗反应
+                    </button>
+                    <button class="phase-btn ${this.currentPhase === 3 ? 'active' : ''}" data-phase="3">
+                        <i class="fas fa-fire"></i> 呼吸作用
+                    </button>
                 </div>
-                <div class="control-group">
-                    <button class="action-btn" id="btn-auto-play">
+                <div class="action-btns">
+                    <button class="action-btn" id="btn-auto-demo">
                         <i class="fas fa-play"></i> 自动演示
                     </button>
                     <button class="action-btn" id="btn-reset-photo">
                         <i class="fas fa-undo"></i> 重置
                     </button>
-                </div>
-                <div class="step-info" id="step-info">
-                    <div class="step-title">${this.stepInfo[0].title}</div>
-                    <div class="step-desc">${this.stepInfo[0].desc}</div>
+                    <button class="action-btn" id="btn-reset-view">
+                        <i class="fas fa-video"></i> 视角
+                    </button>
                 </div>
             </div>
         `;
         
         // 绑定事件
-        document.getElementById('btn-prev-step')?.addEventListener('click', () => {
-            this.goToStep(this.currentStep - 1);
-        });
-        
-        document.getElementById('btn-next-step')?.addEventListener('click', () => {
-            this.goToStep(this.currentStep + 1);
-        });
-        
-        document.querySelectorAll('.step-dot').forEach(dot => {
-            dot.addEventListener('click', (e) => {
-                const step = parseInt(e.target.dataset.step);
-                this.goToStep(step);
+        document.querySelectorAll('.phase-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const phase = parseInt(e.currentTarget.dataset.phase);
+                this.goToPhase(phase);
             });
         });
         
-        document.getElementById('btn-auto-play')?.addEventListener('click', () => {
-            this.startAutoPlay();
+        document.getElementById('btn-auto-demo')?.addEventListener('click', () => {
+            this.startAutoDemo();
         });
         
         document.getElementById('btn-reset-photo')?.addEventListener('click', () => {
-            this.resetScene();
+            this.reset();
+        });
+        
+        document.getElementById('btn-reset-view')?.addEventListener('click', () => {
+            this.resetView();
         });
     }
 
     /**
-     * 切换到指定步骤
+     * 创建信息面板（右侧）
      */
-    goToStep(step) {
-        if (step < 0) step = 0;
-        if (step >= this.totalSteps) step = this.totalSteps - 1;
+    createInfoPanel() {
+        const container = document.getElementById('view-scene');
+        if (!container) return;
         
-        this.currentStep = step;
+        // 移除旧面板
+        const oldPanel = document.getElementById('photo-info-panel');
+        if (oldPanel) oldPanel.remove();
         
-        // 更新步骤指示器
-        document.querySelectorAll('.step-dot').forEach((dot, i) => {
-            dot.classList.toggle('active', i === step);
-            dot.classList.toggle('completed', i < step);
-        });
+        const panel = document.createElement('div');
+        panel.id = 'photo-info-panel';
+        panel.className = 'photo-info-panel';
+        panel.innerHTML = `
+            <div class="panel-header">
+                <span class="panel-icon"><i class="fas fa-leaf"></i></span>
+                <span class="panel-title">整体概览</span>
+            </div>
+            <div class="panel-subtitle">光合作用与呼吸作用的关系</div>
+            <div class="panel-content">
+                <p>植物通过光合作用将光能转化为化学能（葡萄糖），再通过呼吸作用释放能量（ATP）。</p>
+            </div>
+            <div class="panel-formula"></div>
+        `;
+        container.appendChild(panel);
         
-        // 更新步骤信息
-        const info = this.stepInfo[step];
-        const stepTitle = document.querySelector('.step-title');
-        const stepDesc = document.querySelector('.step-desc');
-        if (stepTitle) stepTitle.textContent = info.title;
-        if (stepDesc) stepDesc.textContent = info.desc;
-        
-        // 执行步骤动画
-        this.executeStep(step);
+        this.addPanelStyles();
     }
 
     /**
-     * 执行步骤动画
+     * 添加面板样式
      */
-    executeStep(step) {
-        // 根据步骤高亮不同元素
-        switch(step) {
-            case 0: // 光能吸收
-                this.highlightChloroplast();
+    addPanelStyles() {
+        if (document.getElementById('photo-panel-styles')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'photo-panel-styles';
+        style.textContent = `
+            .photo-info-panel {
+                position: absolute;
+                right: 20px;
+                top: 80px;
+                width: 280px;
+                background: rgba(20, 30, 40, 0.92);
+                border: 1px solid rgba(76, 175, 80, 0.4);
+                border-radius: 12px;
+                padding: 16px;
+                color: #fff;
+                z-index: 100;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            }
+            .panel-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 8px;
+            }
+            .panel-icon {
+                width: 36px;
+                height: 36px;
+                background: linear-gradient(135deg, #4caf50, #2e7d32);
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+            }
+            .panel-title {
+                font-size: 18px;
+                font-weight: bold;
+                color: #4caf50;
+            }
+            .panel-subtitle {
+                font-size: 13px;
+                color: #81c784;
+                margin-bottom: 12px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid rgba(76, 175, 80, 0.2);
+            }
+            .panel-content {
+                font-size: 14px;
+                line-height: 1.6;
+                color: #ccc;
+            }
+            .panel-formula {
+                margin-top: 12px;
+                padding: 10px;
+                background: rgba(76, 175, 80, 0.15);
+                border-radius: 8px;
+                font-family: 'Courier New', monospace;
+                font-size: 13px;
+                color: #81c784;
+                text-align: center;
+            }
+            .panel-formula:empty {
+                display: none;
+            }
+            
+            /* 控制面板样式 */
+            .photosynthesis-controls-v2 {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                padding: 10px;
+            }
+            .phase-nav {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .phase-btn {
+                padding: 8px 14px;
+                background: rgba(255,255,255,0.1);
+                border: 1px solid rgba(255,255,255,0.2);
+                border-radius: 8px;
+                color: #aaa;
+                cursor: pointer;
+                transition: all 0.3s;
+                font-size: 13px;
+            }
+            .phase-btn:hover {
+                background: rgba(76, 175, 80, 0.3);
+                border-color: #4caf50;
+                color: #fff;
+            }
+            .phase-btn.active {
+                background: linear-gradient(135deg, #4caf50, #2e7d32);
+                border-color: #4caf50;
+                color: #fff;
+            }
+            .action-btns {
+                display: flex;
+                gap: 8px;
+            }
+            .action-btn {
+                padding: 8px 14px;
+                background: rgba(255,255,255,0.08);
+                border: 1px solid rgba(255,255,255,0.15);
+                border-radius: 8px;
+                color: #ccc;
+                cursor: pointer;
+                transition: all 0.3s;
+                font-size: 13px;
+            }
+            .action-btn:hover {
+                background: rgba(255,255,255,0.15);
+                color: #fff;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    /**
+     * 切换到指定阶段
+     */
+    goToPhase(phase) {
+        if (phase < 0 || phase >= this.phases.length) return;
+        
+        this.currentPhase = phase;
+        this.updatePhaseDisplay();
+        this.executePhaseAnimation(phase);
+        
+        // 更新按钮状态
+        document.querySelectorAll('.phase-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === phase);
+        });
+    }
+
+    /**
+     * 更新阶段显示
+     */
+    updatePhaseDisplay() {
+        const phase = this.phases[this.currentPhase];
+        const panel = document.getElementById('photo-info-panel');
+        if (!panel) return;
+        
+        const iconMap = {
+            0: 'fa-globe',
+            1: 'fa-sun',
+            2: 'fa-moon',
+            3: 'fa-fire'
+        };
+        
+        panel.querySelector('.panel-icon').innerHTML = `<i class="fas ${iconMap[this.currentPhase]}"></i>`;
+        panel.querySelector('.panel-title').textContent = phase.title;
+        panel.querySelector('.panel-subtitle').textContent = phase.subtitle;
+        panel.querySelector('.panel-content').innerHTML = `<p>${phase.description}</p>`;
+        panel.querySelector('.panel-formula').textContent = phase.formula || '';
+    }
+
+    /**
+     * 执行阶段动画
+     */
+    executePhaseAnimation(phase) {
+        // 重置所有可见性
+        this.molecules.forEach(m => {
+            if (m.userData.type === 'glucose' || m.userData.type === 'atp_resp' || m.userData.type === 'o2') {
+                m.visible = false;
+            }
+        });
+        
+        switch (phase) {
+            case 0: // 概览
+                this.animateOverview();
                 break;
-            case 1: // 水的光解
-                this.animateWaterSplitting();
+            case 1: // 光反应
+                this.animateLightReaction();
                 break;
-            case 2: // ATP合成
-                this.showATPProduction();
+            case 2: // 暗反应
+                this.animateDarkReaction();
                 break;
-            case 3: // 葡萄糖合成
-                this.showGlucoseProduction();
-                break;
-            case 4: // 呼吸作用
-                this.highlightMitochondria();
-                break;
-            case 5: // ATP大量生成
-                this.showRespirationATP();
+            case 3: // 呼吸作用
+                this.animateRespiration();
                 break;
         }
     }
 
     /**
-     * 高亮叶绿体
+     * 概览动画
      */
-    highlightChloroplast() {
-        // 叶绿体脉动效果
-        if (this.chloroplast) {
-            this.chloroplast.scale.set(1.1, 1.1, 1.1);
-            setTimeout(() => {
-                this.chloroplast.scale.set(1, 1, 1);
-            }, 500);
-        }
-    }
-
-    /**
-     * 水分解动画
-     */
-    animateWaterSplitting() {
-        // O₂分子向上释放
-        this.molecules.filter(m => m.userData.type === 'o2').forEach((o2, i) => {
-            o2.userData.released = true;
-        });
-    }
-
-    /**
-     * 显示ATP产生
-     */
-    showATPProduction() {
-        this.molecules.filter(m => m.userData.type === 'atp' && m.userData.source === 'chloroplast')
-            .forEach(atp => {
-                atp.visible = true;
+    animateOverview() {
+        // 相机移动到全景位置
+        if (typeof gsap !== 'undefined') {
+            gsap.to(this.camera.position, {
+                x: 0, y: 3, z: 20,
+                duration: 1,
+                ease: 'power2.out'
             });
-    }
-
-    /**
-     * 显示葡萄糖产生
-     */
-    showGlucoseProduction() {
-        this.molecules.filter(m => m.userData.type === 'glucose').forEach((glucose, i) => {
-            glucose.visible = true;
-            glucose.position.set(-4 + i * 0.5, 0, 0);
-        });
-    }
-
-    /**
-     * 高亮线粒体
-     */
-    highlightMitochondria() {
-        if (this.mitochondria) {
-            this.mitochondria.scale.set(1.1, 1.1, 1.1);
-            setTimeout(() => {
-                this.mitochondria.scale.set(1, 1, 1);
-            }, 500);
         }
+        this.showGuide('🌍 光合作用：叶绿体 | 呼吸作用：线粒体');
     }
 
     /**
-     * 显示呼吸作用ATP
+     * 光反应动画
      */
-    showRespirationATP() {
-        this.molecules.filter(m => m.userData.type === 'atp' && m.userData.source === 'mitochondria')
-            .forEach(atp => {
-                atp.visible = true;
+    animateLightReaction() {
+        // 聚焦叶绿体
+        if (typeof gsap !== 'undefined') {
+            gsap.to(this.camera.position, {
+                x: -6, y: 2, z: 12,
+                duration: 1,
+                ease: 'power2.out'
             });
+            
+            // 高亮基粒
+            if (this.granaGroup) {
+                this.granaGroup.children.forEach(stack => {
+                    stack.children.forEach(disk => {
+                        gsap.to(disk.material, {
+                            emissiveIntensity: 0.6,
+                            duration: 0.5,
+                            yoyo: true,
+                            repeat: 3
+                        });
+                    });
+                });
+            }
+        }
+        
+        // 显示O₂释放
+        this.molecules.filter(m => m.userData.type === 'o2').forEach(m => {
+            m.visible = true;
+            m.userData.rising = true;
+        });
+        
+        this.showGuide('☀️ 光反应：光能 → ATP + NADPH + O₂↑');
     }
 
     /**
-     * 开始自动播放
+     * 暗反应动画
      */
-    startAutoPlay() {
-        this.isPlaying = true;
-        let step = 0;
+    animateDarkReaction() {
+        // 聚焦叶绿体基质
+        if (typeof gsap !== 'undefined') {
+            gsap.to(this.camera.position, {
+                x: -4, y: 1, z: 14,
+                duration: 1,
+                ease: 'power2.out'
+            });
+        }
+        
+        // 显示葡萄糖生成
+        this.molecules.filter(m => m.userData.type === 'glucose').forEach((m, i) => {
+            setTimeout(() => {
+                m.visible = true;
+                m.position.set(-4 + i * 0.8, 0, 0);
+                if (typeof gsap !== 'undefined') {
+                    gsap.from(m.scale, { x: 0, y: 0, z: 0, duration: 0.5 });
+                }
+            }, i * 300);
+        });
+        
+        this.showGuide('🌑 暗反应：CO₂ + ATP + NADPH → 葡萄糖');
+    }
+
+    /**
+     * 呼吸作用动画
+     */
+    animateRespiration() {
+        // 聚焦线粒体
+        if (typeof gsap !== 'undefined') {
+            gsap.to(this.camera.position, {
+                x: 6, y: 2, z: 12,
+                duration: 1,
+                ease: 'power2.out'
+            });
+            
+            // 高亮嵴
+            if (this.cristaeGroup) {
+                this.cristaeGroup.children.forEach(tube => {
+                    gsap.to(tube.material, {
+                        emissiveIntensity: 0.5,
+                        duration: 0.5,
+                        yoyo: true,
+                        repeat: 3
+                    });
+                });
+            }
+        }
+        
+        // 显示葡萄糖和ATP
+        this.molecules.filter(m => m.userData.type === 'glucose').forEach(m => {
+            m.visible = true;
+            m.position.set(3, 0, 0);
+        });
+        
+        this.molecules.filter(m => m.userData.type === 'atp_resp').forEach((m, i) => {
+            setTimeout(() => {
+                m.visible = true;
+                if (typeof gsap !== 'undefined') {
+                    gsap.from(m.scale, { x: 0, y: 0, z: 0, duration: 0.3 });
+                }
+            }, i * 100);
+        });
+        
+        this.showGuide('🔥 呼吸作用：葡萄糖 + O₂ → CO₂ + H₂O + 38ATP');
+    }
+
+    /**
+     * 开始自动演示
+     */
+    startAutoDemo() {
+        if (this.isAutoPlaying) {
+            this.isAutoPlaying = false;
+            return;
+        }
+        
+        this.isAutoPlaying = true;
+        let phase = 0;
         
         const playNext = () => {
-            if (step >= this.totalSteps || !this.isPlaying) {
+            if (!this.isAutoPlaying || phase >= this.phases.length) {
+                this.isAutoPlaying = false;
                 return;
             }
             
-            this.goToStep(step);
-            step++;
+            this.goToPhase(phase);
+            phase++;
             
-            setTimeout(playNext, 3000);
+            setTimeout(playNext, 4000);
         };
         
-        this.showGuide('🌱 开始光合作用与呼吸作用的精彩旅程！');
+        this.showGuide('🎬 开始自动演示...');
         playNext();
     }
 
     /**
      * 重置场景
      */
-    resetScene() {
-        this.currentStep = 0;
-        this.goToStep(0);
-        
-        // 重置分子位置
-        this.molecules.forEach(m => {
-            if (m.userData.type === 'glucose') {
-                m.visible = false;
-            }
-            if (m.userData.type === 'atp' && m.userData.source === 'mitochondria') {
-                m.visible = false;
-            }
-            if (m.userData.type === 'o2') {
-                m.userData.released = false;
-            }
-        });
+    reset() {
+        this.isAutoPlaying = false;
+        this.currentPhase = 0;
+        this.goToPhase(0);
+        this.resetView();
+        this.showGuide('🔄 场景已重置');
+    }
+
+    /**
+     * 重置视角
+     */
+    resetView() {
+        if (typeof gsap !== 'undefined') {
+            gsap.to(this.camera.position, {
+                x: this.defaultCameraPos.x,
+                y: this.defaultCameraPos.y,
+                z: this.defaultCameraPos.z,
+                duration: 0.8,
+                ease: 'power2.out'
+            });
+        } else {
+            this.camera.position.set(this.defaultCameraPos.x, this.defaultCameraPos.y, this.defaultCameraPos.z);
+        }
+        this.camera.lookAt(0, 0, 0);
     }
 
     /**
@@ -1003,7 +1208,7 @@ class PhotosynthesisScene {
         setTimeout(() => {
             guide.classList.remove('visible');
             setTimeout(() => guide.remove(), 300);
-        }, 4000);
+        }, 3500);
     }
 
     /**
@@ -1012,60 +1217,51 @@ class PhotosynthesisScene {
     animate(time, delta) {
         this.animationTime = time;
         
-        // 环境粒子漂浮
-        if (this.ambientParticles) {
-            this.ambientParticles.rotation.y = time * 0.02;
-        }
-        
         // 光子动画
-        this.photons.forEach(photon => {
-            photon.position.x += photon.userData.speed * delta * 10;
-            photon.position.y -= photon.userData.speed * delta * 5;
-            
-            // 重置位置
-            if (photon.position.x > -5 || photon.position.y < -2) {
-                photon.position.set(-12 + Math.random() * 2, 5 + Math.random() * 3, Math.random() * 4 - 2);
-            }
-            
-            // 闪烁效果
-            const scale = 0.8 + Math.sin(time * 10 + photon.userData.phase) * 0.3;
-            photon.scale.setScalar(scale);
-        });
+        if (this.photons) {
+            this.photons.forEach(photon => {
+                photon.position.x += photon.userData.speed * delta * 8;
+                photon.position.y -= photon.userData.speed * delta * 3;
+                
+                // 重置位置
+                if (photon.position.x > -5 || photon.position.y < 0) {
+                    photon.position.set(-14 + Math.random() * 2, 6 + Math.random() * 2, Math.random() * 4 - 2);
+                }
+                
+                // 闪烁
+                const scale = 0.8 + Math.sin(time * 8 + photon.userData.phase) * 0.3;
+                photon.scale.setScalar(scale);
+            });
+        }
         
         // 分子动画
         this.molecules.forEach(mol => {
-            const phase = mol.userData.phase;
-            const speed = mol.userData.speed || 0.1;
+            if (!mol.visible) return;
             
-            // 漂浮效果
-            mol.position.y += Math.sin(time * 2 + phase) * 0.002;
+            const phase = mol.userData.phase || 0;
             
-            // CO₂移动向叶绿体
-            if (mol.userData.type === 'co2' && mol.position.x < mol.userData.targetX) {
-                mol.position.x += speed * delta * 2;
-            }
+            // 漂浮
+            mol.position.y = (mol.userData.basePos?.y || 0) + Math.sin(time * 2 + phase) * 0.1;
             
-            // O₂释放动画
-            if (mol.userData.type === 'o2' && mol.userData.released) {
-                mol.position.y += delta * 0.5;
-                mol.position.x += (Math.random() - 0.5) * 0.05;
-                if (mol.position.y > 6) {
-                    mol.position.y = -1;
-                    mol.userData.released = false;
+            // O₂上升
+            if (mol.userData.type === 'o2' && mol.userData.rising) {
+                mol.position.y += delta * 0.8;
+                if (mol.position.y > 5) {
+                    mol.position.y = 1;
                 }
             }
             
-            // 脉动效果
+            // 脉动
             const pulse = 1 + Math.sin(time * 3 + phase) * 0.1;
             mol.scale.setScalar(pulse);
         });
         
-        // 叶绿体和线粒体轻微旋转
+        // 叶绿体轻微呼吸
         if (this.chloroplast) {
-            this.chloroplast.rotation.y = Math.sin(time * 0.5) * 0.1;
+            this.chloroplast.rotation.y = Math.sin(time * 0.3) * 0.05;
         }
         if (this.mitochondria) {
-            this.mitochondria.rotation.y = Math.sin(time * 0.5 + 1) * 0.1;
+            this.mitochondria.rotation.y = Math.sin(time * 0.3 + 1) * 0.05;
         }
     }
 
@@ -1073,16 +1269,34 @@ class PhotosynthesisScene {
      * 获取可交互对象
      */
     getInteractables() {
-        const interactables = [this.chloroplast, this.mitochondria];
-        this.molecules.filter(m => m.userData.isInteractive).forEach(m => interactables.push(m));
-        return interactables.filter(Boolean);
+        const interactables = [];
+        
+        if (this.chloroplast) interactables.push(this.chloroplast);
+        if (this.mitochondria) interactables.push(this.mitochondria);
+        if (this.granaGroup) {
+            this.granaGroup.children.forEach(g => interactables.push(g));
+        }
+        if (this.cristaeGroup) interactables.push(this.cristaeGroup);
+        
+        this.molecules.filter(m => m.userData.isInteractive && m.visible).forEach(m => {
+            interactables.push(m);
+        });
+        
+        return interactables;
     }
 
     /**
      * 清理
      */
     dispose() {
-        this.isPlaying = false;
+        this.isAutoPlaying = false;
+        
+        const panel = document.getElementById('photo-info-panel');
+        if (panel) panel.remove();
+        
+        if (this.mainGroup) {
+            this.scene.remove(this.mainGroup);
+        }
     }
 }
 
