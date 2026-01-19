@@ -475,14 +475,15 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
                 position: absolute;
                 top: 20px;
                 right: 20px;
-                background: rgba(10, 10, 30, 0.95);
-                border: 1px solid #4a90d9;
-                border-radius: 8px;
-                padding: 16px;
+                background: rgba(10, 15, 30, 0.95);
+                border: 1px solid rgba(74, 144, 217, 0.4);
+                border-radius: 12px;
+                padding: 18px;
                 color: #fff;
                 font-size: 14px;
                 z-index: 100;
-                min-width: 180px;
+                min-width: 200px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             `;
             document.getElementById('scene-canvas-container')?.appendChild(panel);
         }
@@ -491,32 +492,44 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
         const correctCount = decided.filter(p => p.decision === this.correctDirection).length;
         const wrongCount = decided.filter(p => p.decision !== this.correctDirection).length;
         const informedCount = this.people.filter(p => p.isInformed).length;
+        const correctRatio = decided.length > 0 ? (correctCount / decided.length * 100).toFixed(0) : '--';
 
         panel.innerHTML = `
-            <div style="color: #4a90d9; font-size: 16px; margin-bottom: 12px;">
-                <i class="fas fa-users"></i> 羊群效应模拟
+            <div style="color: #4a90d9; font-size: 16px; margin-bottom: 14px; font-weight: bold;">
+                <i class="fas fa-chart-pie"></i> 实时数据
             </div>
-            <div style="margin-bottom: 8px;">
-                <span style="color: #888;">总人数:</span> 
-                <span style="color: #fff;">${this.people.length}</span>
-            </div>
-            <div style="margin-bottom: 8px;">
-                <span style="color: #00ff88;">知情者:</span> 
-                <span style="color: #00ff88;">${informedCount}</span>
-            </div>
-            <div style="margin-bottom: 8px;">
-                <span style="color: #888;">已决策:</span> 
-                <span style="color: #fff;">${decided.length}</span>
-            </div>
-            <hr style="border-color: #333; margin: 10px 0;">
-            <div style="display: flex; justify-content: space-between;">
-                <div>
-                    <div style="color: #00ff88;">← 正确</div>
-                    <div style="font-size: 20px; color: #00ff88;">${correctCount}</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
+                    <div style="color: #888; font-size: 12px;">总人数</div>
+                    <div style="font-size: 22px; color: #fff;">${this.people.length}</div>
                 </div>
-                <div>
-                    <div style="color: #ff6b6b;">错误 →</div>
-                    <div style="font-size: 20px; color: #ff6b6b;">${wrongCount}</div>
+                <div style="background: rgba(0,255,136,0.1); padding: 10px; border-radius: 8px; text-align: center;">
+                    <div style="color: #00ff88; font-size: 12px;">知情者</div>
+                    <div style="font-size: 22px; color: #00ff88;">${informedCount}</div>
+                </div>
+            </div>
+            
+            <div style="background: rgba(255,215,0,0.1); padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 14px;">
+                <div style="color: #ffd700; font-size: 12px;">从众倾向</div>
+                <div style="font-size: 18px; color: #ffd700;">${(this.params.conformityStrength * 100).toFixed(0)}%</div>
+            </div>
+            
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;">
+                <div style="color: #888; font-size: 12px; margin-bottom: 8px;">决策结果 (${decided.length}/${this.people.length})</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="text-align: center;">
+                        <div style="color: #00ff88; font-size: 12px;">← 正确</div>
+                        <div style="font-size: 26px; color: #00ff88; font-weight: bold;">${correctCount}</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="color: #aaa; font-size: 11px;">正确率</div>
+                        <div style="font-size: 18px; color: ${parseInt(correctRatio) >= 70 ? '#00ff88' : parseInt(correctRatio) >= 50 ? '#ffd700' : '#ff6b6b'}; font-weight: bold;">${correctRatio}%</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="color: #ff6b6b; font-size: 12px;">错误 →</div>
+                        <div style="font-size: 26px; color: #ff6b6b; font-weight: bold;">${wrongCount}</div>
+                    </div>
                 </div>
             </div>
         `;
@@ -529,14 +542,20 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
         const controlsDiv = document.getElementById('scene-controls');
         controlsDiv.style.display = 'flex';
         controlsDiv.innerHTML = `
-            <button class="control-btn" id="btn-start">
+            <button class="control-btn active" id="btn-start">
                 <i class="fas fa-play"></i> 开始模拟
             </button>
             <button class="control-btn" id="btn-reset">
                 <i class="fas fa-redo"></i> 重置
             </button>
-            <button class="control-btn" id="btn-adjust">
-                <i class="fas fa-sliders-h"></i> 调整参数
+            <button class="control-btn" id="btn-more-informed">
+                <i class="fas fa-user-plus"></i> 增加知情者
+            </button>
+            <button class="control-btn" id="btn-less-conform">
+                <i class="fas fa-user-minus"></i> 降低从众
+            </button>
+            <button class="control-btn" id="btn-guide">
+                <i class="fas fa-question-circle"></i> 原理说明
             </button>
             <button class="control-btn" id="btn-reset-view">
                 <i class="fas fa-video"></i> 重置视角
@@ -544,6 +563,9 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
         `;
 
         this.bindUIEvents();
+        
+        // 创建教学引导面板
+        this.createTeachingPanel();
     }
 
     /**
@@ -553,101 +575,119 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
         document.getElementById('btn-start').onclick = () => {
             if (!this.isSimulating) {
                 this.startSimulation();
+                this.showGuide('🚀 模拟开始！观察绿色知情者如何影响蓝色普通人的决策...');
             }
         };
         document.getElementById('btn-reset').onclick = () => {
             this.initPeople();
-            this.showGuide('🔄 已重置人群，点击"开始模拟"');
+            this.showGuide('🔄 已重置人群，点击"开始模拟"观察从众效应');
         };
-        document.getElementById('btn-adjust').onclick = () => this.showAdjustPanel();
+        document.getElementById('btn-more-informed').onclick = () => {
+            this.params.informedRatio = Math.min(0.5, this.params.informedRatio + 0.1);
+            this.initPeople();
+            this.showGuide(`✅ 知情者比例增加到 ${(this.params.informedRatio * 100).toFixed(0)}%`);
+        };
+        document.getElementById('btn-less-conform').onclick = () => {
+            this.params.conformityStrength = Math.max(0.1, this.params.conformityStrength - 0.15);
+            this.initPeople();
+            this.showGuide(`✅ 从众倾向降低到 ${(this.params.conformityStrength * 100).toFixed(0)}%，人们更独立思考`);
+        };
+        document.getElementById('btn-guide').onclick = () => this.toggleTeachingPanel();
         document.getElementById('btn-reset-view').onclick = () => this.resetView();
     }
-
+    
     /**
-     * 显示参数调整面板
+     * 创建教学引导面板
      */
-    showAdjustPanel() {
-        let panel = document.getElementById('adjust-panel');
-        if (panel) {
-            panel.remove();
-            return;
-        }
-
+    createTeachingPanel() {
+        let panel = document.getElementById('herd-teaching-panel');
+        if (panel) return;
+        
         panel = document.createElement('div');
-        panel.id = 'adjust-panel';
+        panel.id = 'herd-teaching-panel';
         panel.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(10, 10, 30, 0.95);
-            border: 1px solid #4a90d9;
+            position: absolute;
+            left: 20px;
+            top: 80px;
+            width: 320px;
+            background: rgba(10, 15, 30, 0.95);
+            border: 1px solid rgba(74, 144, 217, 0.4);
             border-radius: 12px;
-            padding: 24px;
-            z-index: 1000;
-            min-width: 300px;
+            padding: 20px;
+            color: #fff;
+            font-size: 14px;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         `;
-
+        
         panel.innerHTML = `
-            <h3 style="color: #4a90d9; margin-bottom: 20px;">
-                <i class="fas fa-sliders-h"></i> 调整参数
-            </h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div style="color: #4a90d9; font-size: 18px; font-weight: bold;">
+                    <i class="fas fa-users"></i> 羊群效应
+                </div>
+                <button id="close-teaching" style="background: none; border: none; color: #888; cursor: pointer; font-size: 16px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
             
-            <div style="margin-bottom: 16px;">
-                <label style="color: #aaa; display: block; margin-bottom: 6px;">
-                    知情者比例: <span id="informed-val">${(this.params.informedRatio * 100).toFixed(0)}%</span>
-                </label>
-                <input type="range" id="param-informed" min="0" max="50" step="5" 
-                    value="${this.params.informedRatio * 100}" style="width: 100%;">
+            <div style="background: rgba(74, 144, 217, 0.1); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                <div style="color: #ffd700; font-size: 13px; margin-bottom: 8px;">
+                    <i class="fas fa-lightbulb"></i> 核心问题
+                </div>
+                <div style="color: #e0e0e0; line-height: 1.6;">
+                    为什么大多数人不是在"思考"，而是在"跟随"？
+                </div>
             </div>
             
             <div style="margin-bottom: 16px;">
-                <label style="color: #aaa; display: block; margin-bottom: 6px;">
-                    从众倾向: <span id="conform-val">${(this.params.conformityStrength * 100).toFixed(0)}%</span>
-                </label>
-                <input type="range" id="param-conform" min="0" max="100" step="10"
-                    value="${this.params.conformityStrength * 100}" style="width: 100%;">
+                <div style="color: #00ff88; font-size: 13px; margin-bottom: 8px;">
+                    <i class="fas fa-user-check"></i> 场景说明
+                </div>
+                <ul style="color: #aaa; line-height: 1.8; padding-left: 18px; margin: 0;">
+                    <li><span style="color: #00ff88;">绿色小人</span> = 知情者（知道正确出口）</li>
+                    <li><span style="color: #4a90d9;">蓝色小人</span> = 普通人（会观察他人决策）</li>
+                    <li><span style="color: #00ff88;">左边</span> = 正确出口</li>
+                    <li><span style="color: #ff6b6b;">右边</span> = 错误方向</li>
+                </ul>
             </div>
             
             <div style="margin-bottom: 16px;">
-                <label style="color: #aaa; display: block; margin-bottom: 6px;">
-                    总人数: <span id="total-val">${this.params.totalPeople}</span>
-                </label>
-                <input type="range" id="param-total" min="10" max="50" step="5"
-                    value="${this.params.totalPeople}" style="width: 100%;">
+                <div style="color: #ff6b6b; font-size: 13px; margin-bottom: 8px;">
+                    <i class="fas fa-exclamation-triangle"></i> 关键洞察
+                </div>
+                <div style="color: #aaa; line-height: 1.6;">
+                    当知情者太少或从众倾向太强时，<span style="color: #ff6b6b;">错误信息会像多米诺骨牌一样传播</span>，导致大多数人选择错误方向！
+                </div>
             </div>
             
-            <button id="adjust-apply" style="width: 100%; padding: 10px; background: #4a90d9; 
-                border: none; color: #fff; border-radius: 6px; cursor: pointer; margin-top: 10px;">
-                <i class="fas fa-check"></i> 应用并重置
-            </button>
-            <button id="adjust-close" style="width: 100%; padding: 10px; background: #333;
-                border: none; color: #fff; border-radius: 6px; cursor: pointer; margin-top: 8px;">
-                关闭
-            </button>
+            <div style="background: rgba(255, 215, 0, 0.1); border-radius: 8px; padding: 12px;">
+                <div style="color: #ffd700; font-size: 13px; margin-bottom: 6px;">
+                    <i class="fas fa-flask"></i> 试一试
+                </div>
+                <ol style="color: #ccc; line-height: 1.8; padding-left: 18px; margin: 0; font-size: 13px;">
+                    <li>点击 <b>"开始模拟"</b> 观察决策过程</li>
+                    <li>点击 <b>"增加知情者"</b> 看正确率如何提升</li>
+                    <li>点击 <b>"降低从众"</b> 看独立思考的影响</li>
+                </ol>
+            </div>
         `;
-
-        document.body.appendChild(panel);
-
-        // 绑定事件
-        document.getElementById('param-informed').oninput = (e) => {
-            document.getElementById('informed-val').textContent = e.target.value + '%';
+        
+        document.getElementById('scene-canvas-container')?.appendChild(panel);
+        
+        // 关闭按钮
+        document.getElementById('close-teaching').onclick = () => {
+            panel.style.display = 'none';
         };
-        document.getElementById('param-conform').oninput = (e) => {
-            document.getElementById('conform-val').textContent = e.target.value + '%';
-        };
-        document.getElementById('param-total').oninput = (e) => {
-            document.getElementById('total-val').textContent = e.target.value;
-        };
-        document.getElementById('adjust-apply').onclick = () => {
-            this.params.informedRatio = document.getElementById('param-informed').value / 100;
-            this.params.conformityStrength = document.getElementById('param-conform').value / 100;
-            this.params.totalPeople = parseInt(document.getElementById('param-total').value);
-            this.initPeople();
-            panel.remove();
-            this.showGuide('✨ 参数已更新，点击"开始模拟"');
-        };
-        document.getElementById('adjust-close').onclick = () => panel.remove();
+    }
+    
+    /**
+     * 切换教学面板显示
+     */
+    toggleTeachingPanel() {
+        const panel = document.getElementById('herd-teaching-panel');
+        if (panel) {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
     }
 
     /**
@@ -716,11 +756,11 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
      */
     showInitialGuide() {
         setTimeout(() => {
-            this.showGuide('🐑 羊群效应：少数知情者 vs 多数盲从');
-        }, 1000);
+            this.showGuide('👀 观察：绿色知情者知道"左边是正确出口"，蓝色普通人会跟随多数');
+        }, 800);
         setTimeout(() => {
-            this.showGuide('💡 绿色是知情者（知道正确答案），蓝色是普通人（会观察他人）');
-        }, 5000);
+            this.showGuide('👆 点击"开始模拟"按钮，观察从众心理如何影响群体决策！');
+        }, 4500);
     }
 
     /**
@@ -759,7 +799,7 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
         }
 
         // 移除UI元素
-        ['herd-info-panel', 'adjust-panel'].forEach(id => {
+        ['herd-info-panel', 'herd-teaching-panel'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.remove();
         });

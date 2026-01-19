@@ -463,7 +463,7 @@ function showConfirmCard(caseConfig) {
 
 /**
  * 开始生成 - 代码打字效果
- * 优化：确保3秒内完成展示
+ * 优化：确保1.25秒内完成展示
  */
 function startGeneration(caseConfig) {
     state.currentTopic = caseConfig.id;
@@ -479,12 +479,11 @@ function startGeneration(caseConfig) {
     
     let i = 0;
     
-    // 动态计算打字速度，确保3秒内完成
-    const targetDuration = 2500; // 目标2.5秒完成（留0.5秒缓冲）
-    const typingSpeed = Math.max(1, Math.min(5, Math.floor(targetDuration / snippet.length)));
+    // 动态计算打字速度，确保1.25秒内完成
+    const targetDuration = 1000; // 目标1秒完成（留0.25秒缓冲）
     
     // 批量打字提高效率（每次打印多个字符）
-    const charsPerFrame = Math.max(1, Math.ceil(snippet.length / (targetDuration / 16))); // 约60fps
+    const charsPerFrame = Math.max(3, Math.ceil(snippet.length / (targetDuration / 16))); // 约60fps
 
     function typeWriter() {
         if (i < snippet.length) {
