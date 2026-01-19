@@ -586,8 +586,14 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
             <button class="control-btn" id="btn-more-informed">
                 <i class="fas fa-user-plus"></i> 增加知情者
             </button>
+            <button class="control-btn" id="btn-less-informed">
+                <i class="fas fa-user-minus"></i> 减少知情者
+            </button>
             <button class="control-btn" id="btn-less-conform">
-                <i class="fas fa-user-minus"></i> 降低从众
+                <i class="fas fa-brain"></i> 降低从众
+            </button>
+            <button class="control-btn" id="btn-more-conform">
+                <i class="fas fa-users"></i> 增加从众
             </button>
             <button class="control-btn" id="btn-guide">
                 <i class="fas fa-question-circle"></i> 原理说明
@@ -622,10 +628,20 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
             this.initPeople();
             this.showGuide(`✅ 知情者比例增加到 ${(this.params.informedRatio * 100).toFixed(0)}%`);
         };
+        document.getElementById('btn-less-informed').onclick = () => {
+            this.params.informedRatio = Math.max(0.05, this.params.informedRatio - 0.1);
+            this.initPeople();
+            this.showGuide(`⚠️ 知情者比例降低到 ${(this.params.informedRatio * 100).toFixed(0)}%`);
+        };
         document.getElementById('btn-less-conform').onclick = () => {
             this.params.conformityStrength = Math.max(0.1, this.params.conformityStrength - 0.15);
             this.initPeople();
             this.showGuide(`✅ 从众倾向降低到 ${(this.params.conformityStrength * 100).toFixed(0)}%，人们更独立思考`);
+        };
+        document.getElementById('btn-more-conform').onclick = () => {
+            this.params.conformityStrength = Math.min(1.0, this.params.conformityStrength + 0.15);
+            this.initPeople();
+            this.showGuide(`⚠️ 从众倾向增加到 ${(this.params.conformityStrength * 100).toFixed(0)}%，人们更容易跟风`);
         };
         document.getElementById('btn-guide').onclick = () => this.toggleTeachingPanel();
         document.getElementById('btn-reset-view').onclick = () => this.resetView();
