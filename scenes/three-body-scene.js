@@ -46,51 +46,51 @@ window.ThreeBodyScene = class ThreeBodyScene {
             chaos: false                 // 混沌模式
         };
 
-        // 预设配置
+        // 预设配置 - 位置放大3倍，更容易观察
         this.presets = {
             'figure8': {
                 name: '8字轨道（稳定）',
                 description: '三体问题的一个周期解，三个天体沿8字形轨道运动',
                 bodies: [
-                    { mass: 1, pos: [-0.97, 0, 0], vel: [0, 0.466, 0], color: 0xff6b6b },
-                    { mass: 1, pos: [0.97, 0, 0], vel: [0, 0.466, 0], color: 0x4ecdc4 },
-                    { mass: 1, pos: [0, 0, 0], vel: [0, -0.932, 0], color: 0xffd93d }
+                    { mass: 1, pos: [-3, 0, 0], vel: [0, 0.35, 0], color: 0xff6b6b },
+                    { mass: 1, pos: [3, 0, 0], vel: [0, 0.35, 0], color: 0x4ecdc4 },
+                    { mass: 1, pos: [0, 0, 0], vel: [0, -0.7, 0], color: 0xffd93d }
                 ]
             },
             'lagrange': {
                 name: '拉格朗日三角形',
                 description: '三个天体形成等边三角形，绕公共质心旋转',
                 bodies: [
-                    { mass: 1, pos: [0, 2, 0], vel: [0.5, 0, 0], color: 0xff6b6b },
-                    { mass: 1, pos: [-1.732, -1, 0], vel: [-0.25, 0.433, 0], color: 0x4ecdc4 },
-                    { mass: 1, pos: [1.732, -1, 0], vel: [-0.25, -0.433, 0], color: 0xffd93d }
+                    { mass: 1, pos: [0, 5, 0], vel: [0.4, 0, 0], color: 0xff6b6b },
+                    { mass: 1, pos: [-4.33, -2.5, 0], vel: [-0.2, 0.35, 0], color: 0x4ecdc4 },
+                    { mass: 1, pos: [4.33, -2.5, 0], vel: [-0.2, -0.35, 0], color: 0xffd93d }
                 ]
             },
             'chaos': {
                 name: '混沌轨道',
                 description: '不稳定配置，展示混沌行为 - 微小扰动导致完全不同的轨迹',
                 bodies: [
-                    { mass: 1.2, pos: [-2, 0, 0], vel: [0, 0.4, 0.1], color: 0xff6b6b },
-                    { mass: 0.8, pos: [2, 0, 0], vel: [0, -0.3, -0.1], color: 0x4ecdc4 },
-                    { mass: 1, pos: [0, 1.5, 0.5], vel: [0.2, 0, 0], color: 0xffd93d }
+                    { mass: 1.2, pos: [-5, 0, 0], vel: [0, 0.3, 0.08], color: 0xff6b6b },
+                    { mass: 0.8, pos: [5, 0, 0], vel: [0, -0.25, -0.08], color: 0x4ecdc4 },
+                    { mass: 1, pos: [0, 4, 1], vel: [0.15, 0, 0], color: 0xffd93d }
                 ]
             },
             'binary': {
                 name: '双星+扰动者',
                 description: '两颗恒星稳定运转，第三颗闯入打破平衡',
                 bodies: [
-                    { mass: 1, pos: [-1, 0, 0], vel: [0, 0.6, 0], color: 0xff6b6b },
-                    { mass: 1, pos: [1, 0, 0], vel: [0, -0.6, 0], color: 0x4ecdc4 },
-                    { mass: 0.5, pos: [4, 2, 1], vel: [-0.3, 0, 0], color: 0xffd93d }
+                    { mass: 1, pos: [-3, 0, 0], vel: [0, 0.5, 0], color: 0xff6b6b },
+                    { mass: 1, pos: [3, 0, 0], vel: [0, -0.5, 0], color: 0x4ecdc4 },
+                    { mass: 0.5, pos: [8, 4, 2], vel: [-0.25, 0, 0], color: 0xffd93d }
                 ]
             },
             'trisolaris': {
                 name: '三体星系（《三体》）',
                 description: '模拟小说中的三体世界 - 恒纪元与乱纪元交替',
                 bodies: [
-                    { mass: 1.5, pos: [-2, 0, 0], vel: [0, 0.35, 0.05], color: 0xff4444 },
-                    { mass: 1.2, pos: [2, 1, 0], vel: [-0.2, -0.3, 0], color: 0xff8800 },
-                    { mass: 1, pos: [0, -2, 0.5], vel: [0.3, 0.2, -0.05], color: 0xffcc00 }
+                    { mass: 1.5, pos: [-5, 0, 0], vel: [0, 0.28, 0.04], color: 0xff4444 },
+                    { mass: 1.2, pos: [5, 2.5, 0], vel: [-0.15, -0.25, 0], color: 0xff8800 },
+                    { mass: 1, pos: [0, -5, 1], vel: [0.25, 0.15, -0.04], color: 0xffcc00 }
                 ]
             }
         };
@@ -103,10 +103,11 @@ window.ThreeBodyScene = class ThreeBodyScene {
             grid: 0x1a1a3a
         };
 
-        // 默认相机位置
-        this.defaultCameraPos = { x: 0, y: 15, z: 20 };
+        // 默认相机位置 - 拉远观察
+        this.defaultCameraPos = { x: 0, y: 20, z: 30 };
         
         this.isAutoPlaying = true;
+        this._lastDataUpdate = 0;
     }
 
     /**
