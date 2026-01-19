@@ -307,7 +307,7 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
         group.position.set(person.x, 0, person.z);
         group.userData = { 
             person, 
-            body,
+            body, 
             head,
             arrow,
             hoverTitle: person.isInformed ? '🌟 知情者' : '👤 普通人',
@@ -560,11 +560,11 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
                     <div style="text-align: center;">
                         <div style="color: #aaa; font-size: 11px;">正确率</div>
                         <div style="font-size: 18px; color: ${parseInt(correctRatio) >= 70 ? '#00ff88' : parseInt(correctRatio) >= 50 ? '#ffd700' : '#ff6b6b'}; font-weight: bold;">${correctRatio}%</div>
-                    </div>
+            </div>
                     <div style="text-align: center;">
                         <div style="color: #ff6b6b; font-size: 12px;">错误 →</div>
                         <div style="font-size: 26px; color: #ff6b6b; font-weight: bold;">${wrongCount}</div>
-                    </div>
+                </div>
                 </div>
             </div>
         `;
@@ -646,14 +646,14 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
         document.getElementById('btn-guide').onclick = () => this.toggleTeachingPanel();
         document.getElementById('btn-reset-view').onclick = () => this.resetView();
     }
-    
+
     /**
      * 创建教学引导面板
      */
     createTeachingPanel() {
         let panel = document.getElementById('herd-teaching-panel');
         if (panel) return;
-        
+
         panel = document.createElement('div');
         panel.id = 'herd-teaching-panel';
         panel.style.cssText = `
@@ -670,7 +670,7 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
             z-index: 100;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         `;
-        
+
         panel.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <div style="color: #4a90d9; font-size: 18px; font-weight: bold;">

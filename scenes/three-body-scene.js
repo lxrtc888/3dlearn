@@ -37,8 +37,8 @@ window.ThreeBodyScene = class ThreeBodyScene {
         // 物理参数
         this.params = {
             G: 1,                        // 引力常数（归一化）
-            dt: 0.002,                   // 时间步长
-            speed: 1,                    // 动画速度
+            dt: 0.008,                   // 时间步长（增大4倍，运动更明显）
+            speed: 1.5,                  // 动画速度（默认1.5倍速）
             trailLength: 500,            // 轨迹长度
             showTrails: true,            // 显示轨迹
             showGravity: true,           // 显示引力
@@ -46,51 +46,51 @@ window.ThreeBodyScene = class ThreeBodyScene {
             chaos: false                 // 混沌模式
         };
 
-        // 预设配置 - 位置放大3倍，更容易观察
+        // 预设配置 - 位置和速度优化，确保一开始就有明显运动
         this.presets = {
             'figure8': {
                 name: '8字轨道（稳定）',
                 description: '三体问题的一个周期解，三个天体沿8字形轨道运动',
                 bodies: [
-                    { mass: 1, pos: [-3, 0, 0], vel: [0, 0.35, 0], color: 0xff6b6b },
-                    { mass: 1, pos: [3, 0, 0], vel: [0, 0.35, 0], color: 0x4ecdc4 },
-                    { mass: 1, pos: [0, 0, 0], vel: [0, -0.7, 0], color: 0xffd93d }
+                    { mass: 1, pos: [-4, 0, 0], vel: [0, 0.6, 0], color: 0xff6b6b },
+                    { mass: 1, pos: [4, 0, 0], vel: [0, 0.6, 0], color: 0x4ecdc4 },
+                    { mass: 1, pos: [0, 0, 0], vel: [0, -1.2, 0], color: 0xffd93d }
                 ]
             },
             'lagrange': {
                 name: '拉格朗日三角形',
                 description: '三个天体形成等边三角形，绕公共质心旋转',
                 bodies: [
-                    { mass: 1, pos: [0, 5, 0], vel: [0.4, 0, 0], color: 0xff6b6b },
-                    { mass: 1, pos: [-4.33, -2.5, 0], vel: [-0.2, 0.35, 0], color: 0x4ecdc4 },
-                    { mass: 1, pos: [4.33, -2.5, 0], vel: [-0.2, -0.35, 0], color: 0xffd93d }
+                    { mass: 1, pos: [0, 6, 0], vel: [0.6, 0, 0], color: 0xff6b6b },
+                    { mass: 1, pos: [-5.2, -3, 0], vel: [-0.3, 0.52, 0], color: 0x4ecdc4 },
+                    { mass: 1, pos: [5.2, -3, 0], vel: [-0.3, -0.52, 0], color: 0xffd93d }
                 ]
             },
             'chaos': {
                 name: '混沌轨道',
                 description: '不稳定配置，展示混沌行为 - 微小扰动导致完全不同的轨迹',
                 bodies: [
-                    { mass: 1.2, pos: [-5, 0, 0], vel: [0, 0.3, 0.08], color: 0xff6b6b },
-                    { mass: 0.8, pos: [5, 0, 0], vel: [0, -0.25, -0.08], color: 0x4ecdc4 },
-                    { mass: 1, pos: [0, 4, 1], vel: [0.15, 0, 0], color: 0xffd93d }
+                    { mass: 1.2, pos: [-6, 0, 0], vel: [0, 0.5, 0.12], color: 0xff6b6b },
+                    { mass: 0.8, pos: [6, 0, 0], vel: [0, -0.4, -0.12], color: 0x4ecdc4 },
+                    { mass: 1, pos: [0, 5, 1.5], vel: [0.25, 0, 0], color: 0xffd93d }
                 ]
             },
             'binary': {
                 name: '双星+扰动者',
                 description: '两颗恒星稳定运转，第三颗闯入打破平衡',
                 bodies: [
-                    { mass: 1, pos: [-3, 0, 0], vel: [0, 0.5, 0], color: 0xff6b6b },
-                    { mass: 1, pos: [3, 0, 0], vel: [0, -0.5, 0], color: 0x4ecdc4 },
-                    { mass: 0.5, pos: [8, 4, 2], vel: [-0.25, 0, 0], color: 0xffd93d }
+                    { mass: 1, pos: [-4, 0, 0], vel: [0, 0.7, 0], color: 0xff6b6b },
+                    { mass: 1, pos: [4, 0, 0], vel: [0, -0.7, 0], color: 0x4ecdc4 },
+                    { mass: 0.5, pos: [10, 5, 3], vel: [-0.4, 0, 0], color: 0xffd93d }
                 ]
             },
             'trisolaris': {
                 name: '三体星系（《三体》）',
                 description: '模拟小说中的三体世界 - 恒纪元与乱纪元交替',
                 bodies: [
-                    { mass: 1.5, pos: [-5, 0, 0], vel: [0, 0.28, 0.04], color: 0xff4444 },
-                    { mass: 1.2, pos: [5, 2.5, 0], vel: [-0.15, -0.25, 0], color: 0xff8800 },
-                    { mass: 1, pos: [0, -5, 1], vel: [0.25, 0.15, -0.04], color: 0xffcc00 }
+                    { mass: 1.5, pos: [-6, 0, 0], vel: [0, 0.45, 0.06], color: 0xff4444 },
+                    { mass: 1.2, pos: [6, 3, 0], vel: [-0.25, -0.4, 0], color: 0xff8800 },
+                    { mass: 1, pos: [0, -6, 1.5], vel: [0.4, 0.25, -0.06], color: 0xffcc00 }
                 ]
             }
         };
@@ -140,6 +140,32 @@ window.ThreeBodyScene = class ThreeBodyScene {
 
         // 加载默认预设
         this.loadPreset(this.params.preset);
+        
+        // 确保自动播放开启
+        this.isAutoPlaying = true;
+        
+        // 预先模拟几帧，让轨迹有初始显示
+        for (let i = 0; i < 50; i++) {
+            this.updatePhysics();
+            if (this.params.showTrails) {
+                this.bodies.forEach((body, index) => {
+                    this.trailPoints[index].push(body.position.clone());
+                });
+            }
+        }
+        
+        // 更新天体位置到当前状态
+        this.bodies.forEach((body, index) => {
+            if (this.bodyMeshes[index]) {
+                this.bodyMeshes[index].position.copy(body.position);
+            }
+            if (this.bodyLights[index]) {
+                this.bodyLights[index].position.copy(body.position);
+            }
+        });
+        
+        // 更新轨迹显示
+        this.updateTrails();
     }
 
     /**
@@ -574,9 +600,9 @@ window.ThreeBodyScene = class ThreeBodyScene {
             </div>
             
             <div class="control-section">
-                <h4><i class="fas fa-tachometer-alt"></i> 模拟速度: <span id="speed-value">1.0x</span></h4>
+                <h4><i class="fas fa-tachometer-alt"></i> 模拟速度: <span id="speed-value">${this.params.speed.toFixed(1)}x</span></h4>
                 <input type="range" id="speed-slider" 
-                       min="0.1" max="3" step="0.1"
+                       min="0.2" max="5" step="0.1"
                        value="${this.params.speed}" 
                        class="styled-slider">
             </div>
@@ -860,11 +886,11 @@ window.ThreeBodyScene = class ThreeBodyScene {
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         `;
         
-        panel.innerHTML = `
+            panel.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <div style="color: #ffd93d; font-size: 18px; font-weight: bold;">
-                    <i class="fas fa-sun"></i> 三体问题
-                </div>
+                        <i class="fas fa-sun"></i> 三体问题
+                    </div>
                 <button id="close-threebody-teaching" style="background: none; border: none; color: #888; cursor: pointer; font-size: 16px;">
                     <i class="fas fa-times"></i>
                 </button>
@@ -909,8 +935,8 @@ window.ThreeBodyScene = class ThreeBodyScene {
                     <li>点击<b>"微小扰动"</b>体验蝴蝶效应</li>
                     <li>点击<b>"三体星系"</b>看《三体》世界</li>
                 </ol>
-            </div>
-        `;
+                </div>
+            `;
         
         document.getElementById('scene-canvas-container')?.appendChild(panel);
         
@@ -1291,7 +1317,7 @@ window.ThreeBodyScene = class ThreeBodyScene {
             this.starfield.material.dispose();
             this.scene.remove(this.starfield);
         }
-        
+
         // 清理UI面板
         ['threebody-teaching-panel', 'threebody-data-panel'].forEach(id => {
             const el = document.getElementById(id);
