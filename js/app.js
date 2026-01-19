@@ -40,6 +40,45 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
+ * 场景分类配置
+ */
+const SCENE_CATEGORIES = {
+    // 精选场景（用户指定的8个）
+    featured: [
+        'quantum', 'electromagnetic', 'photosynthesis', 'gravity', 
+        'maze', 'traffic', 'geometry-problem', 'solid-geometry'
+    ],
+    // 物理类
+    physics: [
+        'quantum', 'hydraulic', 'pendulum', 'electromagnetic', 'gravity',
+        'nuclearfission', 'migdal', 'schrodinger', 'doppler', 'entropy', 'orbital'
+    ],
+    // 生物类
+    biology: [
+        'cell', 'dna', 'flagellar', 'photosynthesis', 'neuronsignal', 'sir-model'
+    ],
+    // 数学类
+    math: [
+        'vector3d', 'conic', 'drumflower', 'tesseract', 'euler', 'klein',
+        'mandelbrot', 'golden-spiral', 'geometry-problem', 'solid-geometry', 'fourier'
+    ],
+    // AI/算法类
+    ai: [
+        'attention', 'sorting', 'kmeans', 'maze', 'gradientdescent', 
+        'game-of-life', 'boids', 'engine'
+    ],
+    // 思维/社科类
+    thinking: [
+        'three-body', 'dimensional-strike', 'lorenz', 'prisoners-dilemma', 
+        'plato-cave', 'six-degrees', 'herd-behavior', 'compound-interest',
+        'tragedy-of-commons', 'traffic', 'entanglement', 'husky-battle'
+    ]
+};
+
+// 当前激活的分类
+let activeCategory = 'featured';
+
+/**
  * 初始化快捷案例卡片
  */
 function initQuickCases() {
@@ -49,7 +88,7 @@ function initQuickCases() {
     // 案例类型映射
     const typeMap = {
         'attention': 'ai',
-        'engine': 'physics',
+        'engine': 'ai',
         'quantum': 'physics',
         'hydraulic': 'physics',
         'pendulum': 'physics',
@@ -68,11 +107,34 @@ function initQuickCases() {
         'dna': 'biology',
         'flagellar': 'biology',
         'photosynthesis': 'biology',
+        'sir-model': 'biology',
         'vector3d': 'math',
         'conic': 'math',
         'drumflower': 'math',
         'geometry-problem': 'math',
         'solid-geometry': 'math',
+        'euler': 'math',
+        'klein': 'math',
+        'mandelbrot': 'math',
+        'golden-spiral': 'math',
+        'fourier': 'math',
+        'orbital': 'physics',
+        'entanglement': 'thinking',
+        'three-body': 'thinking',
+        'dimensional-strike': 'thinking',
+        'boids': 'ai',
+        'doppler': 'physics',
+        'entropy': 'physics',
+        'traffic': 'thinking',
+        'prisoners-dilemma': 'thinking',
+        'plato-cave': 'thinking',
+        'lorenz': 'thinking',
+        'game-of-life': 'ai',
+        'six-degrees': 'thinking',
+        'herd-behavior': 'thinking',
+        'compound-interest': 'thinking',
+        'tragedy-of-commons': 'thinking',
+        'husky-battle': 'thinking',
         'ppt': 'ai'
     };
     
@@ -81,12 +143,27 @@ function initQuickCases() {
         'physics': '物理',
         'biology': '生物',
         'math': '数学',
-        'ai': 'AI'
+        'ai': 'AI',
+        'thinking': '思维'
     };
     
+    // 渲染所有卡片
+    renderCaseCards(container, typeMap, tagMap);
+    
+    // 初始化分类Tab事件
+    initCategoryTabs(container, typeMap, tagMap);
+    
+    // 默认显示精选
+    filterCasesByCategory('featured');
+}
+
+/**
+ * 渲染案例卡片
+ */
+function renderCaseCards(container, typeMap, tagMap) {
     let html = '';
     window.CasesConfig.CASES.forEach(c => {
-        const cType = typeMap[c.id] || 'ai';
+        const cType = typeMap[c.id] || 'thinking';
         const tag = tagMap[cType];
         html += `
             <div class="quick-case-card" data-case-id="${c.id}" data-type="${cType}">
@@ -107,11 +184,67 @@ function initQuickCases() {
             const caseId = card.dataset.caseId;
             const caseConfig = window.CasesConfig.CASES.find(c => c.id === caseId);
             if (caseConfig) {
-                // 直接触发场景加载
                 startGeneration(caseConfig);
                 addMessage('ai', `🚀 正在加载 <b>${caseConfig.title}</b>...`);
             }
         });
+    });
+}
+
+/**
+ * 初始化分类Tab事件
+ */
+function initCategoryTabs(container, typeMap, tagMap) {
+    const tabContainer = document.getElementById('category-tabs');
+    if (!tabContainer) return;
+    
+    tabContainer.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const category = tab.dataset.category;
+            
+            // 更新Tab激活状态
+            tabContainer.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // 过滤案例
+            filterCasesByCategory(category);
+            activeCategory = category;
+        });
+    });
+}
+
+/**
+ * 按分类过滤案例卡片
+ */
+function filterCasesByCategory(category) {
+    const container = document.getElementById('quick-cases');
+    if (!container) return;
+    
+    const cards = container.querySelectorAll('.quick-case-card');
+    const categoryList = SCENE_CATEGORIES[category];
+    
+    cards.forEach(card => {
+        const caseId = card.dataset.caseId;
+        
+        if (category === 'all') {
+            // 全部显示
+            card.style.display = '';
+            card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+        } else if (categoryList && categoryList.includes(caseId)) {
+            // 在分类中
+            card.style.display = '';
+            card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+        } else {
+            // 不在分类中
+            card.style.display = 'none';
+        }
+    });
+    
+    // 添加过渡动画
+    requestAnimationFrame(() => {
+        const visibleCards = container.querySelectorAll('.quick-case-card[style*="display: none"] ~ .quick-case-card, .quick-case-card:not([style*="display: none"])');
     });
 }
 

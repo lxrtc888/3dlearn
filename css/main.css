@@ -213,9 +213,70 @@ body {
     pointer-events: auto;
 }
 
+/* ========== 场景分类Tab ========== */
+.category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    padding: 0 20px;
+    margin-bottom: 12px;
+    max-width: 800px;
+}
+
+.category-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(30, 40, 60, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.category-tab i {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.category-tab:hover {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+.category-tab.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.25) 100%);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.category-tab.active i {
+    opacity: 1;
+    color: #60a5fa;
+}
+
+/* 精选标签特殊样式 */
+.category-tab[data-category="featured"].active {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(239, 68, 68, 0.2) 100%);
+    border-color: rgba(245, 158, 11, 0.5);
+}
+
+.category-tab[data-category="featured"].active i {
+    color: #fbbf24;
+}
+
 /* 案例网格滚动容器 */
 .quick-cases-wrapper {
-    max-height: calc(100vh - 280px);
+    max-height: calc(100vh - 320px);
     overflow-y: auto;
     overflow-x: hidden;
     padding: 8px 0 20px 20px;
@@ -1231,20 +1292,23 @@ body {
 
 /* 全屏按钮 - 放在tab-bar右侧 */
 .fullscreen-btn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto;
     padding: 0 12px;
     height: 32px;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.7);
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s;
     gap: 6px;
+    z-index: 100;
 }
 
 .fullscreen-btn::after {
@@ -1277,16 +1341,29 @@ body {
 
 .scene-fullscreen .fullscreen-btn {
     position: fixed;
-    top: 16px;
-    right: 16px;
+    top: 20px;
+    right: 20px;
     z-index: 10000;
-    background: rgba(0, 0, 0, 0.6);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 255, 255, 0.3);
     color: #fff;
+    padding: 0 16px;
+    height: 40px;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.scene-fullscreen .fullscreen-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.scene-fullscreen .fullscreen-btn i::before {
+    content: "\f066"; /* fa-compress */
 }
 
 .scene-fullscreen .fullscreen-btn::after {
-    content: '退出';
+    content: '退出全屏';
 }
 
 /* 平板及以下 (max-width: 1024px) */

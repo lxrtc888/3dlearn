@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/main.css?v=29">
+    <link rel="stylesheet" href="css/main.css?v=30">
 </head>
 
 <body>
@@ -38,11 +38,11 @@
                 <div class="tab-btn active" id="tab-scene"><i class="fas fa-cube mr-2"></i>全息演示</div>
                 <div class="tab-btn" id="tab-ppt"><i class="fas fa-chalkboard-teacher mr-2"></i>智能课件</div>
                 <div class="tab-btn" id="tab-code"><i class="fas fa-code mr-2"></i>后台代码</div>
-                <!-- 全屏按钮 -->
-                <button class="fullscreen-btn" id="btn-fullscreen" title="全屏观看">
-                    <i class="fas fa-expand"></i>
-                </button>
             </div>
+            <!-- 全屏按钮 - 独立于Tab栏，全屏时也可见 -->
+            <button class="fullscreen-btn" id="btn-fullscreen" title="全屏观看">
+                <i class="fas fa-expand"></i>
+            </button>
 
             <!-- 内容区域容器 -->
             <div class="content-container">
@@ -63,13 +63,38 @@
                     <!-- 占位符 + 快捷案例入口 -->
                     <div id="placeholder-text" class="absolute inset-0 flex flex-col items-center justify-start">
                         <!-- 顶部标题区域 -->
-                        <div class="text-center mb-4 flex-shrink-0">
+                        <div class="text-center mb-3 flex-shrink-0">
                             <div class="relative inline-block mb-2">
                                 <i class="fas fa-atom text-3xl text-blue-500 opacity-80 animate-spin-slow"></i>
                                 <div class="absolute inset-0 bg-blue-500 blur-xl opacity-20"></div>
                             </div>
                             <h3 class="text-lg font-bold text-gray-100 tracking-wide">AI 教学实验室</h3>
-                            <p class="text-xs text-gray-500 mt-1">点击案例卡片开始探索 · 可上下滚动查看更多</p>
+                            <p class="text-xs text-gray-500 mt-1">点击案例卡片开始探索 · 支持分类筛选</p>
+                        </div>
+                        
+                        <!-- 分类Tab栏 -->
+                        <div class="category-tabs" id="category-tabs">
+                            <button class="category-tab active" data-category="featured">
+                                <i class="fas fa-star"></i> 精选场景
+                            </button>
+                            <button class="category-tab" data-category="physics">
+                                <i class="fas fa-atom"></i> 物理
+                            </button>
+                            <button class="category-tab" data-category="biology">
+                                <i class="fas fa-dna"></i> 生物
+                            </button>
+                            <button class="category-tab" data-category="math">
+                                <i class="fas fa-square-root-alt"></i> 数学
+                            </button>
+                            <button class="category-tab" data-category="ai">
+                                <i class="fas fa-robot"></i> AI/算法
+                            </button>
+                            <button class="category-tab" data-category="thinking">
+                                <i class="fas fa-lightbulb"></i> 思维/社科
+                            </button>
+                            <button class="category-tab" data-category="all">
+                                <i class="fas fa-th"></i> 全部
+                            </button>
                         </div>
                         
                         <!-- 快捷案例滚动容器 -->
@@ -183,7 +208,7 @@
     <script src="scenes/solid-geometry-scene.js?v=2"></script>
 
     <!-- 主程序 -->
-    <script src="js/app.js?v=23"></script>
+    <script src="js/app.js?v=24"></script>
 
 </body>
 
