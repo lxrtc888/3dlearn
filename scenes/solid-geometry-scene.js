@@ -1179,10 +1179,370 @@ window.SolidGeometryScene = class SolidGeometryScene {
     }
 
     addBlackboardStyles() {
-        // 复用几何题场景的黑板样式
-        if (!document.getElementById('blackboard-styles')) {
-            // 样式已在geometry-problem-scene中定义
-        }
+        if (document.getElementById('blackboard-styles')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'blackboard-styles';
+        style.textContent = `
+            .geometry-blackboard {
+                position: absolute;
+                left: 20px;
+                top: 80px;
+                bottom: 80px;
+                width: 420px;
+                background: #1a1f2e;
+                border: 1px solid #2d3548;
+                border-radius: 12px;
+                box-shadow: 0 16px 48px rgba(0,0,0,0.35);
+                display: flex;
+                flex-direction: column;
+                font-family: system-ui, -apple-system, sans-serif;
+                opacity: 0;
+                transform: translateX(-20px);
+                transition: all 0.3s ease;
+                z-index: 200;
+                overflow: hidden;
+            }
+            .geometry-blackboard.visible {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            
+            .blackboard-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 14px 18px;
+                background: #252b3d;
+                border-bottom: 1px solid #2d3548;
+            }
+            .blackboard-title {
+                color: #f1f5f9;
+                font-size: 16px;
+                font-weight: 600;
+            }
+            .blackboard-title i {
+                margin-right: 10px;
+                color: #10b981;
+            }
+            .blackboard-close {
+                background: rgba(255,255,255,0.08);
+                border: none;
+                color: #94a3b8;
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .blackboard-close:hover {
+                background: rgba(255,255,255,0.15);
+                color: #f1f5f9;
+            }
+            
+            .blackboard-content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 14px;
+            }
+            .blackboard-content::-webkit-scrollbar {
+                width: 5px;
+            }
+            .blackboard-content::-webkit-scrollbar-thumb {
+                background: #3d4559;
+                border-radius: 3px;
+            }
+            
+            .blackboard-section {
+                margin-bottom: 14px;
+                padding: 12px 14px;
+                background: rgba(255,255,255,0.03);
+                border-radius: 8px;
+            }
+            .section-title {
+                font-size: 13px;
+                font-weight: 600;
+                color: #a1a1aa;
+                margin-bottom: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .section-title i {
+                margin-right: 8px;
+                color: #10b981;
+            }
+            
+            /* 题目区 */
+            .problem-box {
+                background: rgba(0,0,0,0.25);
+                padding: 12px;
+                border-radius: 8px;
+            }
+            .problem-text {
+                color: #d4d4d8;
+                font-size: 14px;
+                line-height: 1.6;
+                margin-bottom: 8px;
+            }
+            .problem-question {
+                color: #fbbf24;
+                font-size: 15px;
+            }
+            .highlight {
+                color: #ef4444;
+                font-weight: bold;
+            }
+            
+            /* 知识点标签 */
+            .knowledge-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .tag {
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+            .tag-primary {
+                background: #10b981;
+                color: white;
+            }
+            .tag-secondary {
+                background: #52525b;
+                color: #e4e4e7;
+            }
+            .tag-accent {
+                background: #f59e0b;
+                color: white;
+            }
+            
+            /* 思路分析 */
+            .thought-content {
+                padding: 0;
+            }
+            .thought-item {
+                display: flex;
+                align-items: flex-start;
+                margin-bottom: 10px;
+                padding: 8px;
+                background: rgba(0,0,0,0.2);
+                border-radius: 8px;
+            }
+            .thought-icon {
+                font-size: 18px;
+                margin-right: 10px;
+                flex-shrink: 0;
+            }
+            .thought-text {
+                color: #cbd5e1;
+                font-size: 13px;
+                line-height: 1.5;
+            }
+            .thought-text strong {
+                color: #f1f5f9;
+            }
+            
+            /* 条件梳理 */
+            .conditions-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .condition-item {
+                background: rgba(0,0,0,0.2);
+                padding: 8px 12px;
+                border-radius: 6px;
+            }
+            .condition-label {
+                color: #94a3b8;
+                font-size: 12px;
+            }
+            .condition-value {
+                color: #60a5fa;
+                font-family: monospace;
+                font-size: 13px;
+            }
+            
+            /* 步骤进度条 */
+            .steps-progress {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 16px;
+            }
+            .step-indicator {
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                background: #3f3f46;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s;
+            }
+            .step-indicator.active {
+                background: #10b981;
+                transform: scale(1.15);
+                box-shadow: 0 0 10px rgba(16,185,129,0.4);
+            }
+            .step-indicator.completed {
+                background: #059669;
+            }
+            .step-number {
+                color: white;
+                font-size: 11px;
+                font-weight: 600;
+            }
+            .step-line {
+                width: 16px;
+                height: 2px;
+                background: #3f3f46;
+            }
+            
+            /* 当前步骤详情 */
+            .current-step-detail {
+                background: rgba(16,185,129,0.08);
+                border: 1px solid rgba(16,185,129,0.25);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .step-header {
+                background: rgba(16,185,129,0.15);
+                padding: 10px 14px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .step-badge {
+                background: #10b981;
+                color: white;
+                padding: 3px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            .step-title-text {
+                color: #f1f5f9;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            .step-detail-content {
+                padding: 14px;
+            }
+            
+            /* 详情块样式 */
+            .detail-block p {
+                color: #d4d4d8;
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+            .detail-list {
+                margin: 8px 0;
+                padding-left: 20px;
+            }
+            .detail-list li {
+                color: #a1a1aa;
+                font-size: 13px;
+                margin-bottom: 6px;
+                line-height: 1.5;
+            }
+            .detail-tip {
+                background: rgba(16,185,129,0.15);
+                padding: 10px 12px;
+                margin-top: 12px;
+                border-radius: 6px;
+                color: #6ee7b7;
+                font-size: 13px;
+            }
+            .detail-tip.success {
+                background: rgba(16,185,129,0.2);
+                color: #6ee7b7;
+            }
+            .detail-formula {
+                background: rgba(0,0,0,0.3);
+                padding: 12px;
+                border-radius: 8px;
+                text-align: center;
+                color: #fbbf24;
+                font-family: 'Times New Roman', serif;
+                font-size: 15px;
+                margin: 10px 0;
+            }
+            .discovery-box, .transform-box, .conclusion-box {
+                background: rgba(0,0,0,0.3);
+                padding: 12px;
+                border-radius: 8px;
+                margin: 10px 0;
+            }
+            .discovery-box p, .transform-box p, .conclusion-box p {
+                margin-bottom: 8px;
+            }
+            .conclusion-key {
+                font-size: 15px !important;
+                color: #fbbf24 !important;
+                font-weight: 600;
+            }
+            .auxiliary-reason {
+                margin-top: 12px;
+                padding: 10px;
+                background: rgba(16,185,129,0.15);
+                border-radius: 8px;
+                border: 1px dashed #10b981;
+            }
+            .auxiliary-reason p {
+                color: #6ee7b7 !important;
+            }
+            
+            /* 高亮文字 */
+            .hl-red { color: #ef4444; font-weight: 600; }
+            .hl-blue { color: #60a5fa; font-weight: 600; }
+            .hl-green { color: #10b981; font-weight: 600; }
+            .hl-orange { color: #f59e0b; font-weight: 600; }
+            
+            /* 底部按钮 */
+            .blackboard-footer {
+                display: flex;
+                gap: 8px;
+                padding: 14px;
+                background: #1f2533;
+                border-top: 1px solid #2d3548;
+            }
+            .bb-btn {
+                flex: 1;
+                padding: 10px 14px;
+                border: none;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            }
+            .bb-btn:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+            .bb-btn-primary {
+                background: #10b981;
+                color: white;
+            }
+            .bb-btn-primary:hover:not(:disabled) {
+                background: #059669;
+            }
+            .bb-btn-secondary {
+                background: #3f3f46;
+                color: #d4d4d8;
+            }
+            .bb-btn-secondary:hover:not(:disabled) {
+                background: #52525b;
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     bindBlackboardEvents(panel) {
