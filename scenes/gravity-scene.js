@@ -219,8 +219,38 @@ class GravityScene {
         // 创建地球轨道线
         this.createOrbitLine(this.celestialData.earth.orbitRadius, 0x4169E1);
         
+        // 创建地球轨道尾迹
+        this.createOrbitTrail();
+        
         // 初始时隐藏月球
         this.moon = null;
+    }
+    
+    /**
+     * 创建轨道尾迹
+     */
+    createOrbitTrail() {
+        const trailLength = 100;
+        const positions = new Float32Array(trailLength * 3);
+        
+        // 初始化尾迹位置
+        for (let i = 0; i < trailLength; i++) {
+            positions[i * 3] = this.earth ? this.earth.position.x : 0;
+            positions[i * 3 + 1] = 0;
+            positions[i * 3 + 2] = this.earth ? this.earth.position.z : 0;
+        }
+        
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        
+        const material = new THREE.LineBasicMaterial({
+            color: 0x4169E1,
+            transparent: true,
+            opacity: 0.6
+        });
+        
+        this.earthTrail = new THREE.Line(geometry, material);
+        this.scene.add(this.earthTrail);
     }
 
     /**
@@ -977,13 +1007,32 @@ class GravityScene {
     }
 
     /**
-     * 动画更新
+     * 动画更新 - SceneManager 调用此方法
      */
-    update(delta) {
-        this.animationTime += delta;
+    animate(time, delta) {
+        // 即使暂停，也要更新一些基础动画
+        this.animationTime = time;
         
+        // 太阳脉动发光效果（始终运行）
+        if (this.sun && this.sun.material) {
+            const pulse = 1 + Math.sin(time * 2) * 0.1;
+            this.sun.scale.setScalar(pulse);
+            // 发光强度变化
+            if (this.sun.material.emissiveIntensity !== undefined) {
+                this.sun.material.emissiveIntensity = 0.3 + Math.sin(time * 3) * 0.1;
+            }
+        }
+        
+        // 网格微弱呼吸效果（始终运行）
+        if (this.spacetimeGrid && this.spacetimeGrid.material) {
+            this.spacetimeGrid.material.opacity = 0.25 + Math.sin(time) * 0.05;
+        }
+        
+        if (!this.isPlaying) return;
+        
+        // 引力波模式时间累加
         if (this.mode === 'wave') {
-            this.waveTime += delta;
+            this.waveTime += delta * 2; // 加快波动速度
         }
         
         // 更新轨道
@@ -995,6 +1044,9 @@ class GravityScene {
         // 更新测试粒子
         this.updateTestParticles(delta);
         
+        // 更新轨道尾迹
+        this.updateOrbitTrails();
+        
         // 更新霍金粒子
         if (this.mode === 'blackhole') {
             this.updateHawkingParticles(delta);
@@ -1005,9 +1057,30 @@ class GravityScene {
             }
         }
         
-        // 更新引力线（牛顿模式）
-        if (this.mode === 'newton' && this.isPlaying) {
+        // 更新引力线（牛顿模式）- 降低更新频率
+        if (this.mode === 'newton' && Math.floor(time * 10) % 3 === 0) {
             this.createGravityForceLines();
+        }
+    }
+    
+    /**
+     * 更新轨道尾迹
+     */
+    updateOrbitTrails() {
+        // 地球轨道尾迹
+        if (this.earth && this.earthTrail) {
+            const positions = this.earthTrail.geometry.attributes.position.array;
+            // 移动尾迹点
+            for (let i = positions.length - 3; i >= 3; i -= 3) {
+                positions[i] = positions[i - 3];
+                positions[i + 1] = positions[i - 2];
+                positions[i + 2] = positions[i - 1];
+            }
+            // 添加新点
+            positions[0] = this.earth.position.x;
+            positions[1] = this.earth.position.y;
+            positions[2] = this.earth.position.z;
+            this.earthTrail.geometry.attributes.position.needsUpdate = true;
         }
     }
 

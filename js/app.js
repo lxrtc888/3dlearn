@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化场景管理器
     state.sceneManager = new SceneManager('scene-canvas-container');
     state.sceneManager.init();
+    
+    // 暴露到全局以供场景访问（如禁用OrbitControls）
+    window.sceneManager = state.sceneManager;
 
     // 绑定基础事件
     bindEvents();
@@ -52,12 +55,24 @@ function initQuickCases() {
         'pendulum': 'physics',
         'electromagnetic': 'physics',
         'gravity': 'physics',
+        'nuclearfission': 'physics',
+        'migdal': 'physics',
+        'schrodinger': 'physics',
+        'tesseract': 'math',
+        'gradientdescent': 'ai',
+        'sorting': 'ai',
+        'kmeans': 'ai',
+        'maze': 'ai',
+        'neuronsignal': 'biology',
         'cell': 'biology',
         'dna': 'biology',
         'flagellar': 'biology',
+        'photosynthesis': 'biology',
         'vector3d': 'math',
         'conic': 'math',
         'drumflower': 'math',
+        'geometry-problem': 'math',
+        'solid-geometry': 'math',
         'ppt': 'ai'
     };
     

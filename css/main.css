@@ -201,6 +201,8 @@ body {
 #placeholder-text {
     z-index: 10;
     pointer-events: auto;
+    overflow: hidden;
+    padding-top: 120px; /* 整体下移 */
 }
 
 #placeholder-text .quick-cases-grid {
@@ -209,6 +211,35 @@ body {
 
 #placeholder-text .quick-case-card {
     pointer-events: auto;
+}
+
+/* 案例网格滚动容器 */
+.quick-cases-wrapper {
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px 0 20px 20px;
+    margin-right: 4px;
+    /* Firefox滚动条 - 极细 */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.15) transparent;
+}
+
+.quick-cases-wrapper::-webkit-scrollbar {
+    width: 4px;
+}
+
+.quick-cases-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.quick-cases-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.15);
+    border-radius: 2px;
+}
+
+.quick-cases-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.35);
 }
 
 #scene-canvas-container canvas {
@@ -779,18 +810,18 @@ body {
 /* === 快捷案例入口网格 === */
 .quick-cases-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 14px;
-    max-width: 720px;
-    width: 90%;
-    padding: 0 20px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    max-width: 960px;
+    width: 100%;
+    padding-right: 16px;
 }
 
 .quick-case-card {
     background: rgba(20, 30, 50, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    padding: 18px 14px;
+    border-radius: 12px;
+    padding: 14px 10px;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: center;
@@ -827,14 +858,14 @@ body {
 }
 
 .quick-case-icon {
-    width: 42px;
-    height: 42px;
-    margin: 0 auto 10px;
+    width: 36px;
+    height: 36px;
+    margin: 0 auto 8px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 16px;
     background: rgba(59, 130, 246, 0.15);
     color: #60a5fa;
     transition: all 0.25s;
@@ -846,10 +877,10 @@ body {
 }
 
 .quick-case-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: #e2e8f0;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1198,27 +1229,33 @@ body {
    移动端响应式布局 - 上下结构
    ============================================ */
 
-/* 全屏按钮 */
+/* 全屏按钮 - 放在tab-bar右侧 */
 .fullscreen-btn {
-    display: none;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 100;
-    width: 40px;
-    height: 40px;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    padding: 0 12px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
     cursor: pointer;
-    backdrop-filter: blur(8px);
     transition: all 0.2s;
+    gap: 6px;
+}
+
+.fullscreen-btn::after {
+    content: '全屏';
+    font-size: 12px;
 }
 
 .fullscreen-btn:hover {
-    background: rgba(59, 130, 246, 0.6);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* 场景全屏模式 */
@@ -1239,9 +1276,17 @@ body {
 }
 
 .scene-fullscreen .fullscreen-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.6);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.scene-fullscreen .fullscreen-btn::after {
+    content: '退出';
 }
 
 /* 平板及以下 (max-width: 1024px) */
@@ -1620,6 +1665,7 @@ body {
     gap: 16px;
     padding: 12px;
     background: rgba(10, 15, 26, 0.9);
+    pointer-events: auto !important; /* 确保可以点击 */
     border-radius: 12px;
     border: 1px solid rgba(0, 212, 255, 0.2);
 }
@@ -1649,6 +1695,8 @@ body {
     border: 1px solid rgba(100, 116, 139, 0.3);
     border-radius: 8px;
     color: #94a3b8;
+    pointer-events: auto;
+    cursor: pointer;
     font-size: 12px;
     cursor: pointer;
     transition: all 0.2s;
@@ -1696,6 +1744,8 @@ body {
     border: 1px solid rgba(0, 212, 255, 0.4);
     border-radius: 8px;
     color: #00D4FF;
+    pointer-events: auto;
+    cursor: pointer;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s;
@@ -1707,6 +1757,189 @@ body {
 .gravity-controls .action-btn:hover {
     background: rgba(0, 212, 255, 0.3);
     box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+/* === 核裂变场景控制面板 === */
+.fission-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 12px;
+    background: rgba(10, 15, 26, 0.9);
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 100, 0, 0.3);
+}
+
+.fission-controls .control-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.fission-controls .action-btn {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(255, 100, 0, 0.2), rgba(255, 50, 0, 0.2));
+    border: 1px solid rgba(255, 100, 0, 0.5);
+    border-radius: 8px;
+    color: #ff8844;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.fission-controls .action-btn:hover {
+    background: rgba(255, 100, 0, 0.4);
+    box-shadow: 0 0 15px rgba(255, 100, 0, 0.4);
+    color: #ffaa66;
+}
+
+.fission-controls .stats-group {
+    display: flex;
+    gap: 20px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+.fission-controls .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.fission-controls .stat-item i {
+    color: #ffaa44;
+}
+
+.fission-controls .stat-item b {
+    color: #ffdd88;
+    font-size: 15px;
+}
+
+/* === 米格达尔效应场景控制面板 === */
+.migdal-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(10, 15, 26, 0.9);
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    align-items: center;
+}
+
+.migdal-controls .control-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.migdal-controls .step-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+}
+
+.migdal-controls .step-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 255, 255, 0.2);
+    border: 1px solid rgba(0, 255, 255, 0.4);
+    color: #00ffff;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.migdal-controls .step-btn:hover {
+    background: rgba(0, 255, 255, 0.4);
+}
+
+.migdal-controls .step-indicators {
+    display: flex;
+    gap: 4px;
+}
+
+.migdal-controls .step-indicator {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(50, 60, 80, 0.8);
+    border: 2px solid rgba(100, 120, 150, 0.4);
+    color: #8899aa;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    pointer-events: auto;
+}
+
+.migdal-controls .step-indicator:hover {
+    border-color: rgba(0, 255, 255, 0.6);
+    color: #aabbcc;
+}
+
+.migdal-controls .step-indicator.active {
+    background: rgba(0, 255, 255, 0.3);
+    border-color: #00ffff;
+    color: #00ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+}
+
+.migdal-controls .step-indicator.completed {
+    background: rgba(0, 200, 100, 0.3);
+    border-color: #00cc66;
+    color: #00cc66;
+}
+
+.migdal-controls .action-btn {
+    padding: 8px 14px;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(0, 200, 200, 0.15));
+    border: 1px solid rgba(0, 255, 255, 0.4);
+    border-radius: 8px;
+    color: #00ffff;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.migdal-controls .action-btn:hover {
+    background: rgba(0, 255, 255, 0.3);
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.3);
+}
+
+.migdal-controls .action-btn.small {
+    padding: 6px 10px;
+    font-size: 11px;
+}
+
+.migdal-controls .action-btn.toggle {
+    background: rgba(50, 60, 80, 0.6);
+    border-color: rgba(100, 120, 150, 0.4);
+    color: #8899aa;
+}
+
+.migdal-controls .action-btn.toggle.active,
+.migdal-controls .action-btn.active {
+    background: rgba(0, 255, 255, 0.25);
+    border-color: #00ffff;
+    color: #00ffff;
 }
 
 /* 公式样式 */
@@ -1729,4 +1962,1520 @@ body {
     border-radius: 6px;
     margin-top: 12px;
     display: block;
+}
+
+/* === 薛定谔的猫场景控制面板 === */
+.schrodinger-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 18px;
+    background: rgba(15, 10, 30, 0.92);
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 0, 211, 0.4);
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(148, 0, 211, 0.15);
+}
+
+.schrodinger-controls .action-btn {
+    padding: 10px 18px;
+    background: linear-gradient(135deg, rgba(148, 0, 211, 0.2), rgba(75, 0, 130, 0.2));
+    border: 1px solid rgba(148, 0, 211, 0.5);
+    border-radius: 10px;
+    color: #da70d6;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.schrodinger-controls .action-btn:hover {
+    background: rgba(148, 0, 211, 0.35);
+    box-shadow: 0 0 20px rgba(148, 0, 211, 0.4);
+    transform: translateY(-2px);
+}
+
+.schrodinger-controls .action-btn:active {
+    transform: translateY(0);
+}
+
+.schrodinger-controls .action-btn i {
+    font-size: 14px;
+}
+
+.schrodinger-controls .state-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: rgba(0, 255, 255, 0.08);
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 8px;
+    font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+.schrodinger-controls .state-label {
+    color: #94a3b8;
+    font-size: 12px;
+    font-family: sans-serif;
+}
+
+.schrodinger-controls .state-value {
+    color: #00ffff;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* === 四维超立方体场景控制面板 === */
+.tesseract-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(10, 5, 30, 0.95), rgba(20, 10, 40, 0.95));
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(138, 43, 226, 0.4);
+    align-items: center;
+    box-shadow: 0 4px 25px rgba(138, 43, 226, 0.2);
+}
+
+.tesseract-controls .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tesseract-controls .control-group label {
+    font-size: 11px;
+    color: #a78bfa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tesseract-controls .dim-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.tesseract-controls .dim-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(30, 20, 60, 0.8);
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    color: #a78bfa;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.25s;
+    pointer-events: auto;
+}
+
+.tesseract-controls .dim-btn:hover {
+    background: rgba(138, 43, 226, 0.3);
+    border-color: rgba(138, 43, 226, 0.6);
+    transform: translateY(-2px);
+}
+
+.tesseract-controls .dim-btn.active {
+    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+    border-color: #a855f7;
+    color: white;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+}
+
+.tesseract-controls .action-btn {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+    border: 1px solid rgba(139, 92, 246, 0.5);
+    border-radius: 10px;
+    color: #a78bfa;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tesseract-controls .action-btn:hover {
+    background: rgba(139, 92, 246, 0.35);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.tesseract-controls .action-btn.small {
+    padding: 6px 10px;
+    font-size: 11px;
+}
+
+.tesseract-controls .action-btn.toggle {
+    background: rgba(40, 30, 70, 0.6);
+    border-color: rgba(100, 80, 140, 0.4);
+    color: #8b7fc7;
+}
+
+.tesseract-controls .action-btn.toggle.active {
+    background: rgba(139, 92, 246, 0.25);
+    border-color: #a78bfa;
+    color: #a78bfa;
+}
+
+.tesseract-controls .rotation-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 维度信息面板 */
+.dimension-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: linear-gradient(135deg, rgba(10, 5, 30, 0.92), rgba(20, 10, 50, 0.92));
+    border: 1px solid rgba(138, 43, 226, 0.4);
+    border-radius: 16px;
+    padding: 20px;
+    min-width: 160px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(138, 43, 226, 0.2);
+    z-index: 100;
+}
+
+.dimension-panel .dim-title {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.dimension-panel .dim-number {
+    font-size: 48px;
+    font-weight: 700;
+    color: #00ffff;
+    line-height: 1;
+    text-shadow: 0 0 20px currentColor;
+    transition: color 0.5s;
+}
+
+.dimension-panel .dim-label {
+    font-size: 24px;
+    color: #94a3b8;
+    font-weight: 300;
+}
+
+.dimension-panel .dim-name {
+    font-size: 16px;
+    color: #e2e8f0;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+}
+
+.dimension-panel .dim-stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.dimension-panel .stat-item {
+    text-align: center;
+}
+
+.dimension-panel .stat-value {
+    display: block;
+    font-size: 20px;
+    font-weight: 600;
+    color: #a78bfa;
+}
+
+.dimension-panel .stat-label {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dimension-panel .dim-formula {
+    font-size: 13px;
+    color: #94a3b8;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-family: 'Georgia', serif;
+}
+
+.dimension-panel .dim-formula sup {
+    color: #a78bfa;
+    font-weight: 600;
+}
+
+.dimension-panel .evolution-progress {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #fbbf24;
+    text-align: center;
+    min-height: 18px;
+}
+
+/* === 光合作用场景控制面板 === */
+.photosynthesis-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(10, 30, 20, 0.95), rgba(5, 40, 25, 0.95));
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(76, 175, 80, 0.4);
+    align-items: center;
+    box-shadow: 0 4px 25px rgba(76, 175, 80, 0.2);
+}
+
+.photosynthesis-controls .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.photosynthesis-controls .control-group label {
+    font-size: 11px;
+    color: #81c784;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.photosynthesis-controls .step-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.photosynthesis-controls .step-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid rgba(76, 175, 80, 0.4);
+    color: #81c784;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.photosynthesis-controls .step-btn:hover {
+    background: rgba(76, 175, 80, 0.4);
+}
+
+.photosynthesis-controls .step-indicators {
+    display: flex;
+    gap: 6px;
+}
+
+.photosynthesis-controls .step-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(40, 60, 50, 0.8);
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    color: #66bb6a;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    pointer-events: auto;
+}
+
+.photosynthesis-controls .step-dot:hover {
+    border-color: rgba(76, 175, 80, 0.6);
+}
+
+.photosynthesis-controls .step-dot.active {
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    border-color: #81c784;
+    color: white;
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.5);
+}
+
+.photosynthesis-controls .step-dot.completed {
+    background: rgba(76, 175, 80, 0.4);
+    border-color: #4caf50;
+    color: #a5d6a7;
+}
+
+.photosynthesis-controls .action-btn {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(56, 142, 60, 0.2));
+    border: 1px solid rgba(76, 175, 80, 0.5);
+    border-radius: 10px;
+    color: #81c784;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.photosynthesis-controls .action-btn:hover {
+    background: rgba(76, 175, 80, 0.35);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+    transform: translateY(-2px);
+}
+
+.photosynthesis-controls .step-info {
+    min-width: 200px;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border-left: 3px solid #4caf50;
+}
+
+.photosynthesis-controls .step-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #a5d6a7;
+    margin-bottom: 4px;
+}
+
+.photosynthesis-controls .step-desc {
+    font-size: 11px;
+    color: #81c784;
+    line-height: 1.4;
+}
+
+/* === 神经网络梯度下降场景控制面板 === */
+.gradient-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(30, 20, 50, 0.95), rgba(50, 30, 80, 0.95));
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 87, 34, 0.4);
+    align-items: center;
+    box-shadow: 0 4px 25px rgba(255, 87, 34, 0.2);
+}
+
+.gradient-controls .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gradient-controls .control-group label {
+    font-size: 11px;
+    color: #ffab91;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.gradient-controls .control-group.buttons {
+    flex-direction: row;
+    gap: 8px;
+}
+
+.gradient-controls .gd-select {
+    padding: 8px 12px;
+    background: rgba(40, 30, 60, 0.9);
+    border: 1px solid rgba(255, 87, 34, 0.4);
+    border-radius: 8px;
+    color: #ffccbc;
+    cursor: pointer;
+    font-size: 12px;
+    pointer-events: auto;
+}
+
+.gradient-controls .gd-select:focus {
+    outline: none;
+    border-color: #ff5722;
+    box-shadow: 0 0 10px rgba(255, 87, 34, 0.3);
+}
+
+.gradient-controls .lr-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gradient-controls .lr-control input[type="range"] {
+    width: 100px;
+    -webkit-appearance: none;
+    background: rgba(255, 87, 34, 0.2);
+    border-radius: 5px;
+    height: 6px;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.gradient-controls .lr-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #ff5722;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(255, 87, 34, 0.5);
+}
+
+.gradient-controls .lr-control span {
+    font-size: 12px;
+    color: #ff8a65;
+    min-width: 35px;
+    text-align: right;
+    font-weight: 600;
+}
+
+.gradient-controls .action-btn {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(255, 87, 34, 0.2), rgba(244, 67, 54, 0.2));
+    border: 1px solid rgba(255, 87, 34, 0.5);
+    border-radius: 10px;
+    color: #ffab91;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gradient-controls .action-btn:hover {
+    background: rgba(255, 87, 34, 0.35);
+    box-shadow: 0 0 20px rgba(255, 87, 34, 0.4);
+    transform: translateY(-2px);
+}
+
+/* 梯度下降信息面板 */
+.gradient-info-panel {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+    background: linear-gradient(135deg, rgba(30, 20, 50, 0.95), rgba(40, 25, 60, 0.95));
+    border: 1px solid rgba(255, 87, 34, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', sans-serif;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    min-width: 200px;
+    z-index: 10;
+}
+
+.gradient-info-panel .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gradient-info-panel .info-row:last-of-type {
+    border-bottom: none;
+}
+
+.gradient-info-panel .info-label {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.gradient-info-panel .info-value {
+    color: #ff8a65;
+    font-weight: 600;
+    font-size: 13px;
+    font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.gradient-info-panel .loss-chart {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gradient-info-panel .chart-title {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.gradient-info-panel #loss-canvas {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+}
+
+/* === 神经元信号传递场景控制面板 === */
+.neuron-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(20, 30, 50, 0.95), rgba(30, 40, 70, 0.95));
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(79, 195, 247, 0.4);
+    align-items: center;
+    box-shadow: 0 4px 25px rgba(79, 195, 247, 0.2);
+}
+
+.neuron-controls .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.neuron-controls .control-group label {
+    font-size: 11px;
+    color: #81d4fa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.neuron-controls .control-group.buttons {
+    flex-direction: row;
+    gap: 8px;
+}
+
+.neuron-controls .step-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.neuron-controls .step-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(79, 195, 247, 0.2);
+    border: 1px solid rgba(79, 195, 247, 0.4);
+    color: #81d4fa;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.neuron-controls .step-btn:hover {
+    background: rgba(79, 195, 247, 0.4);
+}
+
+.neuron-controls .step-indicators {
+    display: flex;
+    gap: 6px;
+}
+
+.neuron-controls .step-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(30, 50, 70, 0.8);
+    border: 2px solid rgba(79, 195, 247, 0.3);
+    color: #4fc3f7;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    pointer-events: auto;
+}
+
+.neuron-controls .step-dot:hover {
+    border-color: rgba(79, 195, 247, 0.6);
+}
+
+.neuron-controls .step-dot.active {
+    background: linear-gradient(135deg, #4fc3f7, #29b6f6);
+    border-color: #81d4fa;
+    color: white;
+    box-shadow: 0 0 12px rgba(79, 195, 247, 0.5);
+}
+
+.neuron-controls .step-dot.completed {
+    background: rgba(79, 195, 247, 0.4);
+    border-color: #4fc3f7;
+    color: #b3e5fc;
+}
+
+.neuron-controls .step-info {
+    min-width: 180px;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border-left: 3px solid #4fc3f7;
+}
+
+.neuron-controls .step-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #b3e5fc;
+    margin-bottom: 4px;
+}
+
+.neuron-controls .step-desc {
+    font-size: 11px;
+    color: #81d4fa;
+    line-height: 1.4;
+}
+
+.neuron-controls .action-btn {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(79, 195, 247, 0.2), rgba(41, 182, 246, 0.2));
+    border: 1px solid rgba(79, 195, 247, 0.5);
+    border-radius: 10px;
+    color: #81d4fa;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.neuron-controls .action-btn:hover {
+    background: rgba(79, 195, 247, 0.35);
+    box-shadow: 0 0 20px rgba(79, 195, 247, 0.4);
+    transform: translateY(-2px);
+}
+
+/* 神经元信息面板 */
+.neuron-info-panel {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+    background: linear-gradient(135deg, rgba(20, 30, 50, 0.95), rgba(30, 40, 70, 0.95));
+    border: 1px solid rgba(79, 195, 247, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', sans-serif;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    min-width: 200px;
+    z-index: 10;
+}
+
+.neuron-info-panel .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(79, 195, 247, 0.2);
+}
+
+.neuron-info-panel .panel-header i {
+    color: #4fc3f7;
+    font-size: 18px;
+}
+
+.neuron-info-panel .panel-header span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #b3e5fc;
+}
+
+.neuron-info-panel .voltage-display {
+    margin-bottom: 12px;
+}
+
+.neuron-info-panel .voltage-label {
+    font-size: 11px;
+    color: #81d4fa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.neuron-info-panel .voltage-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #4fc3f7;
+    font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.neuron-info-panel .voltage-bar {
+    position: relative;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    margin: 8px 0;
+    overflow: hidden;
+}
+
+.neuron-info-panel .voltage-fill {
+    height: 100%;
+    background: #4fc3f7;
+    border-radius: 4px;
+    width: 15%;
+    transition: all 0.1s;
+}
+
+.neuron-info-panel .voltage-threshold {
+    position: absolute;
+    left: 27%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #ff5722;
+}
+
+.neuron-info-panel .voltage-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #64748b;
+}
+
+.neuron-info-panel .step-indicator {
+    padding: 8px 12px;
+    background: rgba(79, 195, 247, 0.15);
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+.neuron-info-panel .step-name {
+    font-size: 12px;
+    color: #81d4fa;
+    font-weight: 500;
+}
+
+/* === 排序算法可视化场景控制面板 === */
+.sorting-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(20, 25, 40, 0.95), rgba(30, 35, 55, 0.95));
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(79, 195, 247, 0.4);
+    align-items: center;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
+}
+
+.sorting-controls .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sorting-controls .control-group label {
+    font-size: 11px;
+    color: #81d4fa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.sorting-controls .control-group.buttons {
+    flex-direction: row;
+    gap: 8px;
+}
+
+.sorting-controls .algo-select {
+    padding: 8px 14px;
+    background: rgba(30, 40, 60, 0.9);
+    border: 1px solid rgba(79, 195, 247, 0.4);
+    border-radius: 8px;
+    color: #b3e5fc;
+    cursor: pointer;
+    font-size: 12px;
+    pointer-events: auto;
+    min-width: 180px;
+}
+
+.sorting-controls .algo-select:focus {
+    outline: none;
+    border-color: #4fc3f7;
+    box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+}
+
+.sorting-controls .speed-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sorting-controls .speed-control input[type="range"] {
+    width: 100px;
+    -webkit-appearance: none;
+    background: rgba(79, 195, 247, 0.2);
+    border-radius: 5px;
+    height: 6px;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.sorting-controls .speed-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #4fc3f7;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(79, 195, 247, 0.5);
+}
+
+.sorting-controls .speed-control span {
+    font-size: 12px;
+    color: #81d4fa;
+    min-width: 50px;
+}
+
+.sorting-controls .action-btn {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(79, 195, 247, 0.15), rgba(41, 182, 246, 0.15));
+    border: 1px solid rgba(79, 195, 247, 0.4);
+    border-radius: 10px;
+    color: #81d4fa;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sorting-controls .action-btn:hover {
+    background: rgba(79, 195, 247, 0.3);
+    box-shadow: 0 0 15px rgba(79, 195, 247, 0.3);
+    transform: translateY(-2px);
+}
+
+.sorting-controls .action-btn.primary {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(56, 142, 60, 0.3));
+    border-color: rgba(76, 175, 80, 0.5);
+    color: #a5d6a7;
+}
+
+.sorting-controls .action-btn.primary:hover {
+    background: rgba(76, 175, 80, 0.4);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
+}
+
+/* 排序信息面板 */
+.sorting-info-panel {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+    background: linear-gradient(135deg, rgba(20, 25, 40, 0.95), rgba(30, 35, 55, 0.95));
+    border: 1px solid rgba(79, 195, 247, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', sans-serif;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    min-width: 180px;
+    z-index: 10;
+}
+
+.sorting-info-panel .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(79, 195, 247, 0.2);
+}
+
+.sorting-info-panel .panel-header i {
+    color: #4fc3f7;
+    font-size: 18px;
+}
+
+.sorting-info-panel .panel-header span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #b3e5fc;
+}
+
+.sorting-info-panel .algo-info {
+    margin-bottom: 12px;
+    padding: 10px;
+    background: rgba(79, 195, 247, 0.1);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.sorting-info-panel .algo-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #4fc3f7;
+    margin-bottom: 4px;
+}
+
+.sorting-info-panel .algo-complexity {
+    font-size: 14px;
+    color: #ffeb3b;
+    font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.sorting-info-panel .stats-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.sorting-info-panel .stat {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+}
+
+.sorting-info-panel .stat-label {
+    display: block;
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.sorting-info-panel .stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #4fc3f7;
+    font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.sorting-info-panel .color-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.sorting-info-panel .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.sorting-info-panel .legend-item .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+/* === K-Means 聚类场景控制面板 === */
+.kmeans-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(20, 30, 45, 0.95), rgba(30, 40, 60, 0.95));
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(78, 205, 196, 0.4);
+    align-items: center;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
+}
+
+.kmeans-controls .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.kmeans-controls .control-group label {
+    font-size: 11px;
+    color: #4ecdc4;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.kmeans-controls .control-group.buttons {
+    flex-direction: row;
+    gap: 8px;
+}
+
+.kmeans-controls .k-selector {
+    display: flex;
+    gap: 6px;
+}
+
+.kmeans-controls .k-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(40, 50, 70, 0.9);
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    pointer-events: auto;
+}
+
+.kmeans-controls .k-btn:hover {
+    border-color: rgba(78, 205, 196, 0.6);
+    color: #4ecdc4;
+}
+
+.kmeans-controls .k-btn.active {
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.3), rgba(52, 152, 219, 0.3));
+    border-color: #4ecdc4;
+    color: #4ecdc4;
+    box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+}
+
+.kmeans-controls .speed-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.kmeans-controls .speed-control input[type="range"] {
+    width: 100px;
+    -webkit-appearance: none;
+    background: rgba(78, 205, 196, 0.2);
+    border-radius: 5px;
+    height: 6px;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.kmeans-controls .speed-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #4ecdc4;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(78, 205, 196, 0.5);
+}
+
+.kmeans-controls .speed-control span {
+    font-size: 12px;
+    color: #4ecdc4;
+    min-width: 40px;
+}
+
+.kmeans-controls .action-btn {
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.15), rgba(52, 152, 219, 0.15));
+    border: 1px solid rgba(78, 205, 196, 0.4);
+    border-radius: 10px;
+    color: #4ecdc4;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.kmeans-controls .action-btn:hover {
+    background: rgba(78, 205, 196, 0.25);
+    box-shadow: 0 0 15px rgba(78, 205, 196, 0.3);
+    transform: translateY(-2px);
+}
+
+.kmeans-controls .action-btn.primary {
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.3), rgba(52, 152, 219, 0.3));
+    border-color: #4ecdc4;
+}
+
+/* K-Means 信息面板 */
+.kmeans-info-panel {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+    background: linear-gradient(135deg, rgba(20, 30, 45, 0.95), rgba(30, 40, 60, 0.95));
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', sans-serif;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    min-width: 200px;
+    z-index: 10;
+}
+
+.kmeans-info-panel .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(78, 205, 196, 0.2);
+}
+
+.kmeans-info-panel .panel-header i {
+    color: #4ecdc4;
+    font-size: 18px;
+}
+
+.kmeans-info-panel .panel-header span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4ecdc4;
+}
+
+.kmeans-info-panel .algo-desc {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
+.kmeans-info-panel .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.kmeans-info-panel .stat-item {
+    text-align: center;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+}
+
+.kmeans-info-panel .stat-label {
+    display: block;
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.kmeans-info-panel .stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #4ecdc4;
+}
+
+.kmeans-info-panel .cluster-info {
+    margin-bottom: 12px;
+}
+
+.kmeans-info-panel .cluster-title {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.kmeans-info-panel .cluster-counts {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.kmeans-info-panel .cluster-count {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+    font-size: 12px;
+}
+
+.kmeans-info-panel .cluster-idx {
+    font-weight: 600;
+}
+
+.kmeans-info-panel .cluster-num {
+    font-weight: 700;
+}
+
+.kmeans-info-panel .algorithm-steps {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.kmeans-info-panel .step-title {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.kmeans-info-panel .steps-list .step {
+    font-size: 11px;
+    color: #64748b;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kmeans-info-panel .steps-list .step i {
+    color: #4ecdc4;
+    font-size: 10px;
+}
+
+/* === 迷宫寻路场景控制面板 v2.0 === */
+.maze-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(15, 22, 35, 0.96), rgba(25, 35, 50, 0.96));
+    pointer-events: auto !important;
+    border-radius: 12px;
+    border: 1px solid rgba(241, 196, 15, 0.35);
+    align-items: flex-start;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
+}
+
+.maze-controls .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.maze-controls .control-group label {
+    font-size: 10px;
+    color: #f1c40f;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.maze-controls .control-group.buttons {
+    flex-direction: row;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.maze-controls .control-group.algo-selectors {
+    flex: 1;
+}
+
+.maze-controls .corner-algos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.maze-controls .corner-algo-select {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.maze-controls .corner-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.maze-controls .algo-select-mini {
+    padding: 5px 8px;
+    background: rgba(30, 40, 55, 0.95);
+    border: 1px solid rgba(100, 120, 150, 0.4);
+    border-radius: 6px;
+    color: #b8c5d8;
+    font-size: 11px;
+    cursor: pointer;
+    pointer-events: auto;
+    min-width: 130px;
+}
+
+.maze-controls .algo-select-mini:focus {
+    outline: none;
+    border-color: #f1c40f;
+}
+
+.maze-controls .speed-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.maze-controls .speed-control input[type="range"] {
+    width: 80px;
+    -webkit-appearance: none;
+    background: rgba(241, 196, 15, 0.2);
+    border-radius: 5px;
+    height: 5px;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.maze-controls .speed-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #f1c40f;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(241, 196, 15, 0.5);
+}
+
+.maze-controls .speed-control span {
+    font-size: 11px;
+    color: #f1c40f;
+    min-width: 40px;
+}
+
+.maze-controls .action-btn {
+    padding: 8px 14px;
+    background: linear-gradient(135deg, rgba(241, 196, 15, 0.15), rgba(243, 156, 18, 0.15));
+    border: 1px solid rgba(241, 196, 15, 0.4);
+    border-radius: 8px;
+    color: #f1c40f;
+    pointer-events: auto;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.maze-controls .action-btn:hover {
+    background: rgba(241, 196, 15, 0.25);
+    box-shadow: 0 0 12px rgba(241, 196, 15, 0.3);
+    transform: translateY(-1px);
+}
+
+.maze-controls .action-btn.primary {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.25), rgba(39, 174, 96, 0.25));
+    border-color: rgba(46, 204, 113, 0.5);
+    color: #2ecc71;
+}
+
+.maze-controls .action-btn.primary:hover {
+    background: rgba(46, 204, 113, 0.35);
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.4);
+}
+
+/* 迷宫信息面板 v2.0 - 竞赛版 */
+.maze-info-panel {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+    background: linear-gradient(135deg, rgba(15, 22, 35, 0.96), rgba(25, 35, 50, 0.96));
+    border: 1px solid rgba(241, 196, 15, 0.3);
+    border-radius: 12px;
+    padding: 14px;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', sans-serif;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    min-width: 220px;
+    z-index: 10;
+}
+
+.maze-info-panel .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(241, 196, 15, 0.2);
+}
+
+.maze-info-panel .panel-header i {
+    color: #f1c40f;
+    font-size: 16px;
+}
+
+.maze-info-panel .panel-header span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f1c40f;
+}
+
+.maze-info-panel .race-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.maze-info-panel .racer-card {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 8px;
+    border-left: 3px solid;
+}
+
+.maze-info-panel .racer-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.maze-info-panel .racer-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.maze-info-panel .racer-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #b8c5d8;
+}
+
+.maze-info-panel .racer-algo {
+    font-size: 10px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.maze-info-panel .racer-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.maze-info-panel .racer-stats b {
+    color: #f1c40f;
+    font-weight: 600;
+}
+
+.maze-info-panel .legend-compact {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: #64748b;
+    padding-top: 8px;
+    border-top: 1px solid rgba(100, 120, 150, 0.2);
 }

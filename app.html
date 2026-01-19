@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/main.css?v=13">
+    <link rel="stylesheet" href="css/main.css?v=29">
 </head>
 
 <body>
@@ -38,6 +38,10 @@
                 <div class="tab-btn active" id="tab-scene"><i class="fas fa-cube mr-2"></i>全息演示</div>
                 <div class="tab-btn" id="tab-ppt"><i class="fas fa-chalkboard-teacher mr-2"></i>智能课件</div>
                 <div class="tab-btn" id="tab-code"><i class="fas fa-code mr-2"></i>后台代码</div>
+                <!-- 全屏按钮 -->
+                <button class="fullscreen-btn" id="btn-fullscreen" title="全屏观看">
+                    <i class="fas fa-expand"></i>
+                </button>
             </div>
 
             <!-- 内容区域容器 -->
@@ -45,11 +49,6 @@
                 <!-- 1. 场景视图 -->
                 <div id="view-scene" class="content-view active">
                     <div id="scene-canvas-container" class="w-full h-full absolute inset-0"></div> <!-- Canvas 容器 -->
-                    
-                    <!-- 全屏按钮（移动端显示） -->
-                    <button class="fullscreen-btn" id="btn-fullscreen" title="全屏观看">
-                        <i class="fas fa-expand"></i>
-                    </button>
 
                     <!-- 侧边信息面板 -->
                     <div id="info-panel" class="info-panel">
@@ -62,20 +61,22 @@
                     </div>
 
                     <!-- 占位符 + 快捷案例入口 -->
-                    <div id="placeholder-text" class="absolute inset-0 flex flex-col items-center justify-center">
+                    <div id="placeholder-text" class="absolute inset-0 flex flex-col items-center justify-start">
                         <!-- 顶部标题区域 -->
-                        <div class="text-center mb-8">
-                            <div class="relative inline-block mb-4">
-                                <i class="fas fa-atom text-5xl text-blue-500 opacity-80 animate-spin-slow"></i>
-                                <div class="absolute inset-0 bg-blue-500 blur-2xl opacity-25"></div>
+                        <div class="text-center mb-4 flex-shrink-0">
+                            <div class="relative inline-block mb-2">
+                                <i class="fas fa-atom text-3xl text-blue-500 opacity-80 animate-spin-slow"></i>
+                                <div class="absolute inset-0 bg-blue-500 blur-xl opacity-20"></div>
                             </div>
-                            <h3 class="text-2xl font-bold text-gray-100 tracking-wide">AI 教学实验室</h3>
-                            <p class="text-sm text-gray-400 mt-2">点击案例卡片开始探索</p>
+                            <h3 class="text-lg font-bold text-gray-100 tracking-wide">AI 教学实验室</h3>
+                            <p class="text-xs text-gray-500 mt-1">点击案例卡片开始探索 · 可上下滚动查看更多</p>
                         </div>
                         
-                        <!-- 快捷案例网格 -->
-                        <div id="quick-cases" class="quick-cases-grid">
-                            <!-- JS动态生成 -->
+                        <!-- 快捷案例滚动容器 -->
+                        <div class="quick-cases-wrapper">
+                            <div id="quick-cases" class="quick-cases-grid">
+                                <!-- JS动态生成 -->
+                            </div>
                         </div>
                     </div>
 
@@ -124,11 +125,11 @@
 
     <!-- 核心脚本 (顺序加载) -->
     <script src="js/ai-service.js?v=1"></script>
-    <script src="js/scene-manager.js?v=12"></script>
+    <script src="js/scene-manager.js?v=13"></script>
     
     <!-- 数据模块 -->
-    <script src="data/cases-config.js?v=12"></script>
-    <script src="data/code-snippets.js?v=12"></script>
+    <script src="data/cases-config.js?v=15"></script>
+    <script src="data/code-snippets.js?v=15"></script>
     <script src="data/slides.js?v=12"></script>
 
     <!-- 场景模块 -->
@@ -144,10 +145,45 @@
     <script src="scenes/conic-scene.js?v=12"></script>
     <script src="scenes/drum-flower-scene.js?v=12"></script>
     <script src="scenes/flagellar-scene.js?v=12"></script>
-    <script src="scenes/gravity-scene.js?v=3"></script>
+    <script src="scenes/gravity-scene.js?v=5"></script>
+    <script src="scenes/nuclear-fission-scene.js?v=1"></script>
+    <script src="scenes/migdal-scene.js?v=1"></script>
+    <script src="scenes/schrodinger-cat-scene.js?v=1"></script>
+    <script src="scenes/tesseract-scene.js?v=2"></script>
+    <script src="scenes/photosynthesis-scene.js?v=1"></script>
+    <script src="scenes/gradient-descent-scene.js?v=1"></script>
+    <script src="scenes/neuron-signal-scene.js?v=5"></script>
+    <script src="scenes/sorting-scene.js?v=1"></script>
+    <script src="scenes/kmeans-scene.js?v=1"></script>
+    <script src="scenes/maze-scene.js?v=2"></script>
+    <script src="scenes/quantum-entanglement-scene.js?v=1"></script>
+    <script src="scenes/orbital-mechanics-scene.js?v=1"></script>
+    <script src="scenes/klein-bottle-scene.js?v=1"></script>
+    <script src="scenes/euler-formula-scene.js?v=1"></script>
+    <script src="scenes/fourier-scene.js?v=1"></script>
+    <script src="scenes/three-body-scene.js?v=1"></script>
+    <script src="scenes/mandelbrot-scene.js?v=1"></script>
+    <script src="scenes/sir-model-scene.js?v=1"></script>
+    <script src="scenes/dimensional-strike-scene.js?v=1"></script>
+    <script src="scenes/boids-scene.js?v=1"></script>
+    <script src="scenes/doppler-effect-scene.js?v=1"></script>
+    <script src="scenes/entropy-scene.js?v=1"></script>
+    <script src="scenes/traffic-flow-scene.js?v=1"></script>
+    <script src="scenes/golden-spiral-scene.js?v=1"></script>
+    <script src="scenes/prisoners-dilemma-scene.js?v=1"></script>
+    <script src="scenes/plato-cave-scene.js?v=1"></script>
+    <script src="scenes/lorenz-attractor-scene.js?v=1"></script>
+    <script src="scenes/game-of-life-scene.js?v=1"></script>
+    <script src="scenes/six-degrees-scene.js?v=1"></script>
+    <script src="scenes/herd-behavior-scene.js?v=1"></script>
+    <script src="scenes/compound-interest-scene.js?v=1"></script>
+    <script src="scenes/tragedy-of-commons-scene.js?v=1"></script>
+    <script src="scenes/husky-battle-scene.js?v=1"></script>
+    <script src="scenes/geometry-problem-scene.js?v=3"></script>
+    <script src="scenes/solid-geometry-scene.js?v=1"></script>
 
     <!-- 主程序 -->
-    <script src="js/app.js?v=12"></script>
+    <script src="js/app.js?v=23"></script>
 
 </body>
 

@@ -436,8 +436,9 @@ class SceneManager {
     animate() {
         this.animationId = requestAnimationFrame(this.animate.bind(this));
         
-        const time = this.clock.getElapsedTime();
+        // 注意: getDelta() 必须在 getElapsedTime() 之前调用，否则会重置
         const delta = this.clock.getDelta();
+        const time = this.clock.elapsedTime; // 使用属性而非方法避免重置
 
         if (this.controls) this.controls.update();
 
