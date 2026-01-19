@@ -330,6 +330,7 @@ function showConfirmCard(caseConfig) {
 
 /**
  * 开始生成 - 代码打字效果
+ * 优化：确保3秒内完成展示
  */
 function startGeneration(caseConfig) {
     state.currentTopic = caseConfig.id;
@@ -344,14 +345,22 @@ function startGeneration(caseConfig) {
     const snippet = snippets[caseConfig.id] || '// Loading advanced modules...';
     
     let i = 0;
-    const typingSpeed = 2;
+    
+    // 动态计算打字速度，确保3秒内完成
+    const targetDuration = 2500; // 目标2.5秒完成（留0.5秒缓冲）
+    const typingSpeed = Math.max(1, Math.min(5, Math.floor(targetDuration / snippet.length)));
+    
+    // 批量打字提高效率（每次打印多个字符）
+    const charsPerFrame = Math.max(1, Math.ceil(snippet.length / (targetDuration / 16))); // 约60fps
 
     function typeWriter() {
         if (i < snippet.length) {
-            codeView.innerHTML += snippet.charAt(i);
-            i++;
+            // 批量添加字符
+            const endIndex = Math.min(i + charsPerFrame, snippet.length);
+            codeView.innerHTML += snippet.substring(i, endIndex);
+            i = endIndex;
             document.getElementById('view-code').scrollTop = document.getElementById('view-code').scrollHeight;
-            setTimeout(typeWriter, typingSpeed);
+            requestAnimationFrame(typeWriter);
         } else {
             codeView.classList.remove('cursor');
             finishGeneration(caseConfig);

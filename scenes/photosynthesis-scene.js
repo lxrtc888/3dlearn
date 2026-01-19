@@ -738,7 +738,7 @@ class PhotosynthesisScene {
     }
 
     /**
-     * 设置UI控制面板
+     * 设置UI控制面板 - 统一样式（参考电磁感应场景）
      */
     setupUI() {
         const controlsDiv = document.getElementById('scene-controls');
@@ -746,53 +746,58 @@ class PhotosynthesisScene {
         
         controlsDiv.style.display = 'flex';
         controlsDiv.innerHTML = `
-            <div class="photosynthesis-controls-v2">
-                <div class="phase-nav">
-                    <button class="phase-btn ${this.currentPhase === 0 ? 'active' : ''}" data-phase="0">
-                        <i class="fas fa-globe"></i> 概览
-                    </button>
-                    <button class="phase-btn ${this.currentPhase === 1 ? 'active' : ''}" data-phase="1">
-                        <i class="fas fa-sun"></i> 光反应
-                    </button>
-                    <button class="phase-btn ${this.currentPhase === 2 ? 'active' : ''}" data-phase="2">
-                        <i class="fas fa-moon"></i> 暗反应
-                    </button>
-                    <button class="phase-btn ${this.currentPhase === 3 ? 'active' : ''}" data-phase="3">
-                        <i class="fas fa-fire"></i> 呼吸作用
-                    </button>
-                </div>
-                <div class="action-btns">
-                    <button class="action-btn" id="btn-auto-demo">
-                        <i class="fas fa-play"></i> 自动演示
-                    </button>
-                    <button class="action-btn" id="btn-reset-photo">
-                        <i class="fas fa-undo"></i> 重置
-                    </button>
-                    <button class="action-btn" id="btn-reset-view">
-                        <i class="fas fa-video"></i> 视角
-                    </button>
-                </div>
-            </div>
+            <button class="control-btn ${this.currentPhase === 0 ? 'active' : ''}" id="btn-phase-0">
+                <i class="fas fa-globe"></i> 概览
+            </button>
+            <button class="control-btn ${this.currentPhase === 1 ? 'active' : ''}" id="btn-phase-1">
+                <i class="fas fa-sun"></i> 光反应
+            </button>
+            <button class="control-btn ${this.currentPhase === 2 ? 'active' : ''}" id="btn-phase-2">
+                <i class="fas fa-moon"></i> 暗反应
+            </button>
+            <button class="control-btn ${this.currentPhase === 3 ? 'active' : ''}" id="btn-phase-3">
+                <i class="fas fa-fire"></i> 呼吸作用
+            </button>
+            <button class="control-btn" id="btn-auto-demo">
+                <i class="fas fa-play"></i> 自动演示
+            </button>
+            <button class="control-btn" id="btn-reset-photo">
+                <i class="fas fa-undo"></i> 重置
+            </button>
+            <button class="control-btn" id="btn-reset-view">
+                <i class="fas fa-video"></i> 重置视角
+            </button>
         `;
         
-        // 绑定事件
-        document.querySelectorAll('.phase-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const phase = parseInt(e.currentTarget.dataset.phase);
-                this.goToPhase(phase);
+        // 绑定阶段按钮事件
+        for (let i = 0; i < 4; i++) {
+            document.getElementById(`btn-phase-${i}`)?.addEventListener('click', () => {
+                this.goToPhase(i);
+                this.showGuide(`✅ 切换到：${this.phases[i].title}`);
             });
-        });
+        }
         
+        // 自动演示按钮
         document.getElementById('btn-auto-demo')?.addEventListener('click', () => {
             this.startAutoDemo();
+            const btn = document.getElementById('btn-auto-demo');
+            if (btn) {
+                btn.innerHTML = this.isAutoPlaying 
+                    ? '<i class="fas fa-pause"></i> 暂停'
+                    : '<i class="fas fa-play"></i> 自动演示';
+            }
         });
         
+        // 重置按钮
         document.getElementById('btn-reset-photo')?.addEventListener('click', () => {
             this.reset();
+            this.showGuide('🔄 场景已重置');
         });
         
+        // 重置视角按钮
         document.getElementById('btn-reset-view')?.addEventListener('click', () => {
             this.resetView();
+            this.showGuide('📷 视角已重置');
         });
     }
 
@@ -894,57 +899,6 @@ class PhotosynthesisScene {
             .panel-formula:empty {
                 display: none;
             }
-            
-            /* 控制面板样式 */
-            .photosynthesis-controls-v2 {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-                padding: 10px;
-            }
-            .phase-nav {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-            }
-            .phase-btn {
-                padding: 8px 14px;
-                background: rgba(255,255,255,0.1);
-                border: 1px solid rgba(255,255,255,0.2);
-                border-radius: 8px;
-                color: #aaa;
-                cursor: pointer;
-                transition: all 0.3s;
-                font-size: 13px;
-            }
-            .phase-btn:hover {
-                background: rgba(76, 175, 80, 0.3);
-                border-color: #4caf50;
-                color: #fff;
-            }
-            .phase-btn.active {
-                background: linear-gradient(135deg, #4caf50, #2e7d32);
-                border-color: #4caf50;
-                color: #fff;
-            }
-            .action-btns {
-                display: flex;
-                gap: 8px;
-            }
-            .action-btn {
-                padding: 8px 14px;
-                background: rgba(255,255,255,0.08);
-                border: 1px solid rgba(255,255,255,0.15);
-                border-radius: 8px;
-                color: #ccc;
-                cursor: pointer;
-                transition: all 0.3s;
-                font-size: 13px;
-            }
-            .action-btn:hover {
-                background: rgba(255,255,255,0.15);
-                color: #fff;
-            }
         `;
         document.head.appendChild(style);
     }
@@ -959,10 +913,13 @@ class PhotosynthesisScene {
         this.updatePhaseDisplay();
         this.executePhaseAnimation(phase);
         
-        // 更新按钮状态
-        document.querySelectorAll('.phase-btn').forEach((btn, i) => {
-            btn.classList.toggle('active', i === phase);
-        });
+        // 更新按钮状态 - 使用统一的control-btn样式
+        for (let i = 0; i < 4; i++) {
+            const btn = document.getElementById(`btn-phase-${i}`);
+            if (btn) {
+                btn.classList.toggle('active', i === phase);
+            }
+        }
     }
 
     /**
