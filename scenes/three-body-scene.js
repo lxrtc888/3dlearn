@@ -472,7 +472,7 @@ window.ThreeBodyScene = class ThreeBodyScene {
         if (controlsDiv) {
             controlsDiv.style.display = 'flex';
             controlsDiv.innerHTML = `
-                <button class="control-btn" id="btn-figure8">
+                <button class="control-btn active" id="btn-figure8">
                     <i class="fas fa-infinity"></i> 8字轨道
                 </button>
                 <button class="control-btn" id="btn-lagrange">
@@ -487,22 +487,41 @@ window.ThreeBodyScene = class ThreeBodyScene {
                 <button class="control-btn" id="btn-perturb">
                     <i class="fas fa-bolt"></i> 微小扰动
                 </button>
-                <button class="control-btn active" id="btn-play">
+                <button class="control-btn" id="btn-play">
                     <i class="fas fa-pause"></i> 暂停
                 </button>
                 <button class="control-btn" id="btn-reset">
                     <i class="fas fa-redo"></i> 重置
                 </button>
+                <button class="control-btn" id="btn-guide">
+                    <i class="fas fa-question-circle"></i> 原理
+                </button>
                 <button class="control-btn" id="btn-reset-view">
-                    <i class="fas fa-video"></i> 重置视角
+                    <i class="fas fa-video"></i> 视角
                 </button>
             `;
 
             // 底部按钮事件
-            document.getElementById('btn-figure8')?.addEventListener('click', () => this.loadPreset('figure8'));
-            document.getElementById('btn-lagrange')?.addEventListener('click', () => this.loadPreset('lagrange'));
-            document.getElementById('btn-chaos')?.addEventListener('click', () => this.loadPreset('chaos'));
-            document.getElementById('btn-trisolaris')?.addEventListener('click', () => this.loadPreset('trisolaris'));
+            document.getElementById('btn-figure8')?.addEventListener('click', () => {
+                this.loadPreset('figure8');
+                this.updatePresetButtons('btn-figure8');
+                this.showGuide('∞ 8字轨道：三个天体沿8字形周期运动，这是一个稳定解');
+            });
+            document.getElementById('btn-lagrange')?.addEventListener('click', () => {
+                this.loadPreset('lagrange');
+                this.updatePresetButtons('btn-lagrange');
+                this.showGuide('△ 拉格朗日三角形：三个天体形成等边三角形绕公共质心旋转');
+            });
+            document.getElementById('btn-chaos')?.addEventListener('click', () => {
+                this.loadPreset('chaos');
+                this.updatePresetButtons('btn-chaos');
+                this.showGuide('🌀 混沌轨道：不稳定配置，轨迹将变得不可预测！');
+            });
+            document.getElementById('btn-trisolaris')?.addEventListener('click', () => {
+                this.loadPreset('trisolaris');
+                this.updatePresetButtons('btn-trisolaris');
+                this.showGuide('⭐ 三体星系：模拟《三体》小说中的三体世界');
+            });
             document.getElementById('btn-perturb')?.addEventListener('click', () => this.applyPerturbation());
             document.getElementById('btn-play')?.addEventListener('click', () => {
                 this.isAutoPlaying = !this.isAutoPlaying;
@@ -510,14 +529,23 @@ window.ThreeBodyScene = class ThreeBodyScene {
                 btn.innerHTML = this.isAutoPlaying 
                     ? '<i class="fas fa-pause"></i> 暂停'
                     : '<i class="fas fa-play"></i> 播放';
+                btn.classList.toggle('active', this.isAutoPlaying);
             });
             document.getElementById('btn-reset')?.addEventListener('click', () => {
                 this.loadPreset(this.params.preset);
                 this.isAutoPlaying = true;
                 document.getElementById('btn-play').innerHTML = '<i class="fas fa-pause"></i> 暂停';
+                this.showGuide('🔄 已重置轨道，三个恒星重新开始运动');
             });
+            document.getElementById('btn-guide')?.addEventListener('click', () => this.toggleTeachingPanel());
             document.getElementById('btn-reset-view')?.addEventListener('click', () => this.resetCamera());
         }
+        
+        // 创建教学引导面板
+        this.createTeachingPanel();
+        
+        // 创建实时数据面板
+        this.createDataPanel();
 
         const panel = document.getElementById('control-panel');
         if (!panel) return;
@@ -798,31 +826,245 @@ window.ThreeBodyScene = class ThreeBodyScene {
     }
 
     /**
+     * 更新预设按钮状态
+     */
+    updatePresetButtons(activeId) {
+        ['btn-figure8', 'btn-lagrange', 'btn-chaos', 'btn-trisolaris'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.toggle('active', id === activeId);
+        });
+    }
+    
+    /**
+     * 创建教学引导面板
+     */
+    createTeachingPanel() {
+        let panel = document.getElementById('threebody-teaching-panel');
+        if (panel) return;
+        
+        panel = document.createElement('div');
+        panel.id = 'threebody-teaching-panel';
+        panel.style.cssText = `
+            position: absolute;
+            left: 20px;
+            top: 80px;
+            width: 320px;
+            background: rgba(5, 10, 25, 0.95);
+            border: 1px solid rgba(255, 217, 61, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            color: #fff;
+            font-size: 14px;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        `;
+        
+        panel.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div style="color: #ffd93d; font-size: 18px; font-weight: bold;">
+                    <i class="fas fa-sun"></i> 三体问题
+                </div>
+                <button id="close-threebody-teaching" style="background: none; border: none; color: #888; cursor: pointer; font-size: 16px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div style="background: rgba(255, 107, 107, 0.1); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                <div style="color: #ff6b6b; font-size: 13px; margin-bottom: 8px;">
+                    <i class="fas fa-exclamation-triangle"></i> 经典力学的终极难题
+                </div>
+                <div style="color: #e0e0e0; line-height: 1.6; font-size: 13px;">
+                    三个天体在万有引力作用下的运动，<span style="color: #ff6b6b; font-weight: bold;">无法用公式精确求解</span>！
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <div style="color: #ffd93d; font-size: 13px; margin-bottom: 8px;">
+                    <i class="fas fa-star"></i> 场景说明
+                </div>
+                <ul style="color: #aaa; line-height: 1.8; padding-left: 18px; margin: 0; font-size: 13px;">
+                    <li><span style="color: #ff6b6b;">红色</span>、<span style="color: #4ecdc4;">青色</span>、<span style="color: #ffd93d;">金色</span> = 三颗恒星</li>
+                    <li>彩色轨迹 = 恒星运动路径</li>
+                    <li>蓝色连线 = 引力相互作用</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <div style="color: #a855f7; font-size: 13px; margin-bottom: 8px;">
+                    <i class="fas fa-bolt"></i> 混沌特性
+                </div>
+                <div style="color: #aaa; line-height: 1.6; font-size: 13px;">
+                    点击<span style="color: #a855f7;">"微小扰动"</span>，对恒星施加极小的速度变化（0.001），观察轨道如何<span style="color: #ff6b6b;">完全改变</span>！这就是<span style="color: #ffd93d;">蝴蝶效应</span>。
+                </div>
+            </div>
+            
+            <div style="background: rgba(255, 215, 0, 0.1); border-radius: 8px; padding: 12px;">
+                <div style="color: #ffd93d; font-size: 13px; margin-bottom: 6px;">
+                    <i class="fas fa-flask"></i> 试一试
+                </div>
+                <ol style="color: #ccc; line-height: 1.8; padding-left: 18px; margin: 0; font-size: 13px;">
+                    <li>切换不同<b>轨道预设</b>观察差异</li>
+                    <li>点击<b>"混沌轨道"</b>看不稳定系统</li>
+                    <li>点击<b>"微小扰动"</b>体验蝴蝶效应</li>
+                    <li>点击<b>"三体星系"</b>看《三体》世界</li>
+                </ol>
+            </div>
+        `;
+        
+        document.getElementById('scene-canvas-container')?.appendChild(panel);
+        
+        document.getElementById('close-threebody-teaching').onclick = () => {
+            panel.style.display = 'none';
+        };
+    }
+    
+    /**
+     * 切换教学面板
+     */
+    toggleTeachingPanel() {
+        const panel = document.getElementById('threebody-teaching-panel');
+        if (panel) {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+    
+    /**
+     * 创建实时数据面板
+     */
+    createDataPanel() {
+        let panel = document.getElementById('threebody-data-panel');
+        if (panel) return;
+        
+        panel = document.createElement('div');
+        panel.id = 'threebody-data-panel';
+        panel.style.cssText = `
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            width: 200px;
+            background: rgba(5, 10, 25, 0.95);
+            border: 1px solid rgba(255, 217, 61, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            color: #fff;
+            font-size: 13px;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        `;
+        
+        document.getElementById('scene-canvas-container')?.appendChild(panel);
+        this.updateDataPanel();
+    }
+    
+    /**
+     * 更新数据面板
+     */
+    updateDataPanel() {
+        const panel = document.getElementById('threebody-data-panel');
+        if (!panel || this.bodies.length < 3) return;
+        
+        const preset = this.presets[this.params.preset];
+        const presetName = preset ? preset.name : '未知';
+        
+        // 计算总能量（简化）
+        let kineticEnergy = 0;
+        this.bodies.forEach(b => {
+            kineticEnergy += 0.5 * b.mass * b.velocity.lengthSq();
+        });
+        
+        // 计算天体间距离
+        const d01 = this.bodies[0].position.distanceTo(this.bodies[1].position);
+        const d12 = this.bodies[1].position.distanceTo(this.bodies[2].position);
+        const d02 = this.bodies[0].position.distanceTo(this.bodies[2].position);
+        
+        panel.innerHTML = `
+            <div style="color: #ffd93d; font-size: 15px; margin-bottom: 12px; font-weight: bold;">
+                <i class="fas fa-chart-line"></i> 实时数据
+            </div>
+            
+            <div style="background: rgba(255,217,61,0.1); padding: 10px; border-radius: 8px; margin-bottom: 12px; text-align: center;">
+                <div style="color: #888; font-size: 11px;">当前预设</div>
+                <div style="color: #ffd93d; font-size: 14px; font-weight: bold;">${presetName}</div>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <div style="color: #888; font-size: 11px; margin-bottom: 4px;">天体间距离</div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <span style="color: #ff6b6b;">1↔2</span>
+                    <span style="color: #fff;">${d01.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <span style="color: #4ecdc4;">2↔3</span>
+                    <span style="color: #fff;">${d12.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <span style="color: #ffd93d;">1↔3</span>
+                    <span style="color: #fff;">${d02.toFixed(2)}</span>
+                </div>
+            </div>
+            
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <span style="color: #888;">动能</span>
+                    <span style="color: #4ecdc4;">${kineticEnergy.toFixed(3)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <span style="color: #888;">状态</span>
+                    <span style="color: ${this.isAutoPlaying ? '#00ff88' : '#ff6b6b'};">${this.isAutoPlaying ? '运行中' : '已暂停'}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * 显示引导消息
+     */
+    showGuide(message) {
+        const container = document.getElementById('scene-canvas-container');
+        if (!container) return;
+
+        const oldGuide = container.querySelector('.scene-guide-message');
+        if (oldGuide) oldGuide.remove();
+
+        const guide = document.createElement('div');
+        guide.className = 'scene-guide-message';
+        guide.innerHTML = message;
+        guide.style.cssText = `
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 217, 61, 0.15);
+            border: 1px solid rgba(255, 217, 61, 0.4);
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: #ffd93d;
+            font-size: 14px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 500px;
+            text-align: center;
+        `;
+        container.appendChild(guide);
+
+        setTimeout(() => guide.style.opacity = '1', 100);
+        setTimeout(() => {
+            guide.style.opacity = '0';
+            setTimeout(() => guide.remove(), 300);
+        }, 4000);
+    }
+
+    /**
      * 显示初始引导
      */
     showInitialGuide() {
-        const panel = document.getElementById('info-panel');
-        if (panel) {
-            panel.innerHTML = `
-                <div style="padding: 15px;">
-                    <h3 style="color: #ffd93d; margin-bottom: 10px;">
-                        <i class="fas fa-sun"></i> 三体问题
-                    </h3>
-                    <p style="color: #aaa; font-size: 13px; line-height: 1.6;">
-                        <strong style="color: #ff6b6b;">经典力学的终极难题：</strong><br>
-                        三个天体在万有引力作用下的运动<br>
-                        <strong>无法</strong>用公式精确求解！
-                    </p>
-                    <div style="margin: 15px 0; padding: 10px; background: rgba(255,107,107,0.1); border-radius: 8px;">
-                        <p style="color: #ff6b6b; font-size: 12px;">
-                            🔬 1889年，庞加莱证明三体问题无解析解<br>
-                            🦋 微小扰动 → 完全不同的结果（混沌）<br>
-                            📚 刘慈欣《三体》的科学背景
-                        </p>
-                    </div>
-                </div>
-            `;
-        }
+        setTimeout(() => {
+            this.showGuide('🌟 三颗恒星正在进行引力舞蹈，观察它们的轨迹！');
+        }, 800);
+        setTimeout(() => {
+            this.showGuide('👆 点击不同"轨道预设"按钮，切换不同的初始配置');
+        }, 5000);
     }
 
     /**
@@ -917,6 +1159,12 @@ window.ThreeBodyScene = class ThreeBodyScene {
         if (this.starfield) {
             this.starfield.rotation.y += 0.0001;
         }
+        
+        // 定期更新数据面板
+        if (Math.floor(time / 500) !== this._lastDataUpdate) {
+            this._lastDataUpdate = Math.floor(time / 500);
+            this.updateDataPanel();
+        }
     }
 
     /**
@@ -1004,6 +1252,20 @@ window.ThreeBodyScene = class ThreeBodyScene {
     }
 
     /**
+     * 获取可交互对象
+     */
+    getInteractables() {
+        return this.interactables;
+    }
+    
+    /**
+     * 背景点击
+     */
+    onBackgroundClick() {
+        // 可扩展
+    }
+
+    /**
      * 销毁场景
      */
     dispose() {
@@ -1028,20 +1290,11 @@ window.ThreeBodyScene = class ThreeBodyScene {
             this.starfield.material.dispose();
             this.scene.remove(this.starfield);
         }
-
-        // 添加动画样式
-        if (!document.querySelector('#three-body-animations')) {
-            const animStyle = document.createElement('style');
-            animStyle.id = 'three-body-animations';
-            animStyle.textContent = `
-                @keyframes fadeInOut {
-                    0% { opacity: 0; transform: translate(-50%, -20px); }
-                    20% { opacity: 1; transform: translate(-50%, 0); }
-                    80% { opacity: 1; transform: translate(-50%, 0); }
-                    100% { opacity: 0; transform: translate(-50%, -20px); }
-                }
-            `;
-            document.head.appendChild(animStyle);
-        }
+        
+        // 清理UI面板
+        ['threebody-teaching-panel', 'threebody-data-panel'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        });
     }
 };
