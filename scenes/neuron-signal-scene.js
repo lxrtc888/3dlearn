@@ -841,6 +841,9 @@ class NeuronSignalScene {
             <div class="panel-header">
                 <i class="fas fa-brain"></i>
                 <span>神经元信号传递</span>
+                <button class="panel-close-btn" id="neuron-panel-close" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="voltage-display">
                 <div class="voltage-label">膜电位</div>
@@ -860,6 +863,11 @@ class NeuronSignalScene {
             </div>
         `;
         container.appendChild(panel);
+        
+        // 绑定关闭按钮事件
+        document.getElementById('neuron-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
     }
 
     /**

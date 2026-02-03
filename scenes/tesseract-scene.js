@@ -841,6 +841,9 @@ class TesseractScene {
         panel.id = 'dimension-panel';
         panel.className = 'dimension-panel';
         panel.innerHTML = `
+            <button class="panel-close-btn" id="tesseract-panel-close" title="关闭">
+                <i class="fas fa-times"></i>
+            </button>
             <div class="dim-title">
                 <span class="dim-number" id="dim-number">0</span>
                 <span class="dim-label">维</span>
@@ -866,6 +869,11 @@ class TesseractScene {
             <div id="evolution-progress" class="evolution-progress"></div>
         `;
         container.appendChild(panel);
+        
+        // 绑定关闭按钮事件
+        document.getElementById('tesseract-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
     }
 
     /**

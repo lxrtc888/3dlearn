@@ -983,6 +983,9 @@ class MazeScene {
             <div class="panel-header">
                 <i class="fas fa-route"></i>
                 <span>迷宫寻路比赛</span>
+                <button class="panel-close-btn" id="maze-panel-close" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="race-grid">
                 ${this.corners.map((corner, i) => `
@@ -1005,6 +1008,11 @@ class MazeScene {
             </div>
         `;
         container.appendChild(panel);
+        
+        // 绑定关闭按钮事件
+        document.getElementById('maze-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
     }
 
     updateInfoPanel() {

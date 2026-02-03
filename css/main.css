@@ -2991,6 +2991,53 @@ body {
     z-index: 10;
 }
 
+/* === 通用面板关闭按钮样式 === */
+.panel-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    min-width: 44px;      /* 移动端触摸区域 */
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 50%;
+    color: #94a3b8;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+.panel-close-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    transform: scale(1.1);
+}
+.panel-close-btn:active {
+    transform: scale(0.95);
+}
+
+/* 面板header需要relative定位来容纳关闭按钮 */
+.panel-header {
+    position: relative;
+}
+
+/* 移动端关闭按钮增强 */
+@media screen and (max-width: 768px) {
+    .panel-close-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+        top: 8px;
+        right: 8px;
+    }
+}
+
 .neuron-info-panel .panel-header {
     display: flex;
     align-items: center;

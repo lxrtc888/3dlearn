@@ -708,6 +708,9 @@ class SortingScene {
             <div class="panel-header">
                 <i class="fas fa-chart-bar"></i>
                 <span>排序算法可视化</span>
+                <button class="panel-close-btn" id="sorting-panel-close" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="algo-info">
                 <div class="algo-name" id="algo-name">冒泡排序</div>
@@ -731,6 +734,11 @@ class SortingScene {
             </div>
         `;
         container.appendChild(panel);
+        
+        // 绑定关闭按钮事件
+        document.getElementById('sorting-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
     }
 
     /**

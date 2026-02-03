@@ -472,6 +472,24 @@ window.GeometryProblemScene = class GeometryProblemScene {
         const panel = document.createElement('div');
         panel.className = 'geometry-area-panel';
         panel.innerHTML = `
+            <button class="geo-panel-close" id="geo-panel-close" title="关闭" style="
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 28px;
+                height: 28px;
+                border: none;
+                background: rgba(0,0,0,0.08);
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #666;
+                font-size: 14px;
+            ">
+                <i class="fas fa-times"></i>
+            </button>
             <div class="geo-panel-title">📐 面积计算</div>
             <div class="geo-area-item" style="border-left: 4px solid #ef4444;">
                 <span class="geo-area-label">S<sub>△ABC</sub></span>
@@ -505,6 +523,11 @@ window.GeometryProblemScene = class GeometryProblemScene {
         `;
         container.appendChild(panel);
         this.areaPanel = panel;
+        
+        // 绑定关闭按钮事件
+        document.getElementById('geo-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
         
         // 添加样式
         this.addPanelStyles();

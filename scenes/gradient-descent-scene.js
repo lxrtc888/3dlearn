@@ -507,6 +507,14 @@ class GradientDescentScene {
         panel.id = 'gradient-info-panel';
         panel.className = 'gradient-info-panel';
         panel.innerHTML = `
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <span style="font-weight: bold; color: #4fc3f7;">
+                    <i class="fas fa-chart-line"></i> 梯度下降
+                </span>
+                <button class="panel-close-btn" id="gradient-panel-close" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
             <div class="info-row">
                 <span class="info-label">迭代次数</span>
                 <span class="info-value" id="gd-iteration">0</span>
@@ -529,6 +537,11 @@ class GradientDescentScene {
             </div>
         `;
         container.appendChild(panel);
+        
+        // 绑定关闭按钮事件
+        document.getElementById('gradient-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
     }
 
     /**

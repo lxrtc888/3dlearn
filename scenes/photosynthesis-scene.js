@@ -819,6 +819,9 @@ class PhotosynthesisScene {
             <div class="panel-header">
                 <span class="panel-icon"><i class="fas fa-leaf"></i></span>
                 <span class="panel-title">整体概览</span>
+                <button class="panel-close-btn" id="photo-panel-close" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="panel-subtitle">光合作用与呼吸作用的关系</div>
             <div class="panel-content">
@@ -827,6 +830,11 @@ class PhotosynthesisScene {
             <div class="panel-formula"></div>
         `;
         container.appendChild(panel);
+        
+        // 绑定关闭按钮事件
+        document.getElementById('photo-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
         
         this.addPanelStyles();
     }

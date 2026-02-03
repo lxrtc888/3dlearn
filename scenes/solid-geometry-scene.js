@@ -623,6 +623,24 @@ window.SolidGeometryScene = class SolidGeometryScene {
         const panel = document.createElement('div');
         panel.className = 'solid-geo-panel';
         panel.innerHTML = `
+            <button class="sg-panel-close" id="sg-panel-close" title="关闭" style="
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 28px;
+                height: 28px;
+                border: none;
+                background: rgba(0,0,0,0.08);
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #666;
+                font-size: 14px;
+            ">
+                <i class="fas fa-times"></i>
+            </button>
             <div class="sg-panel-title">📐 截面信息</div>
             <div class="sg-info-item">
                 <span class="sg-label">截面形状：</span>
@@ -666,6 +684,11 @@ window.SolidGeometryScene = class SolidGeometryScene {
         `;
         container.appendChild(panel);
         this.infoPanel = panel;
+        
+        // 绑定关闭按钮事件
+        document.getElementById('sg-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
         
         this.addInfoPanelStyles();
     }
@@ -1611,6 +1634,24 @@ window.SolidGeometryScene = class SolidGeometryScene {
         const panel = document.createElement('div');
         panel.className = 'special-section-panel';
         panel.innerHTML = `
+            <button class="ssp-close" id="ssp-close" title="关闭" style="
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                width: 24px;
+                height: 24px;
+                border: none;
+                background: rgba(0,0,0,0.08);
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #666;
+                font-size: 12px;
+            ">
+                <i class="fas fa-times"></i>
+            </button>
             <div class="ssp-title">📐 特殊截面</div>
             <button class="ssp-btn" data-type="horizontal">
                 <span>水平截面</span>
@@ -1646,6 +1687,11 @@ window.SolidGeometryScene = class SolidGeometryScene {
         this.addSpecialSectionStyles();
         
         container.appendChild(panel);
+        
+        // 绑定关闭按钮事件
+        panel.querySelector('#ssp-close').onclick = () => {
+            panel.remove();
+        };
         
         // 绑定事件
         panel.querySelectorAll('.ssp-btn').forEach(btn => {

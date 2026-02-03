@@ -618,6 +618,9 @@ class KMeansScene {
             <div class="panel-header">
                 <i class="fas fa-project-diagram"></i>
                 <span>K-Means 聚类</span>
+                <button class="panel-close-btn" id="kmeans-panel-close" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="algo-desc">
                 "物以类聚" - 无监督学习经典算法
@@ -662,6 +665,11 @@ class KMeansScene {
             </div>
         `;
         container.appendChild(panel);
+        
+        // 绑定关闭按钮事件
+        document.getElementById('kmeans-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
     }
 
     /**
