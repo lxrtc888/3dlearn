@@ -1,19 +1,14 @@
 /**
  * 二向箔/降维打击场景 - Dimensional Strike Visualization
  * ============================================
- * "来自《三体》的终极武器"
+ * 优化版本 v2.0
  * 
- * 核心概念：
- * 1. 维度概念：点(0D)→线(1D)→面(2D)→体(3D)
- * 2. 降维打击：高维物体被压缩到低维空间
- * 3. 《三体》设定：二向箔将3D空间坍缩为2D
- * 4. 信息保留：3D结构被"画"在2D平面上
- * 
- * 可视化内容：
- * - 3D太阳系/星球/物体
- * - 二向箔展开动画
- * - 降维过程：3D逐渐压扁成2D
- * - 最终形成2D"画"
+ * 核心改进：
+ * 1. 二向箔平铺方向进入（XZ平面）
+ * 2. 透明化二向箔
+ * 3. 速度提升3倍
+ * 4. 星球粒子化降维效果
+ * 5. 物理模拟下落
  * ============================================
  */
 window.DimensionalStrikeScene = class DimensionalStrikeScene {
@@ -24,22 +19,25 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
 
         this.mainGroup = null;
         this.interactables = [];
-        this.highlighted = null;
 
         // 场景元素
         this.solarSystem = null;
         this.planets = [];
         this.foil = null;
-        this.flattenedObjects = [];
+        this.foilRadius = 0;           // 二向箔当前扩展半径
+        this.foilTargetRadius = 50;    // 二向箔最大半径
+        
+        // 粒子系统
+        this.particleSystems = [];     // 每个星球的粒子系统
+        this.flattenedCircles = [];    // 降维后的二维圆形
 
         // 参数
         this.params = {
-            phase: 'normal',              // normal, deploying, flattening, complete
-            flattenProgress: 0,           // 压扁进度 0-1
-            foilExpanded: false,
-            animationSpeed: 0.5,
-            selectedTarget: 'solar',      // solar, earth, city
-            showInfo: true
+            phase: 'normal',           // normal, entering, expanding, flattening, complete
+            foilPosition: 60,          // 二向箔X位置
+            foilSpeed: 0.6,            // 速度（原来的3倍）
+            expandSpeed: 0.8,          // 扩展速度
+            animationSpeed: 1
         };
 
         // 颜色
@@ -47,23 +45,15 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
             background: 0x000510,
             sun: 0xffdd44,
             earth: 0x4a90d9,
-            mars: 0xff6b6b,
-            jupiter: 0xffa500,
             foil: 0x00ffff,
-            foilGlow: 0x00ffff,
-            grid: 0x1a1a3a
+            particle: 0x00ffff
         };
 
-        // 默认相机位置
-        this.defaultCameraPos = { x: 0, y: 15, z: 30 };
-        
+        this.defaultCameraPos = { x: 0, y: 25, z: 40 };
         this.isAutoPlaying = true;
         this.animationTime = 0;
     }
 
-    /**
-     * 初始化场景
-     */
     init() {
         // 设置相机
         this.camera.position.set(
@@ -73,9 +63,9 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
         );
         this.camera.lookAt(0, 0, 0);
 
-        // 背景 - 深邃太空
+        // 背景
         this.scene.background = new THREE.Color(this.colors.background);
-        this.scene.fog = new THREE.FogExp2(this.colors.background, 0.005);
+        this.scene.fog = new THREE.FogExp2(this.colors.background, 0.008);
 
         // 光照
         this.setupLights();
@@ -86,40 +76,33 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
         // 设置UI
         this.setupUI();
 
-        // 初始引导
+        // 显示引导
         this.showInitialGuide();
     }
 
-    /**
-     * 设置光照
-     */
     setupLights() {
-        const ambient = new THREE.AmbientLight(0xffffff, 0.3);
+        const ambient = new THREE.AmbientLight(0xffffff, 0.4);
         this.scene.add(ambient);
 
-        // 太阳光源
         this.sunLight = new THREE.PointLight(0xffdd44, 2, 100);
         this.sunLight.position.set(0, 0, 0);
         this.scene.add(this.sunLight);
     }
 
-    /**
-     * 创建场景
-     */
     setupScene() {
         this.mainGroup = new THREE.Group();
         this.scene.add(this.mainGroup);
 
-        // 创建星空背景
+        // 星空
         this.createStarfield();
 
-        // 创建太阳系
+        // 太阳系
         this.createSolarSystem();
 
-        // 创建二向箔
+        // 二向箔（平铺方向）
         this.createFoil();
 
-        // 创建2D平面（降维后）
+        // 二维平面（降维后的目标平面）
         this.createFlatPlane();
     }
 
@@ -129,36 +112,24 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
     createStarfield() {
         const starsGeometry = new THREE.BufferGeometry();
         const starPositions = [];
-        const starColors = [];
         
-        for (let i = 0; i < 3000; i++) {
-            const radius = 80 + Math.random() * 120;
+        for (let i = 0; i < 2000; i++) {
+            const radius = 80 + Math.random() * 100;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
             
-            const x = radius * Math.sin(phi) * Math.cos(theta);
-            const y = radius * Math.sin(phi) * Math.sin(theta);
-            const z = radius * Math.cos(phi);
-            
-            starPositions.push(x, y, z);
-            
-            // 星星颜色
-            const colorChoice = Math.random();
-            if (colorChoice < 0.7) {
-                starColors.push(1, 1, 1);
-            } else if (colorChoice < 0.85) {
-                starColors.push(1, 0.9, 0.7);
-            } else {
-                starColors.push(0.7, 0.8, 1);
-            }
+            starPositions.push(
+                radius * Math.sin(phi) * Math.cos(theta),
+                radius * Math.sin(phi) * Math.sin(theta),
+                radius * Math.cos(phi)
+            );
         }
 
         starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-        starsGeometry.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3));
 
         const starsMaterial = new THREE.PointsMaterial({
-            size: 0.15,
-            vertexColors: true,
+            size: 0.2,
+            color: 0xffffff,
             transparent: true,
             opacity: 0.8
         });
@@ -177,55 +148,45 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
 
         // 太阳
         const sunGeometry = new THREE.SphereGeometry(3, 32, 32);
-        const sunMaterial = new THREE.MeshBasicMaterial({
-            color: this.colors.sun
-        });
+        const sunMaterial = new THREE.MeshBasicMaterial({ color: this.colors.sun });
         const sun = new THREE.Mesh(sunGeometry, sunMaterial);
         
         // 太阳光晕
-        const sunGlow1 = new THREE.Mesh(
-            new THREE.SphereGeometry(3.5, 32, 32),
+        const sunGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(4, 32, 32),
             new THREE.MeshBasicMaterial({
                 color: this.colors.sun,
                 transparent: true,
-                opacity: 0.3
+                opacity: 0.2
             })
         );
-        sun.add(sunGlow1);
-        
-        const sunGlow2 = new THREE.Mesh(
-            new THREE.SphereGeometry(4.5, 32, 32),
-            new THREE.MeshBasicMaterial({
-                color: this.colors.sun,
-                transparent: true,
-                opacity: 0.1
-            })
-        );
-        sun.add(sunGlow2);
+        sun.add(sunGlow);
 
         sun.userData = { 
             name: '太阳', 
-            originalScale: 1,
+            radius: 3,
             orbitRadius: 0, 
             orbitSpeed: 0,
-            isSun: true
+            isSun: true,
+            isFlattening: false,
+            flattenProgress: 0
         };
         this.solarSystem.add(sun);
         this.planets.push(sun);
 
         // 行星配置
         const planetConfigs = [
-            { name: '水星', radius: 0.4, orbit: 5, speed: 0.02, color: 0x888888 },
-            { name: '金星', radius: 0.9, orbit: 7, speed: 0.015, color: 0xffcc66 },
-            { name: '地球', radius: 1, orbit: 10, speed: 0.01, color: 0x4a90d9 },
-            { name: '火星', radius: 0.5, orbit: 13, speed: 0.008, color: 0xff6b6b },
-            { name: '木星', radius: 2, orbit: 18, speed: 0.004, color: 0xffa500 },
-            { name: '土星', radius: 1.7, orbit: 24, speed: 0.003, color: 0xffd93d }
+            { name: '水星', radius: 0.5, orbit: 6, speed: 0.025, color: 0x888888 },
+            { name: '金星', radius: 0.9, orbit: 9, speed: 0.018, color: 0xffcc66 },
+            { name: '地球', radius: 1.2, orbit: 13, speed: 0.012, color: 0x4a90d9 },
+            { name: '火星', radius: 0.7, orbit: 17, speed: 0.009, color: 0xff6b6b },
+            { name: '木星', radius: 2.2, orbit: 23, speed: 0.005, color: 0xffa500 },
+            { name: '土星', radius: 1.8, orbit: 30, speed: 0.003, color: 0xffd93d }
         ];
 
-        planetConfigs.forEach((config, index) => {
+        planetConfigs.forEach((config) => {
             // 轨道环
-            const orbitGeometry = new THREE.RingGeometry(config.orbit - 0.05, config.orbit + 0.05, 64);
+            const orbitGeometry = new THREE.RingGeometry(config.orbit - 0.08, config.orbit + 0.08, 64);
             const orbitMaterial = new THREE.MeshBasicMaterial({
                 color: 0x333366,
                 side: THREE.DoubleSide,
@@ -241,11 +202,12 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
             const planetMaterial = new THREE.MeshPhongMaterial({
                 color: config.color,
                 emissive: config.color,
-                emissiveIntensity: 0.2
+                emissiveIntensity: 0.15,
+                transparent: true,
+                opacity: 1
             });
             const planet = new THREE.Mesh(planetGeometry, planetMaterial);
             
-            // 随机初始角度
             const angle = Math.random() * Math.PI * 2;
             planet.position.set(
                 Math.cos(angle) * config.orbit,
@@ -255,21 +217,24 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
 
             planet.userData = {
                 name: config.name,
-                originalScale: 1,
+                radius: config.radius,
                 orbitRadius: config.orbit,
                 orbitSpeed: config.speed,
                 currentAngle: angle,
-                originalY: 0
+                color: config.color,
+                isFlattening: false,
+                flattenProgress: 0,
+                particles: null
             };
 
             // 土星环
             if (config.name === '土星') {
-                const ringGeometry = new THREE.RingGeometry(2, 3.5, 32);
+                const ringGeometry = new THREE.RingGeometry(2.2, 3.5, 32);
                 const ringMaterial = new THREE.MeshBasicMaterial({
                     color: 0xffd93d,
                     side: THREE.DoubleSide,
                     transparent: true,
-                    opacity: 0.6
+                    opacity: 0.5
                 });
                 const ring = new THREE.Mesh(ringGeometry, ringMaterial);
                 ring.rotation.x = Math.PI / 2.5;
@@ -282,103 +247,195 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
     }
 
     /**
-     * 创建二向箔
+     * 创建二向箔 - 平铺方向（XZ平面）
      */
     createFoil() {
         this.foilGroup = new THREE.Group();
-        this.foilGroup.position.set(40, 0, 0);
+        this.foilGroup.position.set(60, 0.1, 0);  // 从右侧开始，稍微高于Y=0
         this.foilGroup.visible = false;
         this.mainGroup.add(this.foilGroup);
 
-        // 二向箔主体 - 极薄的发光片
-        const foilGeometry = new THREE.PlaneGeometry(0.5, 0.5);
+        // 二向箔主体 - 透明圆形平面
+        const foilGeometry = new THREE.CircleGeometry(0.5, 64);
         const foilMaterial = new THREE.MeshBasicMaterial({
             color: this.colors.foil,
             transparent: true,
-            opacity: 0.9,
+            opacity: 0.15,          // 高度透明
             side: THREE.DoubleSide
         });
         this.foil = new THREE.Mesh(foilGeometry, foilMaterial);
+        this.foil.rotation.x = -Math.PI / 2;  // 平铺在XZ平面
         this.foilGroup.add(this.foil);
 
-        // 二向箔光晕
-        const glowGeometry = new THREE.PlaneGeometry(1, 1);
+        // 二向箔发光边缘
+        const edgeGeometry = new THREE.RingGeometry(0.45, 0.5, 64);
+        const edgeMaterial = new THREE.MeshBasicMaterial({
+            color: this.colors.foil,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
+        this.foilEdge = new THREE.Mesh(edgeGeometry, edgeMaterial);
+        this.foilEdge.rotation.x = -Math.PI / 2;
+        this.foilGroup.add(this.foilEdge);
+
+        // 外层光晕
+        const glowGeometry = new THREE.RingGeometry(0.48, 0.55, 64);
         const glowMaterial = new THREE.MeshBasicMaterial({
-            color: this.colors.foilGlow,
+            color: this.colors.foil,
             transparent: true,
             opacity: 0.3,
             side: THREE.DoubleSide
         });
         this.foilGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+        this.foilGlow.rotation.x = -Math.PI / 2;
         this.foilGroup.add(this.foilGlow);
 
         // 边缘粒子效果
-        const particleGeometry = new THREE.BufferGeometry();
-        const particlePositions = [];
-        for (let i = 0; i < 100; i++) {
-            particlePositions.push(
-                (Math.random() - 0.5) * 2,
-                (Math.random() - 0.5) * 2,
-                0
-            );
-        }
-        particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particlePositions, 3));
+        this.createFoilParticles();
+    }
+
+    /**
+     * 创建二向箔边缘粒子
+     */
+    createFoilParticles() {
+        const particleCount = 200;
+        const positions = new Float32Array(particleCount * 3);
         
-        const particleMaterial = new THREE.PointsMaterial({
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2;
+            positions[i * 3] = Math.cos(angle) * 0.5;
+            positions[i * 3 + 1] = 0;
+            positions[i * 3 + 2] = Math.sin(angle) * 0.5;
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const material = new THREE.PointsMaterial({
             color: this.colors.foil,
-            size: 0.1,
+            size: 0.08,
             transparent: true,
-            opacity: 0.6
+            opacity: 0.8
         });
-        this.foilParticles = new THREE.Points(particleGeometry, particleMaterial);
+
+        this.foilParticles = new THREE.Points(geometry, material);
         this.foilGroup.add(this.foilParticles);
     }
 
     /**
-     * 创建扁平化平面
+     * 创建二维平面
      */
     createFlatPlane() {
         this.flatPlane = new THREE.Group();
-        this.flatPlane.position.set(0, -10, 0);
+        this.flatPlane.position.y = -0.5;  // 稍低于场景中心
         this.flatPlane.visible = false;
         this.mainGroup.add(this.flatPlane);
 
-        // 底部平面
-        const planeGeometry = new THREE.PlaneGeometry(60, 60);
-        const planeMaterial = new THREE.MeshBasicMaterial({
-            color: 0x111133,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.8
-        });
-        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        plane.rotation.x = -Math.PI / 2;
-        this.flatPlane.add(plane);
-
-        // 网格
-        const gridHelper = new THREE.GridHelper(60, 30, 0x333366, 0x222244);
-        gridHelper.material.opacity = 0.5;
+        // 底部网格
+        const gridHelper = new THREE.GridHelper(80, 40, 0x1a1a4a, 0x111133);
+        gridHelper.material.opacity = 0.4;
         gridHelper.material.transparent = true;
         this.flatPlane.add(gridHelper);
+    }
+
+    /**
+     * 创建星球粒子化效果
+     */
+    createPlanetParticles(planet) {
+        const particleCount = 500;
+        const radius = planet.userData.radius;
+        const positions = new Float32Array(particleCount * 3);
+        const velocities = [];
+        const originalPositions = [];
+
+        // 在球面上分布粒子
+        for (let i = 0; i < particleCount; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.sin(phi) * Math.sin(theta);
+            const z = radius * Math.cos(phi);
+            
+            positions[i * 3] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+            
+            originalPositions.push({ x, y, z });
+            
+            // 向下飘落的速度
+            velocities.push({
+                x: (Math.random() - 0.5) * 0.05,
+                y: -0.02 - Math.random() * 0.03,
+                z: (Math.random() - 0.5) * 0.05
+            });
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const material = new THREE.PointsMaterial({
+            color: planet.userData.color,
+            size: 0.15,
+            transparent: true,
+            opacity: 0.9
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        particles.position.copy(planet.position);
+        
+        particles.userData = {
+            velocities,
+            originalPositions,
+            targetY: -0.5,  // 降到二维平面
+            planet
+        };
+
+        this.mainGroup.add(particles);
+        planet.userData.particles = particles;
+        this.particleSystems.push(particles);
+
+        return particles;
+    }
+
+    /**
+     * 创建二维化圆形
+     */
+    createFlatCircle(planet) {
+        const radius = planet.userData.radius;
+        
+        const geometry = new THREE.CircleGeometry(radius, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: planet.userData.color,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide
+        });
+        
+        const circle = new THREE.Mesh(geometry, material);
+        circle.rotation.x = -Math.PI / 2;
+        circle.position.set(planet.position.x, -0.4, planet.position.z);
+        
+        this.flatPlane.add(circle);
+        this.flattenedCircles.push({ circle, planet });
+        
+        return circle;
     }
 
     /**
      * 设置UI
      */
     setupUI() {
-        // 底部操作按钮
         const controlsDiv = document.getElementById('scene-controls');
         if (controlsDiv) {
             controlsDiv.style.display = 'flex';
             controlsDiv.innerHTML = `
-                <button class="control-btn" id="btn-reset-scene">
-                    <i class="fas fa-redo"></i> 重置场景
-                </button>
                 <button class="control-btn active" id="btn-deploy-foil">
                     <i class="fas fa-paper-plane"></i> 释放二向箔
                 </button>
-                <button class="control-btn" id="btn-flatten" disabled>
-                    <i class="fas fa-compress-arrows-alt"></i> 开始降维
+                <button class="control-btn" id="btn-reset-scene">
+                    <i class="fas fa-redo"></i> 重置场景
                 </button>
                 <button class="control-btn" id="btn-play">
                     <i class="fas fa-pause"></i> 暂停
@@ -388,10 +445,8 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
                 </button>
             `;
 
-            // 底部按钮事件
-            document.getElementById('btn-reset-scene')?.addEventListener('click', () => this.resetScene());
             document.getElementById('btn-deploy-foil')?.addEventListener('click', () => this.deployFoil());
-            document.getElementById('btn-flatten')?.addEventListener('click', () => this.startFlattening());
+            document.getElementById('btn-reset-scene')?.addEventListener('click', () => this.resetScene());
             document.getElementById('btn-play')?.addEventListener('click', () => {
                 this.isAutoPlaying = !this.isAutoPlaying;
                 const btn = document.getElementById('btn-play');
@@ -402,243 +457,177 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
             document.getElementById('btn-reset-view')?.addEventListener('click', () => this.resetCamera());
         }
 
-        const panel = document.getElementById('control-panel');
-        if (!panel) return;
+        // 创建信息面板
+        this.createInfoPanel();
+    }
 
+    /**
+     * 创建信息面板
+     */
+    createInfoPanel() {
+        const container = document.getElementById('view-scene');
+        if (!container) return;
+
+        const panel = document.createElement('div');
+        panel.id = 'dimensional-info-panel';
         panel.innerHTML = `
-            <div class="control-section">
-                <h4><i class="fas fa-compress-alt"></i> 降维演示</h4>
-                <div class="phase-buttons">
-                    <button id="btn-reset-scene" class="phase-btn">
-                        <i class="fas fa-redo"></i> 重置场景
-                    </button>
-                    <button id="btn-deploy-foil" class="phase-btn highlight">
-                        <i class="fas fa-paper-plane"></i> 释放二向箔
-                    </button>
-                    <button id="btn-flatten" class="phase-btn danger" disabled>
-                        <i class="fas fa-compress-arrows-alt"></i> 开始降维
-                    </button>
+            <div class="panel-header">
+                <i class="fas fa-compress-alt"></i>
+                <span>二向箔 · 降维打击</span>
+                <button class="panel-close-btn" id="dim-panel-close" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="dim-phase" id="dim-phase">
+                <span class="phase-icon"><i class="fas fa-globe"></i></span>
+                <span class="phase-text">正常三维空间</span>
+            </div>
+            <div class="dim-stats">
+                <div class="stat-item">
+                    <span class="stat-label">二向箔半径</span>
+                    <span class="stat-value" id="foil-radius">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">已降维星球</span>
+                    <span class="stat-value" id="flattened-count">0 / 7</span>
                 </div>
             </div>
-            
-            <div class="control-section">
-                <h4><i class="fas fa-tachometer-alt"></i> 动画速度</h4>
-                <input type="range" id="speed-slider" 
-                       min="0.1" max="2" step="0.1"
-                       value="${this.params.animationSpeed}" 
-                       class="styled-slider">
+            <div class="dim-tip">
+                💡 点击"释放二向箔"开始演示
             </div>
-            
-            <div class="control-section">
-                <h4><i class="fas fa-info-circle"></i> 当前阶段</h4>
-                <div id="phase-display" class="phase-display">
-                    <div class="phase-icon"><i class="fas fa-globe"></i></div>
-                    <div class="phase-text">正常三维空间</div>
-                </div>
-                <div id="progress-bar" class="progress-bar" style="display:none;">
-                    <div class="progress-fill" style="width:0%"></div>
-                </div>
-            </div>
-            
-            <div class="control-section">
-                <h4><i class="fas fa-play-circle"></i> 控制</h4>
-                <div class="control-buttons">
-                    <button id="btn-play" class="control-btn primary">
-                        <i class="fas fa-pause"></i> 暂停
-                    </button>
-                </div>
-            </div>
-            
-            <style>
-                .phase-buttons {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 10px;
-                }
-                .phase-btn {
-                    padding: 12px;
-                    border: 2px solid #00ffff;
-                    background: rgba(0, 255, 255, 0.1);
-                    color: #00ffff;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    font-size: 13px;
-                }
-                .phase-btn:hover:not(:disabled) {
-                    background: rgba(0, 255, 255, 0.3);
-                    transform: translateY(-2px);
-                }
-                .phase-btn:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
-                .phase-btn.highlight {
-                    background: rgba(0, 255, 255, 0.2);
-                    animation: pulse 2s infinite;
-                }
-                .phase-btn.danger {
-                    border-color: #ff6b6b;
-                    color: #ff6b6b;
-                    background: rgba(255, 107, 107, 0.1);
-                }
-                .phase-btn.danger:hover:not(:disabled) {
-                    background: rgba(255, 107, 107, 0.3);
-                }
-                @keyframes pulse {
-                    0%, 100% { box-shadow: 0 0 10px rgba(0,255,255,0.3); }
-                    50% { box-shadow: 0 0 20px rgba(0,255,255,0.6); }
-                }
-                .styled-slider {
-                    width: 100%;
-                    height: 8px;
-                    border-radius: 4px;
-                    background: linear-gradient(to right, #333, #00ffff);
-                    outline: none;
-                    -webkit-appearance: none;
-                }
-                .styled-slider::-webkit-slider-thumb {
-                    -webkit-appearance: none;
-                    width: 18px;
-                    height: 18px;
-                    border-radius: 50%;
-                    background: #ffffff;
-                    cursor: pointer;
-                    box-shadow: 0 0 10px rgba(0,255,255,0.5);
-                }
-                .phase-display {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    padding: 12px;
-                    background: rgba(0, 255, 255, 0.1);
-                    border-radius: 8px;
-                    border-left: 3px solid #00ffff;
-                }
-                .phase-icon {
-                    font-size: 24px;
-                    color: #00ffff;
-                }
-                .phase-text {
-                    font-size: 13px;
-                    color: #ffffff;
-                }
-                .progress-bar {
-                    height: 8px;
-                    background: rgba(255,255,255,0.1);
-                    border-radius: 4px;
-                    overflow: hidden;
-                    margin-top: 10px;
-                }
-                .progress-fill {
-                    height: 100%;
-                    background: linear-gradient(to right, #00ffff, #ff6b6b);
-                    transition: width 0.3s;
-                }
-                .control-buttons {
-                    display: flex;
-                    gap: 10px;
-                }
-                .control-btn {
-                    flex: 1;
-                    padding: 12px;
-                    border: none;
-                    border-radius: 8px;
-                    background: rgba(255,255,255,0.1);
-                    color: #ffffff;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                }
-                .control-btn.primary {
-                    background: linear-gradient(135deg, #00ffff, #a855f7);
-                }
-            </style>
         `;
-
-        this.bindUIEvents();
-    }
-
-    /**
-     * 绑定UI事件
-     */
-    bindUIEvents() {
-        // 重置场景
-        const resetBtn = document.getElementById('btn-reset-scene');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
-                this.resetScene();
-            });
-        }
-
-        // 释放二向箔
-        const deployBtn = document.getElementById('btn-deploy-foil');
-        if (deployBtn) {
-            deployBtn.addEventListener('click', () => {
-                this.deployFoil();
-            });
-        }
-
-        // 开始降维
-        const flattenBtn = document.getElementById('btn-flatten');
-        if (flattenBtn) {
-            flattenBtn.addEventListener('click', () => {
-                this.startFlattening();
-            });
-        }
-
-        // 速度滑块
-        const speedSlider = document.getElementById('speed-slider');
-        if (speedSlider) {
-            speedSlider.addEventListener('input', (e) => {
-                this.params.animationSpeed = parseFloat(e.target.value);
-            });
-        }
-
-        // 播放/暂停
-        const playBtn = document.getElementById('btn-play');
-        if (playBtn) {
-            playBtn.addEventListener('click', () => {
-                this.isAutoPlaying = !this.isAutoPlaying;
-                playBtn.innerHTML = this.isAutoPlaying 
-                    ? '<i class="fas fa-pause"></i> 暂停'
-                    : '<i class="fas fa-play"></i> 播放';
-            });
-        }
-    }
-
-    /**
-     * 重置场景
-     */
-    resetScene() {
-        this.params.phase = 'normal';
-        this.params.flattenProgress = 0;
-        this.params.foilExpanded = false;
-
-        // 隐藏二向箔
-        this.foilGroup.visible = false;
-        this.foilGroup.position.set(40, 0, 0);
-
-        // 隐藏平面
-        this.flatPlane.visible = false;
-
-        // 恢复行星
-        this.planets.forEach(planet => {
-            planet.scale.set(1, 1, 1);
-            planet.position.y = 0;
-            planet.material.opacity = 1;
-            if (planet.userData.originalY !== undefined) {
-                planet.position.y = planet.userData.originalY;
-            }
+        panel.style.cssText = `
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(10, 15, 30, 0.92);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            color: #fff;
+            font-size: 13px;
+            z-index: 100;
+            min-width: 220px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        `;
+        container.appendChild(panel);
+        
+        // 绑定关闭按钮
+        document.getElementById('dim-panel-close')?.addEventListener('click', () => {
+            panel.style.display = 'none';
         });
 
-        // 更新UI
-        this.updatePhaseDisplay('normal');
-        document.getElementById('btn-deploy-foil').disabled = false;
-        document.getElementById('btn-deploy-foil').classList.add('highlight');
-        document.getElementById('btn-flatten').disabled = true;
-        document.getElementById('progress-bar').style.display = 'none';
+        this.addPanelStyles();
+    }
 
-        this.showToast('场景已重置');
+    addPanelStyles() {
+        if (document.getElementById('dim-panel-styles')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'dim-panel-styles';
+        style.textContent = `
+            #dimensional-info-panel .panel-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 12px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+                position: relative;
+            }
+            #dimensional-info-panel .panel-header i:first-child {
+                color: #00ffff;
+            }
+            #dimensional-info-panel .panel-header span {
+                font-weight: 600;
+                color: #00ffff;
+            }
+            #dimensional-info-panel .dim-phase {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px;
+                background: rgba(0, 255, 255, 0.1);
+                border-radius: 8px;
+                border-left: 3px solid #00ffff;
+                margin-bottom: 12px;
+            }
+            #dimensional-info-panel .phase-icon {
+                font-size: 20px;
+                color: #00ffff;
+            }
+            #dimensional-info-panel .phase-text {
+                font-size: 14px;
+            }
+            #dimensional-info-panel .dim-stats {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+            #dimensional-info-panel .stat-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 10px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 6px;
+            }
+            #dimensional-info-panel .stat-label {
+                color: #888;
+            }
+            #dimensional-info-panel .stat-value {
+                color: #00ffff;
+                font-weight: bold;
+            }
+            #dimensional-info-panel .dim-tip {
+                font-size: 12px;
+                color: #888;
+                padding: 10px;
+                background: rgba(0, 255, 255, 0.05);
+                border-radius: 6px;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    /**
+     * 更新信息面板
+     */
+    updateInfoPanel() {
+        const radiusEl = document.getElementById('foil-radius');
+        const countEl = document.getElementById('flattened-count');
+        
+        if (radiusEl) {
+            radiusEl.textContent = this.foilRadius.toFixed(1);
+        }
+        
+        if (countEl) {
+            const flattened = this.planets.filter(p => p.userData.flattenProgress >= 1).length;
+            countEl.textContent = `${flattened} / ${this.planets.length}`;
+        }
+    }
+
+    /**
+     * 更新阶段显示
+     */
+    updatePhaseDisplay(phase) {
+        const phaseEl = document.getElementById('dim-phase');
+        if (!phaseEl) return;
+
+        const phases = {
+            'normal': { icon: 'fa-globe', text: '正常三维空间', color: '#4ecdc4' },
+            'entering': { icon: 'fa-paper-plane', text: '二向箔逼近中...', color: '#00ffff' },
+            'expanding': { icon: 'fa-expand-arrows-alt', text: '二向箔扩展中...', color: '#ffd93d' },
+            'flattening': { icon: 'fa-compress-arrows-alt', text: '降维进行中...', color: '#ff6b6b' },
+            'complete': { icon: 'fa-check-circle', text: '降维完成', color: '#a855f7' }
+        };
+
+        const p = phases[phase] || phases['normal'];
+        phaseEl.innerHTML = `
+            <span class="phase-icon" style="color:${p.color}"><i class="fas ${p.icon}"></i></span>
+            <span class="phase-text">${p.text}</span>
+        `;
+        phaseEl.style.borderColor = p.color;
     }
 
     /**
@@ -647,55 +636,83 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
     deployFoil() {
         if (this.params.phase !== 'normal') return;
 
-        this.params.phase = 'deploying';
+        this.params.phase = 'entering';
         this.foilGroup.visible = true;
-        
-        // 更新UI
-        this.updatePhaseDisplay('deploying');
-        document.getElementById('btn-deploy-foil').disabled = true;
-        document.getElementById('btn-deploy-foil').classList.remove('highlight');
-
-        this.showToast('⚠️ 二向箔已释放！');
-    }
-
-    /**
-     * 开始降维
-     */
-    startFlattening() {
-        if (this.params.phase !== 'deployed') return;
-
-        this.params.phase = 'flattening';
         this.flatPlane.visible = true;
+        this.foilRadius = 0.5;
         
-        // 更新UI
-        this.updatePhaseDisplay('flattening');
-        document.getElementById('btn-flatten').disabled = true;
-        document.getElementById('progress-bar').style.display = 'block';
+        this.updatePhaseDisplay('entering');
+        
+        document.getElementById('btn-deploy-foil').disabled = true;
+        document.getElementById('btn-deploy-foil').classList.remove('active');
 
-        this.showToast('🌀 降维打击开始！三维空间正在坍缩...');
+        this.showToast('⚠️ 二向箔已释放！正在逼近...');
     }
 
     /**
-     * 更新阶段显示
+     * 重置场景
      */
-    updatePhaseDisplay(phase) {
-        const display = document.getElementById('phase-display');
-        if (!display) return;
+    resetScene() {
+        this.params.phase = 'normal';
+        this.params.foilPosition = 60;
+        this.foilRadius = 0;
 
-        const phases = {
-            'normal': { icon: 'fa-globe', text: '正常三维空间', color: '#4ecdc4' },
-            'deploying': { icon: 'fa-paper-plane', text: '二向箔展开中...', color: '#00ffff' },
-            'deployed': { icon: 'fa-exclamation-triangle', text: '二向箔已就绪', color: '#ffd93d' },
-            'flattening': { icon: 'fa-compress-arrows-alt', text: '降维进行中...', color: '#ff6b6b' },
-            'complete': { icon: 'fa-check-circle', text: '降维完成：二维化', color: '#a855f7' }
-        };
+        // 隐藏二向箔
+        this.foilGroup.visible = false;
+        this.foilGroup.position.set(60, 0.1, 0);
+        this.foil.scale.set(1, 1, 1);
+        this.foilEdge.scale.set(1, 1, 1);
+        this.foilGlow.scale.set(1, 1, 1);
 
-        const p = phases[phase];
-        display.innerHTML = `
-            <div class="phase-icon" style="color:${p.color}"><i class="fas ${p.icon}"></i></div>
-            <div class="phase-text">${p.text}</div>
-        `;
-        display.style.borderColor = p.color;
+        // 隐藏平面
+        this.flatPlane.visible = false;
+
+        // 清除粒子系统
+        this.particleSystems.forEach(ps => {
+            this.mainGroup.remove(ps);
+            ps.geometry.dispose();
+            ps.material.dispose();
+        });
+        this.particleSystems = [];
+
+        // 清除二维圆形
+        this.flattenedCircles.forEach(({ circle }) => {
+            this.flatPlane.remove(circle);
+            circle.geometry.dispose();
+            circle.material.dispose();
+        });
+        this.flattenedCircles = [];
+
+        // 恢复行星
+        this.planets.forEach(planet => {
+            planet.visible = true;
+            planet.scale.set(1, 1, 1);
+            planet.position.y = 0;
+            planet.material.opacity = 1;
+            planet.userData.isFlattening = false;
+            planet.userData.flattenProgress = 0;
+            planet.userData.particles = null;
+        });
+
+        // 更新UI
+        this.updatePhaseDisplay('normal');
+        document.getElementById('btn-deploy-foil').disabled = false;
+        document.getElementById('btn-deploy-foil').classList.add('active');
+        this.updateInfoPanel();
+
+        this.showToast('场景已重置');
+    }
+
+    /**
+     * 重置相机
+     */
+    resetCamera() {
+        this.camera.position.set(
+            this.defaultCameraPos.x,
+            this.defaultCameraPos.y,
+            this.defaultCameraPos.z
+        );
+        this.camera.lookAt(0, 0, 0);
     }
 
     /**
@@ -726,32 +743,9 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
      * 显示初始引导
      */
     showInitialGuide() {
-        const panel = document.getElementById('info-panel');
-        if (panel) {
-            panel.innerHTML = `
-                <div style="padding: 15px;">
-                    <h3 style="color: #00ffff; margin-bottom: 10px;">
-                        <i class="fas fa-compress-alt"></i> 二向箔 · 降维打击
-                    </h3>
-                    <p style="color: #aaa; font-size: 13px; line-height: 1.6;">
-                        <strong style="color: #ffd93d;">《三体》设定：</strong><br>
-                        神级文明的终极武器，将三维空间<br>
-                        坍缩为二维，一切物质被压成"画"
-                    </p>
-                    <div style="margin: 15px 0; padding: 10px; background: rgba(0,255,255,0.1); border-radius: 8px;">
-                        <p style="color: #00ffff; font-size: 12px;">
-                            📐 维度概念：<br>
-                            0D(点) → 1D(线) → 2D(面) → 3D(体)<br>
-                            <br>
-                            ⚠️ 降维 = 维度减少 = 信息压缩
-                        </p>
-                    </div>
-                    <p style="color: #888; font-size: 12px;">
-                        💡 点击"释放二向箔"开始演示
-                    </p>
-                </div>
-            `;
-        }
+        setTimeout(() => {
+            this.showToast('🌌 点击"释放二向箔"开始降维打击演示');
+        }, 500);
     }
 
     /**
@@ -762,99 +756,104 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
 
         this.animationTime += delta * 0.001 * this.params.animationSpeed;
 
-        // 行星公转
-        if (this.params.phase === 'normal' || this.params.phase === 'deploying') {
-            this.planets.forEach(planet => {
-                if (!planet.userData.isSun && planet.userData.orbitRadius > 0) {
-                    planet.userData.currentAngle += planet.userData.orbitSpeed * this.params.animationSpeed;
-                    planet.position.x = Math.cos(planet.userData.currentAngle) * planet.userData.orbitRadius;
-                    planet.position.z = Math.sin(planet.userData.currentAngle) * planet.userData.orbitRadius;
-                }
-            });
+        // 行星公转（未降维时）
+        if (this.params.phase === 'normal' || this.params.phase === 'entering') {
+            this.animatePlanetOrbits();
         }
 
-        // 二向箔展开动画
-        if (this.params.phase === 'deploying') {
-            this.animateFoilDeployment();
+        // 二向箔进入动画
+        if (this.params.phase === 'entering') {
+            this.animateFoilEntering();
         }
 
-        // 降维动画
-        if (this.params.phase === 'flattening') {
-            this.animateFlattening();
+        // 二向箔扩展动画
+        if (this.params.phase === 'expanding') {
+            this.animateFoilExpanding();
         }
 
-        // 二向箔粒子效果
-        if (this.foilGroup.visible) {
-            this.foilParticles.rotation.z += 0.02;
+        // 降维粒子动画
+        if (this.params.phase === 'expanding' || this.params.phase === 'flattening') {
+            this.animateParticleSystems();
+            this.animateFlatteningCircles();
         }
+
+        // 二向箔边缘粒子旋转
+        if (this.foilGroup.visible && this.foilParticles) {
+            this.updateFoilParticles();
+        }
+
+        // 更新信息面板
+        this.updateInfoPanel();
 
         // 星空微动
         if (this.starfield) {
-            this.starfield.rotation.y += 0.0001;
+            this.starfield.rotation.y += 0.0002;
         }
     }
 
     /**
-     * 二向箔展开动画
+     * 行星公转动画
      */
-    animateFoilDeployment() {
-        // 二向箔向太阳系移动
-        const targetX = 30;
-        const speed = 0.1 * this.params.animationSpeed;
-        
-        if (this.foilGroup.position.x > targetX) {
-            this.foilGroup.position.x -= speed;
-            
-            // 展开（放大）
-            const scale = 1 + (40 - this.foilGroup.position.x) * 0.5;
-            this.foil.scale.set(scale, scale, 1);
-            this.foilGlow.scale.set(scale * 1.5, scale * 1.5, 1);
-        } else {
-            // 展开完成
-            this.params.phase = 'deployed';
-            this.updatePhaseDisplay('deployed');
-            document.getElementById('btn-flatten').disabled = false;
-        }
-    }
-
-    /**
-     * 降维动画
-     */
-    animateFlattening() {
-        const speed = 0.002 * this.params.animationSpeed;
-        this.params.flattenProgress = Math.min(1, this.params.flattenProgress + speed);
-
-        // 更新进度条
-        const progressFill = document.querySelector('.progress-fill');
-        if (progressFill) {
-            progressFill.style.width = (this.params.flattenProgress * 100) + '%';
-        }
-
-        // 二向箔继续推进
-        if (this.foilGroup.position.x > -35) {
-            this.foilGroup.position.x -= 0.15 * this.params.animationSpeed;
-        }
-
-        // 压扁行星
+    animatePlanetOrbits() {
         this.planets.forEach(planet => {
-            // Y轴压缩
-            const flattenAmount = Math.min(1, this.params.flattenProgress * 2);
-            const scaleY = Math.max(0.01, 1 - flattenAmount * 0.99);
-            planet.scale.y = scaleY;
-
-            // 下沉到平面
-            const targetY = -10 + planet.userData.orbitRadius * 0.1;
-            planet.position.y = THREE.MathUtils.lerp(0, targetY, flattenAmount);
-
-            // 透明度变化（被降维的部分变透明）
-            if (planet.position.x < this.foilGroup.position.x + 5) {
-                planet.material.transparent = true;
-                planet.material.opacity = Math.max(0.3, 1 - flattenAmount * 0.7);
+            if (!planet.userData.isSun && planet.userData.orbitRadius > 0 && !planet.userData.isFlattening) {
+                planet.userData.currentAngle += planet.userData.orbitSpeed * this.params.animationSpeed;
+                planet.position.x = Math.cos(planet.userData.currentAngle) * planet.userData.orbitRadius;
+                planet.position.z = Math.sin(planet.userData.currentAngle) * planet.userData.orbitRadius;
             }
         });
+    }
 
-        // 完成
-        if (this.params.flattenProgress >= 1) {
+    /**
+     * 二向箔进入动画
+     */
+    animateFoilEntering() {
+        const speed = this.params.foilSpeed * this.params.animationSpeed;
+        
+        // 从右侧向中心移动
+        if (this.foilGroup.position.x > 0) {
+            this.foilGroup.position.x -= speed;
+            
+            // 边移动边稍微放大
+            const scale = 1 + (60 - this.foilGroup.position.x) * 0.1;
+            this.foil.scale.set(scale, scale, 1);
+            this.foilEdge.scale.set(scale, scale, 1);
+            this.foilGlow.scale.set(scale, scale, 1);
+            this.foilRadius = 0.5 * scale;
+        } else {
+            // 到达中心，开始扩展
+            this.params.phase = 'expanding';
+            this.updatePhaseDisplay('expanding');
+            this.showToast('🌀 二向箔开始扩展！降维开始...');
+        }
+    }
+
+    /**
+     * 二向箔扩展动画
+     */
+    animateFoilExpanding() {
+        const expandSpeed = this.params.expandSpeed * this.params.animationSpeed;
+        
+        if (this.foilRadius < this.foilTargetRadius) {
+            this.foilRadius += expandSpeed;
+            
+            const scale = this.foilRadius / 0.5;
+            this.foil.scale.set(scale, scale, 1);
+            this.foilEdge.scale.set(scale, scale, 1);
+            this.foilGlow.scale.set(scale, scale, 1);
+            
+            // 检测与星球的接触
+            this.checkPlanetContact();
+        } else {
+            // 扩展完成
+            if (!this.isAllFlattened()) {
+                this.params.phase = 'flattening';
+                this.updatePhaseDisplay('flattening');
+            }
+        }
+
+        // 检查是否全部降维完成
+        if (this.isAllFlattened()) {
             this.params.phase = 'complete';
             this.updatePhaseDisplay('complete');
             this.showToast('🎭 降维完成！三维空间已坍缩为二维');
@@ -862,35 +861,171 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
     }
 
     /**
-     * 鼠标移动处理
+     * 检测星球接触
      */
-    onMouseMove(event) {
-        // 可扩展
+    checkPlanetContact() {
+        this.planets.forEach(planet => {
+            if (planet.userData.isFlattening) return;
+            
+            const distance = Math.sqrt(
+                planet.position.x * planet.position.x + 
+                planet.position.z * planet.position.z
+            );
+            
+            // 当二向箔边缘接触到星球时
+            if (distance <= this.foilRadius + planet.userData.radius) {
+                this.startPlanetFlattening(planet);
+            }
+        });
     }
 
     /**
-     * 点击处理
+     * 开始星球降维
      */
-    onClick(event) {
-        // 可扩展
+    startPlanetFlattening(planet) {
+        planet.userData.isFlattening = true;
+        planet.userData.flattenProgress = 0;
+        
+        // 创建粒子系统
+        this.createPlanetParticles(planet);
+        
+        // 创建二维圆形
+        this.createFlatCircle(planet);
+        
+        // 闪光效果
+        this.createContactFlash(planet.position);
     }
 
     /**
-     * 重置相机
+     * 创建接触闪光效果
      */
-    resetCamera() {
-        this.camera.position.set(
-            this.defaultCameraPos.x,
-            this.defaultCameraPos.y,
-            this.defaultCameraPos.z
-        );
-        this.camera.lookAt(0, 0, 0);
+    createContactFlash(position) {
+        const flashGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+        const flashMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 1
+        });
+        const flash = new THREE.Mesh(flashGeometry, flashMaterial);
+        flash.position.copy(position);
+        this.mainGroup.add(flash);
+
+        // 动画：放大并消失
+        const animate = () => {
+            flash.scale.multiplyScalar(1.15);
+            flash.material.opacity -= 0.08;
+            
+            if (flash.material.opacity > 0) {
+                requestAnimationFrame(animate);
+            } else {
+                this.mainGroup.remove(flash);
+                flash.geometry.dispose();
+                flash.material.dispose();
+            }
+        };
+        animate();
+    }
+
+    /**
+     * 更新二向箔边缘粒子
+     */
+    updateFoilParticles() {
+        const positions = this.foilParticles.geometry.attributes.position.array;
+        const particleCount = positions.length / 3;
+        const scale = this.foilRadius / 0.5;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + this.animationTime * 2;
+            positions[i * 3] = Math.cos(angle) * 0.5 * scale;
+            positions[i * 3 + 2] = Math.sin(angle) * 0.5 * scale;
+        }
+        
+        this.foilParticles.geometry.attributes.position.needsUpdate = true;
+    }
+
+    /**
+     * 粒子系统动画
+     */
+    animateParticleSystems() {
+        this.particleSystems.forEach(particles => {
+            const positions = particles.geometry.attributes.position.array;
+            const velocities = particles.userData.velocities;
+            const targetY = particles.userData.targetY;
+            const planet = particles.userData.planet;
+            
+            let allSettled = true;
+            
+            for (let i = 0; i < velocities.length; i++) {
+                // 当前位置
+                let y = positions[i * 3 + 1];
+                
+                // 未到达目标平面
+                if (y > targetY) {
+                    positions[i * 3] += velocities[i].x;
+                    positions[i * 3 + 1] += velocities[i].y;
+                    positions[i * 3 + 2] += velocities[i].z;
+                    
+                    // 加速下落
+                    velocities[i].y -= 0.001;
+                    
+                    allSettled = false;
+                } else {
+                    positions[i * 3 + 1] = targetY;
+                }
+            }
+            
+            particles.geometry.attributes.position.needsUpdate = true;
+            
+            // 更新星球降维进度
+            if (!allSettled) {
+                planet.userData.flattenProgress = Math.min(1, planet.userData.flattenProgress + 0.01);
+                
+                // 原始星球逐渐透明
+                planet.material.opacity = Math.max(0, 1 - planet.userData.flattenProgress);
+                
+                // 原始星球Y轴压缩
+                planet.scale.y = Math.max(0.01, 1 - planet.userData.flattenProgress * 0.99);
+            } else {
+                planet.userData.flattenProgress = 1;
+                planet.visible = false;
+            }
+        });
+    }
+
+    /**
+     * 二维圆形渐显动画
+     */
+    animateFlatteningCircles() {
+        this.flattenedCircles.forEach(({ circle, planet }) => {
+            const progress = planet.userData.flattenProgress;
+            circle.material.opacity = progress * 0.8;
+        });
+    }
+
+    /**
+     * 检查是否全部降维完成
+     */
+    isAllFlattened() {
+        return this.planets.every(p => p.userData.flattenProgress >= 1);
     }
 
     /**
      * 销毁场景
      */
     dispose() {
+        // 清理粒子系统
+        this.particleSystems.forEach(ps => {
+            this.mainGroup.remove(ps);
+            ps.geometry.dispose();
+            ps.material.dispose();
+        });
+
+        // 清理二维圆形
+        this.flattenedCircles.forEach(({ circle }) => {
+            circle.geometry.dispose();
+            circle.material.dispose();
+        });
+
         if (this.mainGroup) {
             this.mainGroup.traverse((child) => {
                 if (child.geometry) child.geometry.dispose();
@@ -914,6 +1049,10 @@ window.DimensionalStrikeScene = class DimensionalStrikeScene {
         if (this.sunLight) {
             this.scene.remove(this.sunLight);
         }
+
+        // 移除信息面板
+        const panel = document.getElementById('dimensional-info-panel');
+        if (panel) panel.remove();
 
         // 添加动画样式
         if (!document.querySelector('#dimensional-animations')) {
