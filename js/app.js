@@ -43,10 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
  * 场景分类配置
  */
 const SCENE_CATEGORIES = {
-    // 精选场景（用户指定的8个）
+    // 精选场景（用户指定的8个 + 智慧矿山）
     featured: [
         'quantum', 'electromagnetic', 'photosynthesis', 'gravity', 
-        'maze', 'traffic', 'geometry-problem', 'solid-geometry'
+        'maze', 'traffic', 'geometry-problem', 'solid-geometry', 'smartmine'
     ],
     // 物理类
     physics: [
@@ -62,10 +62,10 @@ const SCENE_CATEGORIES = {
         'vector3d', 'conic', 'drumflower', 'tesseract', 'euler', 'klein',
         'mandelbrot', 'golden-spiral', 'geometry-problem', 'solid-geometry', 'fourier'
     ],
-    // AI/算法类
+    // AI/算法类（智慧矿山涉及物联网和智能系统）
     ai: [
         'attention', 'sorting', 'kmeans', 'maze', 'gradientdescent', 
-        'game-of-life', 'boids', 'engine'
+        'game-of-life', 'boids', 'engine', 'smartmine'
     ],
     // 思维/社科类
     thinking: [

@@ -1010,6 +1010,27 @@ window.CasesConfig = {
             }
         },
         {
+            id: 'smartmine',
+            title: '智慧煤矿数字孪生',
+            keywords: ['煤矿', '智慧矿山', '安全监测', '瓦斯', '数字孪生', '生产调度', '矿山', 'mine', '采煤'],
+            type: 'scene',
+            sceneClass: 'SmartMineScene',
+            icon: 'fa-mountain',
+            description: '🏭 企业级煤矿安全监测与生产调度3D可视化',
+            difficulty: 4,
+            intro: {
+                subtitle: '煤矿数字孪生系统演示',
+                objectives: [
+                    '了解智慧矿山的整体架构',
+                    '认识安全监测系统（瓦斯、人员定位）',
+                    '理解生产调度数据可视化',
+                    '体验瓦斯超限报警流程'
+                ],
+                keyPoints: ['数字孪生', '安全监测', '生产调度', '瓦斯报警', '人员定位'],
+                tips: '切换视角查看地表/井下，点击设施查看详情，尝试"报警演示"！'
+            }
+        },
+        {
             id: 'ppt',
             title: '注意力机制课件',
             keywords: ['ppt', '原理', '课件', '幻灯片', '讲解'],

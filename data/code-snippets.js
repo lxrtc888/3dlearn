@@ -1134,6 +1134,62 @@ class CubeSectionSolver {
 // 最大截面：过体对角线中点，⊥体对角线，为正六边形
 // 面积 = (3√2/2) × a²`,
 
+    smartmine: `class SmartMineScene extends HolographicScene {
+    /**
+     * 智慧煤矿数字孪生系统
+     * 实时监测 + 生产调度 + 安全预警
+     */
+    init() {
+        // 1. 创建矿区地形和建筑
+        this.createTerrain();
+        this.createSurfaceBuildings();
+        
+        // 2. 构建井下系统
+        this.createUnderground();
+        this.createWorkfaces(4);  // 4个采煤工作面
+        
+        // 3. 安全监测系统
+        this.createGasSensors();
+        this.createPersonnelMarkers();
+        
+        // 4. 数据可视化面板
+        this.createDataPanel();
+    }
+    
+    // 瓦斯浓度监测
+    updateGasHeatmap(sensorData) {
+        sensorData.forEach(sensor => {
+            const ratio = sensor.value / sensor.limit;
+            const color = ratio > 0.8 ? 0xff4444 :  // 危险-红
+                          ratio > 0.5 ? 0xffcc00 :  // 预警-黄
+                                        0x00ff88;   // 正常-绿
+            
+            this.setSensorColor(sensor.id, color);
+        });
+    }
+    
+    // 触发瓦斯超限报警
+    triggerGasAlarm(workfaceId) {
+        const workface = this.workfaceMeshes[workfaceId];
+        
+        // 脉冲闪烁效果
+        gsap.to(workface.material, {
+            emissiveIntensity: 1,
+            repeat: -1,
+            yoyo: true,
+            duration: 0.5
+        });
+        
+        // 广播报警信息
+        this.showAlert('⚠️ 瓦斯浓度超限！请立即撤离');
+    }
+}
+
+// 矿山数字孪生核心价值：
+// 🛡️ 安全监测：实时瓦斯、人员定位
+// 📊 生产调度：产量、设备状态可视化
+// 🚨 智能预警：提前发现隐患`,
+
     ppt: `// 智能课件系统
 class SlideRenderer {
     constructor(slides) {
