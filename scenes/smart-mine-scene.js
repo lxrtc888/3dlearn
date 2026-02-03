@@ -995,9 +995,14 @@ window.SmartMineScene = class SmartMineScene {
      * 切换教学面板
      */
     toggleTeachingPanel() {
-        const panel = document.getElementById('mine-teaching-panel');
-        if (panel) {
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        // 使用MobilePanelManager处理移动端面板切换
+        if (window.MobilePanelManager) {
+            window.MobilePanelManager.togglePanel('mine-teaching-panel');
+        } else {
+            const panel = document.getElementById('mine-teaching-panel');
+            if (panel) {
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            }
         }
     }
 

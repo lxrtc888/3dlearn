@@ -735,9 +735,14 @@ window.HerdBehaviorScene = class HerdBehaviorScene {
      * 切换教学面板显示
      */
     toggleTeachingPanel() {
-        const panel = document.getElementById('herd-teaching-panel');
-        if (panel) {
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        // 使用MobilePanelManager处理移动端面板切换
+        if (window.MobilePanelManager) {
+            window.MobilePanelManager.togglePanel('herd-teaching-panel');
+        } else {
+            const panel = document.getElementById('herd-teaching-panel');
+            if (panel) {
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            }
         }
     }
 

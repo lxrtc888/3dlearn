@@ -323,6 +323,82 @@ function toggleFullscreen() {
     }
 }
 
+/**
+ * 移动端面板切换工具
+ * 用于在移动端显示/隐藏教学面板和数据面板
+ */
+const MobilePanelManager = {
+    isMobile: () => window.innerWidth <= 768,
+    
+    /**
+     * 切换面板展开状态
+     * @param {string} panelId - 面板元素ID
+     * @param {boolean} forceState - 强制设置状态 (true=展开, false=收起)
+     */
+    togglePanel(panelId, forceState = null) {
+        const panel = document.getElementById(panelId);
+        if (!panel) return;
+        
+        if (!this.isMobile()) {
+            // PC端使用原有逻辑
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            return;
+        }
+        
+        // 移动端使用 mobile-expanded 类
+        const shouldExpand = forceState !== null ? forceState : !panel.classList.contains('mobile-expanded');
+        
+        if (shouldExpand) {
+            // 先关闭其他面板
+            document.querySelectorAll('[id$="-teaching-panel"].mobile-expanded, [id$="-data-panel"].mobile-expanded').forEach(p => {
+                if (p.id !== panelId) {
+                    p.classList.remove('mobile-expanded');
+                }
+            });
+            panel.classList.add('mobile-expanded');
+            panel.style.display = 'block';
+        } else {
+            panel.classList.remove('mobile-expanded');
+        }
+    },
+    
+    /**
+     * 关闭所有面板
+     */
+    closeAllPanels() {
+        document.querySelectorAll('[id$="-teaching-panel"], [id$="-data-panel"]').forEach(panel => {
+            panel.classList.remove('mobile-expanded');
+            if (this.isMobile()) {
+                // 移动端不改变display，让CSS控制
+            }
+        });
+    },
+    
+    /**
+     * 初始化移动端面板状态
+     * 在场景加载时调用，确保移动端面板默认收起
+     */
+    init() {
+        if (!this.isMobile()) return;
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            if (!this.isMobile()) {
+                // 切换到PC端时，移除mobile-expanded类
+                document.querySelectorAll('.mobile-expanded').forEach(el => {
+                    el.classList.remove('mobile-expanded');
+                });
+            }
+        });
+    }
+};
+
+// 初始化移动端面板管理器
+MobilePanelManager.init();
+
+// 暴露给场景使用
+window.MobilePanelManager = MobilePanelManager;
+
 
 // --- 聊天逻辑 ---
 function handleSend() {
