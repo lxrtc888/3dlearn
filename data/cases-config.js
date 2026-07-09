@@ -133,6 +133,27 @@ window.CasesConfig = {
             }
         },
         {
+            id: 'circuit-ohm',
+            title: '串并联电路与欧姆定律',
+            keywords: ['串联', '并联', '欧姆定律', '电路', '电流', '电压', '电阻', 'U=IR', '等效电阻'],
+            type: 'scene',
+            sceneClass: 'CircuitOhmScene',
+            icon: 'fa-bolt',
+            description: '切换串并联并调节电阻，直观理解 U=IR 与等效电阻',
+            difficulty: 2,
+            intro: {
+                subtitle: '电路连接方式与欧姆定律可视化',
+                objectives: [
+                    '区分串联与并联的连接方式',
+                    '理解等效电阻变化对电流的影响',
+                    '通过调参验证欧姆定律 U=IR',
+                    '完成练习并输出掌握度总结'
+                ],
+                keyPoints: ['串联', '并联', '等效电阻', 'U=IR', '电流与功率'],
+                tips: '先切换模式再调节 R1/R2，观察 Req、I、P 变化趋势'
+            }
+        },
+        {
             id: 'cell',
             title: '动物细胞结构',
             keywords: ['细胞', '动物细胞', '细胞核', '线粒体', '内质网', '高尔基体'],
@@ -210,6 +231,27 @@ window.CasesConfig = {
                 ],
                 keyPoints: ['切割角度', '离心率', '平面与圆锥交线'],
                 tips: '切换不同曲线按钮，观察截面变化'
+            }
+        },
+        {
+            id: 'quadratic-function',
+            title: '二次函数图像与参数变换',
+            keywords: ['二次函数', '抛物线', 'a b c', '顶点', '对称轴', '函数图像', '参数变换', '代数'],
+            type: 'scene',
+            sceneClass: 'QuadraticFunctionScene',
+            icon: 'fa-square-root-alt',
+            description: '通过调节 a、b、c 理解二次函数图像变化与参数作用',
+            difficulty: 2,
+            intro: {
+                subtitle: '从参数到图像的直觉建立',
+                objectives: [
+                    '理解参数 a 对开口方向与宽窄的影响',
+                    '理解参数 b 对对称轴位置的影响',
+                    '理解参数 c 对上下平移与截距的影响',
+                    '通过练习完成“图像-公式”双向判断'
+                ],
+                keyPoints: ['y=ax²+bx+c', '顶点坐标', '对称轴', '参数联动'],
+                tips: '先固定两个参数，再调第三个参数，观察单变量影响最清晰'
             }
         },
         {

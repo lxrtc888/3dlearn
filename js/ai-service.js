@@ -8,8 +8,7 @@
 
 window.AIService = {
     // API配置
-    API_URL: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-    API_KEY: '4670b2d1c7bf4f64aa2c5411ae07f849.UdQjlX3trIo4EwdT',
+    API_URL: '/api/ai/chat',
     MODEL: 'glm-4-flash',  // 注意：必须使用 glm-4-flash，不是 glm-4
     
     // 对话历史（保持上下文）
@@ -121,8 +120,7 @@ ${scene.intro.objectives ? scene.intro.objectives.map((o, i) => `${i+1}. ${o}`).
             const response = await fetch(this.API_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.API_KEY}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     model: this.MODEL,

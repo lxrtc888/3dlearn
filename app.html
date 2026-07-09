@@ -15,20 +15,41 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="rtcvx.png">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/main.css?v=31">
+    <link rel="stylesheet" href="css/main.css?v=40">
 </head>
 
 <body>
 
     <div id="app-container">
         <!-- === 左上：AI老师视频 === -->
-        <div id="teacher-section">
-            <video id="teacher-video" autoplay loop muted playsinline>
+        <div id="teacher-section" class="teacher-state-idle">
+            <video id="teacher-video" muted playsinline preload="auto" hidden aria-hidden="true">
                 <source src="assets/Avatar IV Video.mp4" type="video/mp4">
                 您的浏览器不支持视频播放
             </video>
+            <div id="teacher-avatar-stage" class="teacher-avatar-stage">
+                <canvas id="teacher-avatar-canvas" aria-label="3D AI teacher"></canvas>
+                <div id="teacher-avatar-loading" class="teacher-avatar-loading">3D老师加载中</div>
+            </div>
+            <div id="teacher-avatar-switcher" class="teacher-avatar-switcher" aria-label="切换老师形象" hidden></div>
+            <div id="teacher-status" class="teacher-status">
+                <span class="teacher-status-dot"></span>
+                <span id="teacher-status-text">小静待机中</span>
+            </div>
+            <div id="teacher-subtitle" class="teacher-subtitle" aria-live="polite"></div>
+            <div class="teacher-actions">
+                <button id="btn-enable-voice" class="teacher-action-btn" type="button">
+                    <i class="fas fa-volume-up"></i>
+                    <span>启用语音老师</span>
+                </button>
+                <button id="btn-stop-voice" class="teacher-action-btn secondary" type="button" hidden>
+                    <i class="fas fa-stop"></i>
+                    <span>停止朗读</span>
+                </button>
+            </div>
         </div>
 
         <!-- === 右侧：多媒体黑板 (扩展版) === -->
@@ -39,10 +60,16 @@
                 <div class="tab-btn" id="tab-ppt"><i class="fas fa-chalkboard-teacher mr-2"></i>智能课件</div>
                 <div class="tab-btn" id="tab-code"><i class="fas fa-code mr-2"></i>后台代码</div>
             </div>
-            <!-- 全屏按钮 - 独立于Tab栏，全屏时也可见 -->
-            <button class="fullscreen-btn" id="btn-fullscreen" title="全屏观看">
-                <i class="fas fa-expand"></i>
-            </button>
+            <!-- 右上角工具栏 - 独立于Tab栏，全屏时也可见 -->
+            <div class="scene-toolbar" id="scene-toolbar">
+                <!-- 返回场景列表（首页）：仅在进入场景后显示 -->
+                <button class="home-btn" id="btn-home" title="返回场景列表" style="display: none;">
+                    <i class="fas fa-home"></i>
+                </button>
+                <button class="fullscreen-btn" id="btn-fullscreen" title="全屏观看">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
 
             <!-- 内容区域容器 -->
             <div class="content-container">
@@ -148,70 +175,72 @@
         </div>
     </div>
 
+    <script>
+        (function () {
+            if (window.location.protocol !== 'file:') return;
+
+            function showLocalServerNotice() {
+                var section = document.getElementById('teacher-section');
+                var stage = document.getElementById('teacher-avatar-stage');
+                var canvas = document.getElementById('teacher-avatar-canvas');
+                var loading = document.getElementById('teacher-avatar-loading');
+                var switcher = document.getElementById('teacher-avatar-switcher');
+
+                if (section) section.classList.add('teacher-avatar-direct-file');
+                if (stage) stage.hidden = false;
+                if (canvas) canvas.hidden = true;
+                if (loading) {
+                    loading.hidden = false;
+                    loading.textContent = '请运行 start.bat 后打开 http://localhost:8000/app.html';
+                }
+                if (switcher) {
+                    switcher.hidden = false;
+                    switcher.querySelectorAll('button').forEach(function (button) {
+                        button.disabled = true;
+                        button.title = '请通过本地服务打开后切换形象';
+                    });
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', showLocalServerNotice, { once: true });
+            } else {
+                showLocalServerNotice();
+            }
+        })();
+    </script>
+
     <!-- 核心脚本 (顺序加载) -->
-    <script src="js/ai-service.js?v=1"></script>
-    <script src="js/scene-manager.js?v=13"></script>
+    <script src="js/ai-service.js?v=2"></script>
+    <script src="js/scene-manager.js?v=15"></script>
     
     <!-- 数据模块 -->
-    <script src="data/cases-config.js?v=15"></script>
-    <script src="data/code-snippets.js?v=15"></script>
+    <script src="data/cases-config.js?v=17"></script>
+    <script src="data/code-snippets.js?v=17"></script>
     <script src="data/slides.js?v=12"></script>
+    <script src="data/learning-path-config.js?v=3"></script>
+    <script src="data/quiz-bank.js?v=3"></script>
+    <script src="js/learning-engine.js?v=3"></script>
 
-    <!-- 场景模块 -->
-    <script src="scenes/attention-scene.js?v=12"></script>
-    <script src="scenes/quantum-scene.js?v=12"></script>
-    <script src="scenes/hydraulic-scene.js?v=12"></script>
-    <script src="scenes/engine-scene.js?v=12"></script>
-    <script src="scenes/pendulum-scene.js?v=12"></script>
-    <script src="scenes/electromagnetic-scene.js?v=12"></script>
-    <script src="scenes/cell-scene.js?v=12"></script>
-    <script src="scenes/dna-scene.js?v=12"></script>
-    <script src="scenes/vector3d-scene.js?v=12"></script>
-    <script src="scenes/conic-scene.js?v=12"></script>
-    <script src="scenes/drum-flower-scene.js?v=12"></script>
-    <script src="scenes/flagellar-scene.js?v=12"></script>
-    <script src="scenes/gravity-scene.js?v=5"></script>
-    <script src="scenes/nuclear-fission-scene.js?v=1"></script>
-    <script src="scenes/migdal-scene.js?v=1"></script>
-    <script src="scenes/schrodinger-cat-scene.js?v=1"></script>
-    <script src="scenes/tesseract-scene.js?v=3"></script>
-    <script src="scenes/photosynthesis-scene.js?v=4"></script>
-    <script src="scenes/gradient-descent-scene.js?v=2"></script>
-    <script src="scenes/neuron-signal-scene.js?v=6"></script>
-    <script src="scenes/sorting-scene.js?v=2"></script>
-    <script src="scenes/kmeans-scene.js?v=2"></script>
-    <script src="scenes/maze-scene.js?v=3"></script>
-    <script src="scenes/quantum-entanglement-scene.js?v=1"></script>
-    <script src="scenes/orbital-mechanics-scene.js?v=1"></script>
-    <script src="scenes/klein-bottle-scene.js?v=1"></script>
-    <script src="scenes/euler-formula-scene.js?v=1"></script>
-    <script src="scenes/fourier-scene.js?v=1"></script>
-    <script src="scenes/three-body-scene.js?v=5"></script>
-    <script src="scenes/mandelbrot-scene.js?v=1"></script>
-    <script src="scenes/sir-model-scene.js?v=1"></script>
-    <script src="scenes/dimensional-strike-scene.js?v=2"></script>
-    <script src="scenes/boids-scene.js?v=1"></script>
-    <script src="scenes/doppler-effect-scene.js?v=1"></script>
-    <script src="scenes/entropy-scene.js?v=1"></script>
-    <script src="scenes/traffic-flow-scene.js?v=1"></script>
-    <script src="scenes/golden-spiral-scene.js?v=1"></script>
-    <script src="scenes/prisoners-dilemma-scene.js?v=1"></script>
-    <script src="scenes/plato-cave-scene.js?v=1"></script>
-    <script src="scenes/lorenz-attractor-scene.js?v=1"></script>
-    <script src="scenes/game-of-life-scene.js?v=1"></script>
-    <script src="scenes/six-degrees-scene.js?v=1"></script>
-    <script src="scenes/herd-behavior-scene.js?v=5"></script>
-    <script src="scenes/compound-interest-scene.js?v=1"></script>
-    <script src="scenes/tragedy-of-commons-scene.js?v=1"></script>
-    <script src="scenes/husky-battle-scene.js?v=1"></script>
-    <script src="scenes/geometry-problem-scene.js?v=4"></script>
-    <script src="scenes/solid-geometry-scene.js?v=3"></script>
-    <script src="data/mine-mock-data.js?v=1"></script>
-    <script src="scenes/smart-mine-scene.js?v=2"></script>
+    <!-- 场景懒加载器 -->
+    <script src="js/scene-loader.js?v=3"></script>
 
     <!-- 主程序 -->
-    <script src="js/app.js?v=27"></script>
+    <script src="js/voice-tutor-live.js?v=9"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/",
+                "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2/lib/three-vrm.module.js"
+            }
+        }
+    </script>
+    <script type="module" src="js/avatar-tutor.js?v=20"></script>
+    <script src="js/app.js?v=34"></script>
 
 </body>
 
 </html>
+
+

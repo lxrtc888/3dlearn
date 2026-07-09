@@ -107,6 +107,26 @@ function lenzDirection(deltaFlux) {
     return deltaFlux > 0 ? '产生反向磁场' : '产生同向磁场';
 }`,
 
+    'circuit-ohm': `// 串并联电路与欧姆定律
+function equivalentResistance(mode, r1, r2) {
+    if (mode === 'series') return r1 + r2;
+    return 1 / (1 / r1 + 1 / r2);
+}
+
+function currentByOhmLaw(voltage, req) {
+    // 欧姆定律：I = U / R
+    return voltage / req;
+}
+
+function power(voltage, current) {
+    return voltage * current;
+}
+
+// 学习提示：
+// 1) 串联：Req 增大，I 减小
+// 2) 并联：Req 减小，I 增大
+// 3) 调参验证 U = I * R`,
+
     cell: `class CellOrganelle {
     constructor(name, role) {
         this.name = name;
@@ -146,6 +166,27 @@ function cross(a, b) {
     if (eccentricity === 1) return 'parabola';
     return 'hyperbola';
 }`,
+
+    'quadratic-function': `// 二次函数图像与参数变换
+function quadraticY(x, a, b, c) {
+    return a * x * x + b * x + c;
+}
+
+function getVertex(a, b, c) {
+    // 顶点：x = -b / (2a), y = f(x)
+    const x0 = -b / (2 * a);
+    const y0 = quadraticY(x0, a, b, c);
+    return { x: x0, y: y0 };
+}
+
+function getSymmetryAxis(a, b) {
+    return -b / (2 * a);
+}
+
+// 学习提示：
+// 1) 先固定 b、c，只调 a 看开口
+// 2) 先固定 a、c，只调 b 看对称轴
+// 3) 先固定 a、b，只调 c 看上下平移`,
 
     drumflower: `// 击鼓传花 - 周期性问题
 function findHolder(passCount, totalChildren = 8) {

@@ -1,0 +1,215 @@
+<style>
+  .direction-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 22px;
+  }
+  .direction-card {
+    min-height: 460px;
+  }
+  .preview {
+    height: 230px;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .classroom {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(8, 12, 24, 0.04), rgba(8, 12, 24, 0.74)),
+      radial-gradient(circle at 50% 24%, rgba(99, 102, 241, 0.24), transparent 32%),
+      linear-gradient(135deg, #1f2937, #0f172a 64%);
+  }
+  .human-head {
+    position: absolute;
+    left: 50%;
+    top: 32px;
+    width: 72px;
+    height: 86px;
+    transform: translateX(-50%);
+    border-radius: 42% 42% 46% 46%;
+    background: linear-gradient(160deg, #f2c7a5, #c99069);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+  }
+  .human-head:before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    right: 9px;
+    top: -10px;
+    height: 30px;
+    border-radius: 24px 24px 12px 12px;
+    background: #1f2937;
+  }
+  .eyes {
+    position: absolute;
+    top: 39px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .eyes span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #111827;
+  }
+  .mouth {
+    position: absolute;
+    left: 26px;
+    top: 61px;
+    width: 20px;
+    height: 6px;
+    border-radius: 999px;
+    background: #7f1d1d;
+  }
+  .mouth.live {
+    height: 14px;
+    top: 56px;
+    border-radius: 50%;
+  }
+  .body {
+    position: absolute;
+    left: 50%;
+    top: 118px;
+    width: 116px;
+    height: 120px;
+    transform: translateX(-50%);
+    border-radius: 38px 38px 0 0;
+    background: linear-gradient(160deg, #f8fafc, #94a3b8);
+  }
+  .caption {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 14px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    color: #e5f6ff;
+    background: rgba(2, 6, 23, 0.72);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+    color: #94a3b8;
+    font-size: 12px;
+  }
+  .pill {
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.86);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+  }
+  .signal {
+    position: absolute;
+    top: 18px;
+    right: 16px;
+    display: flex;
+    gap: 4px;
+    align-items: end;
+  }
+  .signal span {
+    width: 6px;
+    border-radius: 999px;
+    background: #22c55e;
+  }
+  .signal span:nth-child(1) { height: 14px; }
+  .signal span:nth-child(2) { height: 30px; }
+  .signal span:nth-child(3) { height: 22px; }
+  .badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.72);
+    color: #dbeafe;
+    font-size: 12px;
+    border: 1px solid rgba(147, 197, 253, 0.28);
+  }
+  .recommend {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(14, 116, 144, 0.12);
+    border: 1px solid rgba(34, 211, 238, 0.24);
+    color: #dff7ff;
+  }
+  @media (max-width: 980px) {
+    .direction-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<h2>左侧“真人老师”可以做到，但要先选目标档位</h2>
+<p class="subtitle">下面三种路线从左到右越来越像真人，也越来越依赖算力、第三方服务、预算和合规素材。请先选第一阶段你希望达到的观感。</p>
+
+<div class="direction-grid">
+  <div class="card direction-card" data-choice="video-loop" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="classroom"></div>
+      <div class="badge">A 当前路线升级</div>
+      <div class="human-head">
+        <div class="eyes"><span></span><span></span></div>
+        <div class="mouth"></div>
+      </div>
+      <div class="body"></div>
+      <div class="caption">AI 回复后播放 TTS，同时播放老师视频。画面真实，但口型只能大致跟随。</div>
+    </div>
+    <div class="card-body">
+      <h3>真实视频素材 + TTS</h3>
+      <p>最快落地，延续现在的视频窗口。适合先提升“真人感”，但无法做到真正逐字对口型。</p>
+      <div class="pipeline"><span class="pill">AI文字</span><span>→</span><span class="pill">TTS</span><span>→</span><span class="pill">视频播放</span></div>
+    </div>
+  </div>
+
+  <div class="card direction-card" data-choice="vrm-viseme" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="classroom"></div>
+      <div class="badge">B 推荐先做</div>
+      <div class="signal"><span></span><span></span><span></span></div>
+      <div class="human-head">
+        <div class="eyes"><span></span><span></span></div>
+        <div class="mouth live"></div>
+      </div>
+      <div class="body" style="background:linear-gradient(160deg,#e0f2fe,#38bdf8);"></div>
+      <div class="caption">音频分析出音素/音量，驱动嘴型、眨眼、点头、呼吸和视线。</div>
+    </div>
+    <div class="card-body">
+      <h3>3D/VRM 数字人 + 口型同步</h3>
+      <p>可控、可离线演示、和 Three.js 项目气质一致。人物可以做得写实，但“完全真人”难度高。</p>
+      <div class="pipeline"><span class="pill">AI文字</span><span>→</span><span class="pill">TTS</span><span>→</span><span class="pill">Viseme</span><span>→</span><span class="pill">3D脸部</span></div>
+    </div>
+  </div>
+
+  <div class="card direction-card" data-choice="cloud-human" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="classroom" style="background:linear-gradient(135deg,#172554,#020617 68%);"></div>
+      <div class="badge">C 最像真人</div>
+      <div class="signal"><span style="background:#f59e0b"></span><span style="background:#f59e0b"></span><span style="background:#f59e0b"></span></div>
+      <div class="human-head" style="background:linear-gradient(160deg,#f6d3b6,#b87a52);">
+        <div class="eyes"><span></span><span></span></div>
+        <div class="mouth live"></div>
+      </div>
+      <div class="body" style="background:linear-gradient(160deg,#f8fafc,#64748b);"></div>
+      <div class="caption">云端根据文本/音频生成真人数字人视频流，口型和表情最自然。</div>
+    </div>
+    <div class="card-body">
+      <h3>云端真人数字人视频流</h3>
+      <p>观感最接近“真人老师”。代价是接口成本、延迟、网络依赖、授权素材和服务商绑定。</p>
+      <div class="pipeline"><span class="pill">AI文字</span><span>→</span><span class="pill">数字人API</span><span>→</span><span class="pill">视频流</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="recommend">
+  我的初步判断：如果目标是稳定上线，优先 B；如果目标是演示时一眼震撼，评估 C；如果只是短期改善，A 成本最低。
+</div>

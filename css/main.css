@@ -24,8 +24,8 @@ body {
     z-index: 20;
     top: 2.2%;
     left: 2%;
-    width: 20.5%;
-    height: 42%;
+    width: 17.5%;
+    height: 48%;
     border-radius: 14px;
     overflow: hidden;
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
@@ -38,6 +38,406 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    filter: saturate(0.92) brightness(0.92);
+    transition: filter 0.24s ease;
+}
+
+.teacher-avatar-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: radial-gradient(circle at 50% 26%, rgba(34, 211, 238, 0.18), transparent 38%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(2, 6, 23, 0.96));
+}
+
+#teacher-avatar-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.teacher-avatar-fallback {
+    --avatar-mouth: 0;
+    --avatar-mouth-scale: 0.25;
+    --avatar-eye-scale: 1;
+    --avatar-breath: 0;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    perspective: 700px;
+}
+
+.teacher-avatar-fallback[hidden] {
+    display: none;
+}
+
+.teacher-avatar-fallback-figure {
+    position: relative;
+    width: min(74%, 220px);
+    aspect-ratio: 0.62;
+    transform: translateY(calc(var(--avatar-breath) * 1px)) rotateX(4deg);
+    transform-style: preserve-3d;
+    transition: transform 0.08s linear;
+}
+
+.teacher-avatar-fallback-glow {
+    position: absolute;
+    inset: 10% -12% 18%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(45, 212, 191, 0.34), transparent 68%);
+    filter: blur(12px);
+}
+
+.teacher-avatar-fallback-head {
+    position: absolute;
+    left: 50%;
+    top: 6%;
+    width: 60%;
+    aspect-ratio: 0.86;
+    transform: translateX(-50%);
+    border-radius: 46% 46% 42% 42%;
+    background: linear-gradient(160deg, #f8d8bd 0%, #d99a7b 100%);
+    box-shadow: inset -12px -10px 22px rgba(89, 49, 35, 0.2), 0 14px 26px rgba(0, 0, 0, 0.28);
+}
+
+.teacher-avatar-fallback-hair {
+    position: absolute;
+    left: -4%;
+    right: -4%;
+    top: -7%;
+    height: 42%;
+    border-radius: 48% 48% 30% 34%;
+    background: linear-gradient(160deg, #243044, #0f172a);
+    box-shadow: inset 12px 0 18px rgba(255, 255, 255, 0.06);
+}
+
+.teacher-avatar-fallback-face {
+    position: absolute;
+    inset: 28% 16% 16%;
+}
+
+.teacher-avatar-fallback-eye {
+    position: absolute;
+    top: 24%;
+    width: 14%;
+    height: 9%;
+    border-radius: 999px;
+    background: #111827;
+    transform: scaleY(var(--avatar-eye-scale));
+    transform-origin: center;
+}
+
+.teacher-avatar-fallback-eye.left {
+    left: 22%;
+}
+
+.teacher-avatar-fallback-eye.right {
+    right: 22%;
+}
+
+.teacher-avatar-fallback-mouth {
+    position: absolute;
+    left: 50%;
+    bottom: 18%;
+    width: 24%;
+    height: 13%;
+    border-radius: 0 0 999px 999px;
+    background: linear-gradient(180deg, #7f1d1d, #ef4444);
+    transform: translateX(-50%) scaleY(var(--avatar-mouth-scale));
+    transform-origin: top center;
+    box-shadow: inset 0 5px 8px rgba(0, 0, 0, 0.34);
+}
+
+.teacher-avatar-fallback-torso {
+    position: absolute;
+    left: 50%;
+    bottom: 3%;
+    width: 88%;
+    height: 48%;
+    transform: translateX(-50%) translateZ(-22px);
+    border-radius: 42% 42% 18% 18%;
+    background: linear-gradient(155deg, #155e75, #0f766e 48%, #134e4a);
+    box-shadow: inset -18px -8px 24px rgba(0, 0, 0, 0.22), 0 18px 30px rgba(0, 0, 0, 0.28);
+}
+
+.teacher-avatar-fallback-collar {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 42%;
+    height: 30%;
+    transform: translateX(-50%);
+    clip-path: polygon(0 0, 100% 0, 74% 100%, 50% 56%, 26% 100%);
+    background: #ecfeff;
+}
+
+.teacher-avatar-fallback-note {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 58px;
+    padding: 7px 9px;
+    border-radius: 8px;
+    color: #dff7ff;
+    font-size: 11px;
+    line-height: 1.25;
+    text-align: center;
+    background: rgba(2, 6, 23, 0.58);
+    border: 1px solid rgba(94, 234, 212, 0.24);
+}
+
+#teacher-section.teacher-avatar-fallback-ready #teacher-avatar-canvas {
+    display: none;
+}
+
+.teacher-avatar-loading {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 58px;
+    z-index: 1;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: #dff7ff;
+    font-size: 12px;
+    line-height: 1.35;
+    text-align: center;
+    background: rgba(2, 6, 23, 0.72);
+    border: 1px solid rgba(103, 232, 249, 0.22);
+    backdrop-filter: blur(8px);
+}
+
+.teacher-avatar-switcher {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.teacher-avatar-switcher[hidden] {
+    display: none;
+}
+
+.teacher-avatar-option {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    background: rgba(8, 14, 24, 0.74);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+    backdrop-filter: blur(8px);
+    transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.teacher-avatar-option i {
+    font-size: 10px;
+}
+
+.teacher-avatar-option:hover {
+    transform: translateY(-1px);
+    color: #f8fafc;
+    border-color: rgba(103, 232, 249, 0.5);
+    background: rgba(15, 23, 42, 0.9);
+}
+
+.teacher-avatar-option.active {
+    color: #ecfeff;
+    border-color: rgba(103, 232, 249, 0.72);
+    background: linear-gradient(135deg, rgba(8, 145, 178, 0.92), rgba(14, 165, 233, 0.86));
+}
+
+.teacher-avatar-option.loading {
+    opacity: 0.74;
+}
+
+.teacher-avatar-option:disabled {
+    cursor: wait;
+    transform: none;
+}
+
+#teacher-section.teacher-avatar-ready #teacher-video {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#teacher-section.teacher-avatar-ready .teacher-avatar-loading {
+    display: none;
+}
+
+#teacher-section.teacher-avatar-loading-only #teacher-video {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#teacher-section.teacher-avatar-loading-only #teacher-avatar-canvas {
+    display: none;
+}
+
+#teacher-section.teacher-avatar-loading-only .teacher-avatar-loading {
+    display: block;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+}
+
+#teacher-section.teacher-avatar-direct-file #teacher-video {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#teacher-section.teacher-avatar-direct-file .teacher-avatar-loading {
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+}
+
+#teacher-section.teacher-state-thinking #teacher-video,
+#teacher-section.teacher-state-error #teacher-video,
+#teacher-section.teacher-state-idle #teacher-video {
+    filter: saturate(0.92) brightness(0.92);
+}
+
+#teacher-section.teacher-state-speaking #teacher-video {
+    filter: saturate(1.08) brightness(1.04);
+}
+
+.teacher-status {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: calc(100% - 20px);
+    padding: 6px 10px;
+    border-radius: 999px;
+    color: #e6f7ff;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    background: rgba(8, 14, 24, 0.76);
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(8px);
+}
+
+.teacher-status-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 50%;
+    background: #67e8f9;
+    box-shadow: 0 0 10px rgba(103, 232, 249, 0.7);
+}
+
+#teacher-section.teacher-state-thinking .teacher-status-dot {
+    background: #facc15;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.75);
+}
+
+#teacher-section.teacher-state-speaking .teacher-status-dot {
+    background: #22c55e;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.75);
+}
+
+#teacher-section.teacher-state-error .teacher-status-dot {
+    background: #fb7185;
+    box-shadow: 0 0 10px rgba(251, 113, 133, 0.75);
+}
+
+.teacher-subtitle {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 58px;
+    z-index: 2;
+    display: none;
+    max-height: 40%;
+    padding: 9px 12px;
+    border-radius: 10px;
+    color: #f8fafc;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: left;
+    background: rgba(3, 7, 18, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+}
+
+.teacher-subtitle.visible {
+    display: block;
+}
+
+.teacher-actions {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.teacher-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: #ecfeff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(8, 145, 178, 0.92), rgba(14, 165, 233, 0.86));
+    border: 1px solid rgba(103, 232, 249, 0.45);
+    box-shadow: 0 8px 18px rgba(8, 145, 178, 0.24);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.teacher-action-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(165, 243, 252, 0.72);
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.98), rgba(56, 189, 248, 0.92));
+}
+
+.teacher-action-btn:active {
+    transform: translateY(0);
+}
+
+.teacher-action-btn.secondary {
+    color: #cffafe;
+    background: rgba(15, 23, 42, 0.78);
+    border-color: rgba(148, 163, 184, 0.38);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+}
+
+.teacher-action-btn.secondary:hover {
+    border-color: rgba(103, 232, 249, 0.55);
+    background: rgba(15, 23, 42, 0.9);
 }
 
 /* === 布局区域调整 (V7 扩展版) === */
@@ -48,8 +448,8 @@ body {
     z-index: 20;
     bottom: 2.2%;
     left: 2%;
-    width: 20.5%;
-    height: 52%;
+    width: 17.5%;
+    height: 47%;
     display: flex;
     flex-direction: column;
     padding: 12px;
@@ -67,7 +467,7 @@ body {
     top: 1%;
     bottom: 1%;
     right: 0.5%;
-    left: calc(2% + 20.5% + 10px);
+    left: calc(2% + 17.5% + 10px);
     border-radius: 12px;
     overflow: hidden;
     background: rgba(13, 18, 28, 0.96);
@@ -207,6 +607,45 @@ body {
 
 #placeholder-text .quick-cases-grid {
     pointer-events: auto;
+}
+
+.webgl-fallback-notice {
+    width: min(960px, 92%);
+    margin: 6px auto 14px;
+    padding: 10px 14px;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border-radius: 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.scene-loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 25;
+    background: rgba(8, 12, 24, 0.42);
+    backdrop-filter: blur(2px);
+    pointer-events: none;
+}
+
+.scene-loading-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    color: #dbeafe;
+    font-size: 13px;
+    border: 1px solid rgba(59, 130, 246, 0.45);
+    background: rgba(30, 64, 175, 0.35);
+    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.28);
 }
 
 #placeholder-text .quick-case-card {
@@ -1142,6 +1581,9 @@ body {
     padding: 40px 50px;
     max-width: 520px;
     width: 90%;
+    max-height: min(86vh, 760px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     box-shadow: 
         0 25px 80px rgba(0, 0, 0, 0.6),
         0 0 60px rgba(59, 130, 246, 0.15);
@@ -1151,6 +1593,35 @@ body {
 
 .scene-intro-modal.visible .intro-content {
     transform: scale(1) translateY(0);
+}
+
+.qf-close-btn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    background: #334155;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qf-step-pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    color: #cbd5e1;
+    font-size: 12px;
+}
+
+.qf-panel-body {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 14px;
+    color: #cbd5e1;
+    line-height: 1.7;
 }
 
 .intro-header {
@@ -1275,6 +1746,8 @@ body {
     gap: 12px;
     transition: all 0.3s;
     box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+    position: sticky;
+    bottom: 0;
 }
 
 .intro-start-btn:hover {
@@ -1290,11 +1763,20 @@ body {
    移动端响应式布局 - 上下结构
    ============================================ */
 
-/* 全屏按钮 - 放在tab-bar右侧 */
-.fullscreen-btn {
+/* 右上角工具栏 - 承载“返回首页”与“全屏”按钮 */
+.scene-toolbar {
     position: absolute;
     top: 8px;
     right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+}
+
+/* 工具栏按钮通用外观（全屏 / 返回首页） */
+.fullscreen-btn,
+.home-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1308,7 +1790,6 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     gap: 6px;
-    z-index: 100;
 }
 
 .fullscreen-btn::after {
@@ -1316,7 +1797,13 @@ body {
     font-size: 12px;
 }
 
-.fullscreen-btn:hover {
+.home-btn::after {
+    content: '首页';
+    font-size: 12px;
+}
+
+.fullscreen-btn:hover,
+.home-btn:hover {
     background: rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.8);
     border-color: rgba(255, 255, 255, 0.2);
@@ -1339,11 +1826,15 @@ body {
     display: none;
 }
 
-.scene-fullscreen .fullscreen-btn {
+.scene-fullscreen .scene-toolbar {
     position: fixed;
     top: 20px;
     right: 20px;
     z-index: 10000;
+}
+
+.scene-fullscreen .fullscreen-btn,
+.scene-fullscreen .home-btn {
     background: rgba(0, 0, 0, 0.7);
     border-color: rgba(255, 255, 255, 0.3);
     color: #fff;
@@ -1353,7 +1844,8 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-.scene-fullscreen .fullscreen-btn:hover {
+.scene-fullscreen .fullscreen-btn:hover,
+.scene-fullscreen .home-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.5);
 }
@@ -1369,17 +1861,17 @@ body {
 /* 平板及以下 (max-width: 1024px) */
 @media screen and (max-width: 1024px) {
     #teacher-section {
-        width: 28%;
+        width: 24%;
         height: 35%;
     }
     
     #chat-section {
-        width: 28%;
+        width: 24%;
         height: 58%;
     }
     
     #display-section {
-        left: calc(2% + 28% + 10px);
+        left: calc(2% + 24% + 10px);
     }
     
     .tab-btn {
@@ -1442,15 +1934,27 @@ body {
         box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
     }
     
-    /* 显示全屏按钮 */
-    .fullscreen-btn {
+    /* 工具栏移动端定位 */
+    .scene-toolbar {
+        top: 8px;
+        right: 8px;
+        gap: 6px;
+    }
+
+    /* 显示工具栏按钮 - 手机端仅图标 */
+    .fullscreen-btn,
+    .home-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        top: 8px;
-        right: 8px;
+        padding: 0;
         width: 36px;
         height: 36px;
+    }
+
+    .fullscreen-btn::after,
+    .home-btn::after {
+        display: none;
     }
     
     /* 隐藏Tab栏 - 手机端不需要 */
@@ -1575,6 +2079,11 @@ body {
         max-width: 95%;
         max-height: 90vh;
         overflow-y: auto;
+    }
+
+    .qf-close-btn {
+        width: 44px !important;
+        height: 44px !important;
     }
     
     .intro-header {

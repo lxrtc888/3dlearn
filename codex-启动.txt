@@ -1,0 +1,1 @@
+codex --sandbox workspace-write --ask-for-approval never

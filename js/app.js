@@ -13,31 +13,194 @@ const state = {
     activeTab: 'scene',
     pptIndex: 0,
     sceneManager: null,
+    webglReady: false,
     isAIChatting: false, // AI正在回复中
     currentSceneConfig: null, // 当前场景配置
 };
 
+const WELCOME_MESSAGE = '嗨，你好呀！我是助手小静老师。你对哪个3D场景感兴趣呢？是神经元信号传递，还是迷宫寻路算法。你可以在右边选择。';
+
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
-    // 初始化场景管理器
-    state.sceneManager = new SceneManager('scene-canvas-container');
-    state.sceneManager.init();
-    
-    // 暴露到全局以供场景访问（如禁用OrbitControls）
-    window.sceneManager = state.sceneManager;
-
     // 绑定基础事件
     bindEvents();
+
+    if (window.VoiceTutor) {
+        window.VoiceTutor.init();
+    }
     
     // 初始化快捷案例入口
     initQuickCases();
 
-    // 欢迎语
-    setTimeout(() => {
-        addMessage('ai', '👋 欢迎回到神经元课堂。');
-        addMessage('ai', '我是您的 AI 助教。点击右侧案例卡片或输入关键词开始探索！');
-    }, 800);
+    // 初始化场景管理器（失败时不影响卡片展示）
+    initSceneManagerWithFallback();
+    
+    // 空闲时预加载热门场景，提升第二次点击速度
+    scheduleScenePreload();
+
+    scheduleWelcomeMessage();
+    scheduleTeacherAutoActivation();
 });
+
+function scheduleWelcomeMessage() {
+    waitForAvatarTutorReady().finally(() => {
+        setTimeout(() => {
+            presentAiMessage(WELCOME_MESSAGE, { syncWithSpeech: true });
+        }, 200);
+    });
+}
+
+function scheduleTeacherAutoActivation() {
+    const activateTeacherPanel = () => {
+        const teacherSection = document.getElementById('teacher-section');
+        if (!teacherSection) return;
+
+        const rect = teacherSection.getBoundingClientRect?.();
+        const eventInit = {
+            bubbles: true,
+            cancelable: true,
+            clientX: rect ? rect.left + 8 : 0,
+            clientY: rect ? rect.top + 8 : 0
+        };
+
+        try {
+            teacherSection.dispatchEvent(new PointerEvent('pointerdown', {
+                ...eventInit,
+                pointerType: 'mouse',
+                isPrimary: true
+            }));
+        } catch (error) {
+            teacherSection.dispatchEvent(new MouseEvent('pointerdown', eventInit));
+        }
+
+        teacherSection.click?.();
+        window.VoiceTutor?.retryPendingSpeechFromGesture?.();
+    };
+
+    // VRM 加载完成后立即尝试激活（配合 start.bat 的 --autoplay-policy 参数即可无须真实点击发声），
+    // 再辅以几次延时兜底，覆盖 ready 事件早于监听绑定的情况。
+    waitForAvatarTutorReady().finally(() => {
+        activateTeacherPanel();
+        [300, 1200, 2600].forEach((delay) => {
+            setTimeout(activateTeacherPanel, delay);
+        });
+    });
+}
+
+function waitForAvatarTutorReady(timeoutMs = 7000) {
+    if (window.AvatarTutor?.ready) return Promise.resolve(true);
+
+    return new Promise((resolve) => {
+        let resolved = false;
+        let timeoutId = null;
+        let pollId = null;
+
+        const finish = (isReady) => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeoutId);
+            clearTimeout(pollId);
+            resolve(isReady);
+        };
+
+        const poll = () => {
+            if (window.AvatarTutor?.ready) {
+                finish(true);
+                return;
+            }
+            pollId = setTimeout(poll, 120);
+        };
+
+        window.addEventListener?.('avatar-tutor-ready', () => finish(true), { once: true });
+        timeoutId = setTimeout(() => finish(false), timeoutMs);
+        poll();
+    });
+}
+
+function scheduleScenePreload() {
+    if (!window.SceneLoader || !window.SceneLoader.preloadCases) return;
+    const preloadIds = ['quantum', 'gravity', 'electromagnetic', 'photosynthesis'];
+
+    const runPreload = () => {
+        window.SceneLoader.preloadCases(preloadIds).catch((error) => {
+            console.warn('场景预加载失败:', error);
+        });
+    };
+
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(runPreload, { timeout: 1500 });
+    } else {
+        setTimeout(runPreload, 1200);
+    }
+}
+
+function setSceneLoadingState(isLoading, title = '正在加载场景资源...') {
+    const placeholder = document.getElementById('placeholder-text');
+    if (!placeholder) return;
+
+    let loadingEl = document.getElementById('scene-loading-overlay');
+    if (!loadingEl) {
+        loadingEl = document.createElement('div');
+        loadingEl.id = 'scene-loading-overlay';
+        loadingEl.className = 'scene-loading-overlay';
+        loadingEl.innerHTML = `
+            <div class="scene-loading-card">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span id="scene-loading-text"></span>
+            </div>
+        `;
+        placeholder.appendChild(loadingEl);
+    }
+
+    const textEl = document.getElementById('scene-loading-text');
+    if (textEl) textEl.textContent = title;
+    loadingEl.style.display = isLoading ? 'flex' : 'none';
+}
+
+function isWebGLAvailable() {
+    try {
+        const canvas = document.createElement('canvas');
+        return !!(
+            window.WebGLRenderingContext &&
+            (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+        );
+    } catch (e) {
+        return false;
+    }
+}
+
+function showWebGLFallbackNotice() {
+    const placeholder = document.getElementById('placeholder-text');
+    if (!placeholder || document.getElementById('webgl-fallback-notice')) return;
+
+    const notice = document.createElement('div');
+    notice.id = 'webgl-fallback-notice';
+    notice.className = 'webgl-fallback-notice';
+    notice.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>当前设备 WebGL 不可用，仍可浏览场景卡片与学习内容。建议使用新版 Chrome/Edge 或更高性能设备体验 3D 交互。</span>
+    `;
+    placeholder.prepend(notice);
+}
+
+function initSceneManagerWithFallback() {
+    if (!isWebGLAvailable()) {
+        state.webglReady = false;
+        showWebGLFallbackNotice();
+        return;
+    }
+
+    try {
+        state.sceneManager = new SceneManager('scene-canvas-container');
+        state.sceneManager.init();
+        state.webglReady = true;
+        window.sceneManager = state.sceneManager;
+    } catch (error) {
+        console.error('WebGL 初始化失败:', error);
+        state.webglReady = false;
+        showWebGLFallbackNotice();
+    }
+}
 
 /**
  * 场景分类配置
@@ -46,12 +209,14 @@ const SCENE_CATEGORIES = {
     // 精选场景（用户指定的8个 + 智慧矿山）
     featured: [
         'quantum', 'electromagnetic', 'photosynthesis', 'gravity', 
-        'maze', 'traffic', 'geometry-problem', 'solid-geometry', 'smartmine'
+        'maze', 'traffic', 'geometry-problem', 'solid-geometry', 'smartmine',
+        'quadratic-function', 'circuit-ohm'
     ],
     // 物理类
     physics: [
         'quantum', 'hydraulic', 'pendulum', 'electromagnetic', 'gravity',
-        'nuclearfission', 'migdal', 'schrodinger', 'doppler', 'entropy', 'orbital'
+        'nuclearfission', 'migdal', 'schrodinger', 'doppler', 'entropy', 'orbital',
+        'circuit-ohm'
     ],
     // 生物类
     biology: [
@@ -60,7 +225,8 @@ const SCENE_CATEGORIES = {
     // 数学类
     math: [
         'vector3d', 'conic', 'drumflower', 'tesseract', 'euler', 'klein',
-        'mandelbrot', 'golden-spiral', 'geometry-problem', 'solid-geometry', 'fourier'
+        'mandelbrot', 'golden-spiral', 'geometry-problem', 'solid-geometry', 'fourier',
+        'quadratic-function'
     ],
     // AI/算法类（智慧矿山涉及物联网和智能系统）
     ai: [
@@ -93,6 +259,7 @@ function initQuickCases() {
         'hydraulic': 'physics',
         'pendulum': 'physics',
         'electromagnetic': 'physics',
+        'circuit-ohm': 'physics',
         'gravity': 'physics',
         'nuclearfission': 'physics',
         'migdal': 'physics',
@@ -110,6 +277,7 @@ function initQuickCases() {
         'sir-model': 'biology',
         'vector3d': 'math',
         'conic': 'math',
+        'quadratic-function': 'math',
         'drumflower': 'math',
         'geometry-problem': 'math',
         'solid-geometry': 'math',
@@ -273,6 +441,12 @@ function bindEvents() {
     if (fullscreenBtn) {
         fullscreenBtn.addEventListener('click', toggleFullscreen);
     }
+
+    // 返回首页（场景列表）按钮
+    const homeBtn = document.getElementById('btn-home');
+    if (homeBtn) {
+        homeBtn.addEventListener('click', returnToHome);
+    }
 }
 
 /**
@@ -321,6 +495,50 @@ function toggleFullscreen() {
             state.sceneManager.handleResize();
         }, 100);
     }
+}
+
+/**
+ * 显示/隐藏“返回首页”按钮
+ * 进入场景后显示，回到场景列表时隐藏
+ */
+function updateHomeButtonVisibility(visible) {
+    const homeBtn = document.getElementById('btn-home');
+    if (homeBtn) homeBtn.style.display = visible ? 'flex' : 'none';
+}
+
+/**
+ * 返回首页（场景列表）
+ * 清理当前场景，重新显示案例卡片列表，便于选择其他场景
+ */
+function returnToHome() {
+    // 若正处于全屏，先退出全屏
+    const displaySection = document.getElementById('display-section');
+    if (displaySection && displaySection.classList.contains('scene-fullscreen')) {
+        toggleFullscreen();
+    }
+
+    // 清理当前 3D 场景并重置为空白场景（释放资源、避免残留旧画面）
+    if (state.sceneManager) {
+        if (state.sceneManager.resetToEmptyScene) {
+            state.sceneManager.resetToEmptyScene();
+        } else if (state.sceneManager.clearScene) {
+            state.sceneManager.clearScene();
+        }
+    }
+
+    // 切回场景 Tab 并重新显示占位符（场景卡片列表）
+    switchTab('scene');
+    const placeholder = document.getElementById('placeholder-text');
+    if (placeholder) placeholder.style.display = '';
+
+    // 重置 AI 场景上下文
+    state.currentSceneConfig = null;
+    if (window.AIService && window.AIService.setSceneContext) {
+        window.AIService.setSceneContext(null);
+    }
+
+    // 已回到首页，隐藏返回按钮
+    updateHomeButtonVisibility(false);
 }
 
 /**
@@ -435,6 +653,7 @@ function handleSend() {
  */
 async function handleAIChat(text) {
     state.isAIChatting = true;
+    window.VoiceTutor?.setThinking();
     
     // 显示"正在思考"提示
     const thinkingId = 'ai-thinking-' + Date.now();
@@ -443,17 +662,20 @@ async function handleAIChat(text) {
     try {
         const result = await window.AIService.chat(text);
         
-        // 移除"正在思考"提示
-        removeThinkingMessage(thinkingId);
-        
         if (result.success) {
-            addMessage('ai', result.message);
+            await presentAiMessage(result.message, {
+                syncWithSpeech: true,
+                beforeDisplay: () => removeThinkingMessage(thinkingId)
+            });
         } else {
+            removeThinkingMessage(thinkingId);
             addMessage('ai', '😅 ' + result.message);
+            window.VoiceTutor?.setState('error', '老师暂时无法语音回应');
         }
     } catch (error) {
         removeThinkingMessage(thinkingId);
         addMessage('ai', '😅 抱歉，网络似乎有点问题，请稍后再试。');
+        window.VoiceTutor?.setState('error', '老师暂时无法语音回应');
         console.error('AI Chat Error:', error);
     }
     
@@ -493,6 +715,50 @@ function addMessage(role, text) {
     div.innerHTML = text;
     chatHistory.appendChild(div);
     chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
+function presentAiMessage(text, options = {}) {
+    const messageText = `${options.prefix || ''}${text}`;
+    const speakText = options.speakText || text;
+    const shouldSpeak = options.speak !== false && window.VoiceTutor?.speak;
+    const syncWithSpeech = options.syncWithSpeech === true && shouldSpeak;
+    let displayed = false;
+    let resolveDisplayed;
+    const displayedPromise = new Promise((resolve) => {
+        resolveDisplayed = resolve;
+    });
+
+    const display = () => {
+        if (displayed) return;
+        displayed = true;
+        options.beforeDisplay?.();
+        addMessage('ai', messageText);
+        resolveDisplayed();
+    };
+
+    if (!shouldSpeak) {
+        display();
+        return displayedPromise;
+    }
+
+    if (!syncWithSpeech) {
+        window.VoiceTutor.speak(speakText);
+        display();
+        return displayedPromise;
+    }
+
+    const fallbackTimer = setTimeout(display, 4200);
+    const displayWithSpeech = () => {
+        clearTimeout(fallbackTimer);
+        display();
+    };
+    const speechPromise = window.VoiceTutor.speak(speakText, {
+        deferSubtitleUntilAudio: true,
+        onAudioReady: displayWithSpeech,
+        onSpeechUnavailable: displayWithSpeech
+    });
+    speechPromise?.catch?.(displayWithSpeech);
+    return displayedPromise;
 }
 
 
@@ -588,6 +854,7 @@ async function finishGeneration(caseConfig) {
         addMessage('ai', '✅ <b>课件已投屏。</b><br>请使用右下角按钮翻页。');
         switchTab('ppt');
         renderSlide(0);
+        updateHomeButtonVisibility(true);
         
         // 设置AI上下文（PPT模式）
         state.currentSceneConfig = caseConfig;
@@ -598,14 +865,30 @@ async function finishGeneration(caseConfig) {
         addMessage('ai', `✅ <b>场景准备就绪。</b>`);
         switchTab('scene');
 
+        if (!state.webglReady || !state.sceneManager) {
+            addMessage('ai', '⚠️ 当前设备暂不支持 WebGL 3D 渲染，你仍可继续查看讲解内容与其他场景。');
+            return;
+        }
+
         // 使用配置中心获取场景类
         try {
+            const shouldShowLoading = !window.SceneLoader || !window.SceneLoader.isSceneReady || !window.SceneLoader.isSceneReady(caseConfig.id);
+            if (shouldShowLoading) {
+                setSceneLoadingState(true, `正在准备 ${caseConfig.title} ...`);
+            }
+
+            if (window.SceneLoader && window.SceneLoader.ensureSceneLoaded) {
+                await window.SceneLoader.ensureSceneLoaded(caseConfig);
+            }
+
             const SceneClass = window.CasesConfig ? window.CasesConfig.getSceneClass(caseConfig.id) : null;
 
             if (SceneClass) {
                 // 隐藏占位符
                 document.getElementById('placeholder-text').style.display = 'none';
-                
+                setSceneLoadingState(false);
+                updateHomeButtonVisibility(true);
+
                 // 加载场景
                 state.sceneManager.loadScene(SceneClass);
 
@@ -627,12 +910,14 @@ async function finishGeneration(caseConfig) {
                 }
 
             } else {
+                setSceneLoadingState(false);
                 console.error("Scene Class not found for:", caseConfig.id);
                 addMessage('ai', '❌ 未找到对应的场景模块，请检查配置。');
             }
         } catch (e) {
+            setSceneLoadingState(false);
             console.error("Failed to load scene module:", e);
-            addMessage('ai', '❌ 场景加载失败，请检查控制台。');
+            addMessage('ai', '❌ 场景加载失败（已自动重试一次）。请稍后重试或切换其他场景。');
         }
     }
 }
@@ -710,7 +995,10 @@ function showIntroModal(intro) {
             setTimeout(async () => {
                 const result = await window.AIService.getSceneIntroduction();
                 if (result.success) {
-                    addMessage('ai', '🎓 ' + result.message);
+                    await presentAiMessage(result.message, {
+                        prefix: '🎓 ',
+                        syncWithSpeech: true
+                    });
                 }
             }, 1000);
         }

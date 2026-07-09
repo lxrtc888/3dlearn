@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>真人老师形象方案对比</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220;
+      --panel: #111827;
+      --panel-2: #172033;
+      --text: #e5eefc;
+      --muted: #9fb0c8;
+      --line: rgba(148, 163, 184, 0.24);
+      --accent: #22d3ee;
+      --green: #22c55e;
+      --amber: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+      background:
+        radial-gradient(900px 440px at 16% 12%, rgba(34, 211, 238, 0.13), transparent 60%),
+        radial-gradient(740px 420px at 86% 72%, rgba(245, 158, 11, 0.11), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      padding: 34px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 820px;
+      font-size: 15px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 28px;
+    }
+    .card {
+      min-height: 540px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018)), var(--panel);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .card:hover,
+    .card.selected {
+      transform: translateY(-2px);
+      border-color: rgba(34, 211, 238, 0.62);
+      box-shadow: 0 20px 38px rgba(0, 0, 0, 0.34);
+    }
+    .preview {
+      height: 260px;
+      position: relative;
+      overflow: hidden;
+      background: #101827;
+      border-bottom: 1px solid var(--line);
+    }
+    .classroom {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(8, 12, 24, 0.05), rgba(8, 12, 24, 0.72)),
+        radial-gradient(circle at 50% 22%, rgba(99, 102, 241, 0.24), transparent 32%),
+        linear-gradient(135deg, #1f2937, #0f172a 64%);
+    }
+    .head {
+      position: absolute;
+      left: 50%;
+      top: 42px;
+      width: 76px;
+      height: 90px;
+      transform: translateX(-50%);
+      border-radius: 42% 42% 46% 46%;
+      background: linear-gradient(160deg, #f2c7a5, #c99069);
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+    }
+    .head:before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: -10px;
+      height: 31px;
+      border-radius: 24px 24px 12px 12px;
+      background: #1f2937;
+    }
+    .eyes {
+      position: absolute;
+      top: 42px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .eyes span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #111827;
+    }
+    .mouth {
+      position: absolute;
+      left: 27px;
+      top: 65px;
+      width: 22px;
+      height: 6px;
+      border-radius: 999px;
+      background: #7f1d1d;
+    }
+    .mouth.live {
+      top: 59px;
+      height: 16px;
+      border-radius: 50%;
+      animation: talk 0.52s infinite ease-in-out;
+    }
+    @keyframes talk {
+      0%, 100% { height: 6px; top: 65px; }
+      50% { height: 18px; top: 58px; }
+    }
+    .body {
+      position: absolute;
+      left: 50%;
+      top: 132px;
+      width: 122px;
+      height: 128px;
+      transform: translateX(-50%);
+      border-radius: 40px 40px 0 0;
+      background: linear-gradient(160deg, #f8fafc, #94a3b8);
+    }
+    .badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.74);
+      color: #dbeafe;
+      font-size: 12px;
+      border: 1px solid rgba(147, 197, 253, 0.28);
+    }
+    .caption {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 14px;
+      padding: 9px 11px;
+      border-radius: 10px;
+      color: #e5f6ff;
+      background: rgba(2, 6, 23, 0.72);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .signal {
+      position: absolute;
+      top: 18px;
+      right: 16px;
+      display: flex;
+      gap: 4px;
+      align-items: end;
+    }
+    .signal span {
+      width: 6px;
+      border-radius: 999px;
+      background: var(--green);
+      animation: level 0.7s infinite ease-in-out;
+    }
+    .signal span:nth-child(1) { height: 14px; animation-delay: 0s; }
+    .signal span:nth-child(2) { height: 30px; animation-delay: 0.12s; }
+    .signal span:nth-child(3) { height: 22px; animation-delay: 0.24s; }
+    @keyframes level {
+      0%, 100% { transform: scaleY(0.65); }
+      50% { transform: scaleY(1.08); }
+    }
+    .body-content {
+      padding: 18px;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .pipeline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      margin-top: 15px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+    .pill {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.86);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+    }
+    .meta {
+      display: grid;
+      gap: 8px;
+      margin-top: 15px;
+      color: #c7d2e5;
+      font-size: 13px;
+    }
+    .meta div {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      padding-bottom: 8px;
+    }
+    .note {
+      margin-top: 22px;
+      padding: 15px 17px;
+      border-radius: 12px;
+      background: rgba(14, 116, 144, 0.14);
+      border: 1px solid rgba(34, 211, 238, 0.26);
+      color: #dff7ff;
+      line-height: 1.7;
+    }
+    #selected {
+      margin-top: 16px;
+      color: #f8fafc;
+      font-weight: 700;
+      min-height: 24px;
+    }
+    @media (max-width: 980px) {
+      body { padding: 18px; }
+      .grid { grid-template-columns: 1fr; }
+      .card { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>左侧“真人老师”形象方案对比</h1>
+    <p class="lead">项目当前已有左侧视频老师、TTS 播报和字幕。要做到“像真人一样自然说话”，主要有三条路线：越靠后越真实，但也越依赖预算、服务商、网络延迟和肖像授权。</p>
+
+    <section class="grid">
+      <article class="card" data-choice="A：真实视频素材 + TTS">
+        <div class="preview">
+          <div class="classroom"></div>
+          <div class="badge">A 当前路线升级</div>
+          <div class="head"><div class="eyes"><span></span><span></span></div><div class="mouth"></div></div>
+          <div class="body"></div>
+          <div class="caption">AI 回复后播放 TTS，同时播放一段老师视频。画面真实，但口型只能大致跟随。</div>
+        </div>
+        <div class="body-content">
+          <h2>真实视频素材 + TTS</h2>
+          <p>最快落地，延续现有结构。适合先提升“真人感”，但很难做到逐字精准对口型。</p>
+          <div class="pipeline"><span class="pill">AI文字</span><span>→</span><span class="pill">TTS</span><span>→</span><span class="pill">视频播放</span></div>
+          <div class="meta">
+            <div><span>真实感</span><strong>中高</strong></div>
+            <div><span>开发成本</span><strong>低</strong></div>
+            <div><span>口型自然度</span><strong>低到中</strong></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" data-choice="B：3D/VRM 数字人 + 口型同步">
+        <div class="preview">
+          <div class="classroom"></div>
+          <div class="badge">B 推荐先做</div>
+          <div class="signal"><span></span><span></span><span></span></div>
+          <div class="head"><div class="eyes"><span></span><span></span></div><div class="mouth live"></div></div>
+          <div class="body" style="background:linear-gradient(160deg,#e0f2fe,#38bdf8);"></div>
+          <div class="caption">用 TTS 音频驱动嘴型、眨眼、点头、呼吸和视线，和 Three.js 技术栈更匹配。</div>
+        </div>
+        <div class="body-content">
+          <h2>3D/VRM 数字人 + 口型同步</h2>
+          <p>稳定、可控、可本地演示。人物能做得较真实，但“完全真人”需要高质量模型和动作调校。</p>
+          <div class="pipeline"><span class="pill">AI文字</span><span>→</span><span class="pill">TTS</span><span>→</span><span class="pill">Viseme</span><span>→</span><span class="pill">脸部动画</span></div>
+          <div class="meta">
+            <div><span>真实感</span><strong>中到高</strong></div>
+            <div><span>开发成本</span><strong>中</strong></div>
+            <div><span>口型自然度</span><strong>中高</strong></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" data-choice="C：云端真人数字人视频流">
+        <div class="preview">
+          <div class="classroom" style="background:linear-gradient(135deg,#172554,#020617 68%);"></div>
+          <div class="badge">C 最像真人</div>
+          <div class="signal"><span style="background:#f59e0b"></span><span style="background:#f59e0b"></span><span style="background:#f59e0b"></span></div>
+          <div class="head" style="background:linear-gradient(160deg,#f6d3b6,#b87a52);"><div class="eyes"><span></span><span></span></div><div class="mouth live"></div></div>
+          <div class="body" style="background:linear-gradient(160deg,#f8fafc,#64748b);"></div>
+          <div class="caption">服务商根据文本或音频生成真人数字人视频流，口型和表情最自然。</div>
+        </div>
+        <div class="body-content">
+          <h2>云端真人数字人视频流</h2>
+          <p>观感最接近真人老师。代价是接口费用、延迟、网络依赖、授权素材和服务商绑定。</p>
+          <div class="pipeline"><span class="pill">AI文字</span><span>→</span><span class="pill">数字人API</span><span>→</span><span class="pill">视频流</span></div>
+          <div class="meta">
+            <div><span>真实感</span><strong>最高</strong></div>
+            <div><span>开发成本</span><strong>高</strong></div>
+            <div><span>口型自然度</span><strong>高</strong></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <div class="note">我的初步判断：如果目标是稳定上线，优先 B；如果目标是演示时一眼震撼，评估 C；如果只是短期改善，A 成本最低。</div>
+    <div id="selected"></div>
+  </main>
+
+  <script>
+    const cards = Array.from(document.querySelectorAll(".card"));
+    const selected = document.getElementById("selected");
+    cards.forEach((card) => {
+      card.addEventListener("click", () => {
+        cards.forEach((item) => item.classList.remove("selected"));
+        card.classList.add("selected");
+        selected.textContent = "当前选择：" + card.dataset.choice;
+      });
+    });
+  </script>
+</body>
+</html>

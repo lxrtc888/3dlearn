@@ -17,6 +17,9 @@ class SceneManager {
         this.interactableObjects = [];
         this.labels = [];
         this.clock = new THREE.Clock();
+
+        // 初始教学引导的定时器（清理场景时需要取消，避免回到首页后仍弹出）
+        this.guideTimers = [];
         
         // 当前活跃的场景实例
         this.currentSceneInstance = null;
@@ -315,7 +318,7 @@ class SceneManager {
         // 创建渲染器
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.container.appendChild(this.renderer.domElement);
@@ -338,6 +341,17 @@ class SceneManager {
         this.controls.minDistance = 5;
         this.controls.maxDistance = 100;
         this.controls.maxPolarAngle = Math.PI * 0.9;
+
+        // 移动端交互调优：降低过敏感操作，双指缩放+平移更稳定
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            this.controls.rotateSpeed = 0.65;
+            this.controls.zoomSpeed = 0.85;
+            this.controls.panSpeed = 0.75;
+            this.controls.touches = {
+                ONE: THREE.TOUCH.ROTATE,
+                TWO: THREE.TOUCH.DOLLY_PAN
+            };
+        }
 
         // 默认灯光
         this.setupDefaultLights();
@@ -408,6 +422,15 @@ class SceneManager {
             this.currentSceneInstance.dispose();
         }
 
+        // 取消尚未触发的初始引导定时器，并移除已弹出的引导提示
+        if (this.guideTimers && this.guideTimers.length) {
+            this.guideTimers.forEach(id => clearTimeout(id));
+            this.guideTimers = [];
+        }
+        if (this.container) {
+            this.container.querySelectorAll('.scene-guide-message').forEach(el => el.remove());
+        }
+
         this.labels.forEach(l => {
             if (l.container && l.container.parentNode) {
                 l.container.parentNode.removeChild(l.container);
@@ -427,6 +450,25 @@ class SceneManager {
         if (controlsDiv) {
             controlsDiv.style.display = 'none';
             controlsDiv.innerHTML = '';
+        }
+    }
+
+    /**
+     * 重置为空场景
+     * 返回首页时调用：清理当前场景并换上一个只含默认灯光的空场景，
+     * 避免渲染循环继续绘制已释放的旧场景，回到与初始一致的空白画面。
+     */
+    resetToEmptyScene() {
+        this.clearScene();
+
+        this.scene = new THREE.Scene();
+        this.setupDefaultLights();
+        this.camera.position.set(0, 10, 30);
+        this.camera.lookAt(0, 0, 0);
+
+        if (this.controls) {
+            this.controls.target.set(0, 0, 0);
+            this.controls.update();
         }
     }
 
@@ -674,11 +716,11 @@ class SceneManager {
      * 显示初始教学引导
      */
     showInitialGuides() {
-        setTimeout(() => {
+        this.guideTimers.push(setTimeout(() => {
             this.showGuide('🖱️ 拖动旋转 · 滚轮缩放 · 右键平移');
-        }, 1200);
-        setTimeout(() => {
+        }, 1200));
+        this.guideTimers.push(setTimeout(() => {
             this.showGuide('👆 点击蓝色部件查看详细说明');
-        }, 5000);
+        }, 5000));
     }
 }

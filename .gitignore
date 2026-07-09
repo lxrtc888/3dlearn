@@ -1,0 +1,15 @@
+# Local secrets and environment files
+.env
+.env.*
+*.local
+
+# TTS/API key notes
+docs/火山TTS引擎key及指南.txt
+
+# Local evaluation material that should not be pushed
+测评本测评网站内容不用推送到Github.pdf
+3dlearn-evaluation-report本测评网站/
+
+# Local browser verification artifacts
+.playwright-cli/
+output/playwright/

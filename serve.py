@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-import http.server
-import socketserver
 import os
+import subprocess
+import sys
 
-# 切换到脚本所在目录
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.abspath(__file__))
+os.chdir(ROOT)
 
-PORT = 8000
-Handler = http.server.SimpleHTTPRequestHandler
+print("Starting 3Dlearn local server...")
+print("Open http://localhost:8000/app.html")
+print("Do not open app.html directly with file://")
 
-with socketserver.TCPServer(("", PORT), Handler) as httpd:
-    print(f"服务器已启动: http://localhost:{PORT}")
-    print(f"当前目录: {os.getcwd()}")
-    httpd.serve_forever()
+try:
+    raise SystemExit(subprocess.call(["node", "local-server.mjs"]))
+except FileNotFoundError:
+    print("Node.js 18+ is required to run local-server.mjs.")
+    sys.exit(1)
