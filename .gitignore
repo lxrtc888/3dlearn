@@ -13,3 +13,9 @@ docs/火山TTS引擎key及指南.txt
 # Local browser verification artifacts
 .playwright-cli/
 output/playwright/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
